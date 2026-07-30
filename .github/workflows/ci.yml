@@ -24,17 +24,26 @@ jobs:
       matrix:
         php: ['8.5']
 
-    env:
-      database.tests.hostname: 127.0.0.1
-      database.tests.database: ci4_agency_test
-      database.tests.username: root
-      database.tests.password: root
-      database.tests.DBDriver: MySQLi
-      database.tests.port: 43306
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: 테스트용 .env 작성
+        # Composer가 스크립트("composer test")를 하위 프로세스로 실행할 때
+        # 점(.)이 포함된 job-level env 키(database.tests.*)를 제대로 전달하지
+        # 못해 기본 그룹(hostname=localhost, 하드코딩 port=3306)으로 접속하며
+        # 이 러너의 시스템 mysqld에 "Access denied"로 막히는 문제가 있었다
+        # (vendor/bin/phpunit 직접 호출은 정상 — composer 스크립트 경유만 깨짐).
+        # .env 파일은 CI4 Dotenv가 직접 읽어 이 문제를 우회한다.
+        run: |
+          cat > .env <<'ENVEOF'
+          database.tests.hostname = 127.0.0.1
+          database.tests.database = ci4_agency_test
+          database.tests.username = root
+          database.tests.password = root
+          database.tests.DBDriver = MySQLi
+          database.tests.port = 43306
+          ENVEOF
 
       - name: MySQL 컨테이너 기동
         run: |
@@ -91,17 +100,21 @@ jobs:
     permissions:
       contents: read
 
-    env:
-      database.tests.hostname: 127.0.0.1
-      database.tests.database: ci4_agency_test
-      database.tests.username: root
-      database.tests.password: root
-      database.tests.DBDriver: MySQLi
-      database.tests.port: 43306
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: 테스트용 .env 작성
+        # quality 잡과 동일한 이유 (composer 스크립트 경유 시 점 포함 env 키 유실).
+        run: |
+          cat > .env <<'ENVEOF'
+          database.tests.hostname = 127.0.0.1
+          database.tests.database = ci4_agency_test
+          database.tests.username = root
+          database.tests.password = root
+          database.tests.DBDriver = MySQLi
+          database.tests.port = 43306
+          ENVEOF
 
       - name: MySQL 컨테이너 기동
         run: |
