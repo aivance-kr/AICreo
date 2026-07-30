@@ -5,6 +5,13 @@
 #
 # 활성화: 저장소 루트에서 `composer install` 을 실행하면 자동 등록됩니다.
 #         (수동 등록: git config core.hooksPath .githooks)
+# 건너뛰기: `SKIP_HOOKS=1 git commit ...` — git add -p 로 부분 스테이징한 상태에서
+#          자동 재-스테이징이 의도치 않은 변경까지 커밋에 넣을 수 있을 때 사용.
+
+if [ -n "$SKIP_HOOKS" ]; then
+    echo "⚠ SKIP_HOOKS=1 — PHP-CS-Fixer 자동 적용을 건너뜁니다."
+    exit 0
+fi
 
 # 스테이징된 .php 파일 목록 (삭제된 파일 제외)
 STAGED_PHP="$(git diff --cached --name-only --diff-filter=ACMR | grep '\.php$')"

@@ -39,9 +39,12 @@ class MenuModel extends Model
      */
     public function reorder(array $ids): void
     {
+        $this->db->transStart();
+
         foreach ($ids as $index => $id) {
             $this->update($id, ['sort_order' => $index]);
         }
+        $this->db->transComplete();
         $this->clearCache();
     }
 
