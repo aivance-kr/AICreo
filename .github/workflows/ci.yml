@@ -48,9 +48,13 @@ jobs:
             -e MYSQL_DATABASE=ci4_agency_test \
             -p 43306:3306 \
             mysql:8.0
-          for i in $(seq 1 30); do
-            docker exec ci-mysql-${{ github.run_id }} mysqladmin ping -proot --silent && break
-            sleep 2
+          # 공식 mysql 이미지는 초기화 중 임시 서버로 한 번 떴다가 재시작한다.
+          # mysqladmin ping은 그 임시 서버 단계에서도 성공해버려 재시작 중
+          # 붙으면 "server has gone away"가 나므로, 실제 인증 쿼리가
+          # 성공할 때까지(=재시작이 끝날 때까지) 재시도한다.
+          for i in $(seq 1 60); do
+            docker exec ci-mysql-${{ github.run_id }} mysql -uroot -proot -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && break
+            sleep 1
           done
 
       - name: Setup PHP
@@ -107,9 +111,10 @@ jobs:
             -e MYSQL_DATABASE=ci4_agency_test \
             -p 43306:3306 \
             mysql:8.0
-          for i in $(seq 1 30); do
-            docker exec ci-mysql-coverage-${{ github.run_id }} mysqladmin ping -proot --silent && break
-            sleep 2
+          # quality 잡과 동일한 이유 — 실제 인증 쿼리가 성공할 때까지 재시도.
+          for i in $(seq 1 60); do
+            docker exec ci-mysql-coverage-${{ github.run_id }} mysql -uroot -proot -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && break
+            sleep 1
           done
 
       - name: Setup PHP
