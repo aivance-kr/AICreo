@@ -1,10 +1,8 @@
 name: CI
 
 on:
-  push:
-    branches: [main, dev]
   pull_request:
-    branches: [main, dev]
+    branches: [main]     # dev 로 가는 PR 에서는 돌지 않는다 — 검증 게이트는 로컬(pre-push 훅)에서 끝낸다.
 
 permissions:
   contents: read
@@ -72,9 +70,8 @@ jobs:
   coverage:
     name: 커버리지 리포트
     runs-on: ubuntu-latest
-    # 커버리지는 dev·main push 시에만 실행 — PR CI 대기 시간을 quality 잡만으로 단축.
-    # 커버리지 결과는 push 후 job summary에서 확인한다.
-    if: github.event_name == 'push'
+    # CI 자체가 dev → main 배포 PR 에서만 도므로 quality 잡과 함께 항상 실행된다.
+    # 커버리지 결과는 job summary에서 확인한다.
 
     permissions:
       contents: read
@@ -146,7 +143,6 @@ jobs:
       - name: Slack 알림 전송
         uses: ./.github/actions/slack-notify
         with:
-          # coverage는 PR에서 skip되므로(push 전용) skipped도 성공으로 간주한다.
-          status: ${{ (needs.quality.result == 'success' && (needs.coverage.result == 'success' || needs.coverage.result == 'skipped')) && 'success' || 'failure' }}
+          status: ${{ (needs.quality.result == 'success' && needs.coverage.result == 'success') && 'success' || 'failure' }}
           title: CI
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
