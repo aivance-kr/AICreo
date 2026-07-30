@@ -14,26 +14,15 @@ concurrency:
 jobs:
   quality:
     name: PHP ${{ matrix.php }} - 정적분석 · 스타일 · 테스트
-    runs-on: ubuntu-latest
+    # self-hosted(macOS) 러너는 `services:` 도커 컨테이너를 지원하지 않는다
+    # (GitHub Actions 서비스 컨테이너는 Linux 러너 전용). 대신 아래에서
+    # MySQL을 docker run으로 직접 띄우고 잡 종료 시 정리한다.
+    runs-on: [self-hosted, macOS, ARM64]
 
     strategy:
       fail-fast: false
       matrix:
         php: ['8.5']
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: ci4_agency_test
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
 
     env:
       database.tests.hostname: 127.0.0.1
@@ -41,11 +30,26 @@ jobs:
       database.tests.username: root
       database.tests.password: root
       database.tests.DBDriver: MySQLi
-      database.tests.port: 3306
+      database.tests.port: 23306
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: MySQL 컨테이너 기동
+        run: |
+          docker rm -f ci-mysql-${{ github.run_id }} 2>/dev/null || true
+          # 이 러너에는 시스템 MySQL(mysqld)이 이미 3306을 상시 점유하고 있고
+          # 다른 저장소 CI(예: AIFid, 13306)와도 겹치지 않게 23306으로 띄운다.
+          docker run -d --name ci-mysql-${{ github.run_id }} \
+            -e MYSQL_ROOT_PASSWORD=root \
+            -e MYSQL_DATABASE=ci4_agency_test \
+            -p 23306:3306 \
+            mysql:8.0
+          for i in $(seq 1 30); do
+            docker exec ci-mysql-${{ github.run_id }} mysqladmin ping -proot --silent && break
+            sleep 2
+          done
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -67,28 +71,19 @@ jobs:
       - name: Tests (PHPUnit)
         run: composer test
 
+      - name: 컨테이너 정리
+        if: always()
+        run: docker rm -f ci-mysql-${{ github.run_id }} 2>/dev/null || true
+
   coverage:
     name: 커버리지 리포트
-    runs-on: ubuntu-latest
+    # self-hosted(macOS) 러너는 services: 를 지원하지 않아 MySQL을 직접 기동한다.
+    runs-on: [self-hosted, macOS, ARM64]
     # CI 자체가 dev → main 배포 PR 에서만 도므로 quality 잡과 함께 항상 실행된다.
     # 커버리지 결과는 job summary에서 확인한다.
 
     permissions:
       contents: read
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: ci4_agency_test
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
 
     env:
       database.tests.hostname: 127.0.0.1
@@ -96,11 +91,24 @@ jobs:
       database.tests.username: root
       database.tests.password: root
       database.tests.DBDriver: MySQLi
-      database.tests.port: 3306
+      database.tests.port: 23306
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: MySQL 컨테이너 기동
+        run: |
+          docker rm -f ci-mysql-coverage-${{ github.run_id }} 2>/dev/null || true
+          docker run -d --name ci-mysql-coverage-${{ github.run_id }} \
+            -e MYSQL_ROOT_PASSWORD=root \
+            -e MYSQL_DATABASE=ci4_agency_test \
+            -p 23306:3306 \
+            mysql:8.0
+          for i in $(seq 1 30); do
+            docker exec ci-mysql-coverage-${{ github.run_id }} mysqladmin ping -proot --silent && break
+            sleep 2
+          done
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -129,6 +137,10 @@ jobs:
             cat build/coverage.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 컨테이너 정리
+        if: always()
+        run: docker rm -f ci-mysql-coverage-${{ github.run_id }} 2>/dev/null || true
 
   notify:
     name: Slack 알림
