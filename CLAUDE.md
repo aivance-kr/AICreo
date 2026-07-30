@@ -20,7 +20,14 @@ php spark migrate            # 대기 중인 마이그레이션 전체 실행 (�
 php spark migrate:rollback   # 마지막 마이그레이션 배치 롤백
 ```
 
-**품질 게이트 (커밋 전 필수 — 저장소 루트에서 실행):**
+**검증 게이트 — 어디서 무엇을 돌리는가.** 검증은 로컬에서 끝낸다. `feature → dev` PR 에는 CI 를 걸지 않고(코드 리뷰만), CI 는 `dev → main` 배포 PR 에서만 돈다.
+
+```
+feature/*  ──[로컬 검증: composer ci]──▶  dev  ──[PR + 코드 리뷰]──▶  dev → main PR ──[CI]──▶  main
+                    ↑
+              여기가 실질적 게이트 (feature → dev 는 Squash merge 라 CI 가 없다)
+```
+
 ```bash
 composer cs          # PHP-CS-Fixer 스타일 점검 (dry-run)
 composer cs:fix      # 스타일 자동 정규화
@@ -30,7 +37,24 @@ composer ci          # cs + analyse + test 한 번에 — push 전 이걸로 CI 
 composer rector:dry  # 코드 현대화 미리보기 (선택), composer rector 로 적용
 ```
 
-> CI(`.github/workflows/ci.yml`): `main`·`dev` push/PR 시 **quality 잡**(cs·analyse·test, PHP 8.5/MySQL 8.0) + **coverage 잡**(커버리지 리포트를 PR 코멘트) 실행.
+| 시점 | 무엇을 |
+|------|--------|
+| 개발 중 | `composer analyse` + `composer test` 수시 실행 |
+| push 전 (`main` 제외 모든 브랜치) | `composer ci` 필수 — 실패하면 push 하지 않는다. `pre-push` 훅이 강제한다 |
+| `feature → dev` PR | CI 없음. 코드 리뷰만 — 직전 push 의 `composer ci` 가 유일한 방어선 |
+| `dev → main` PR | GitHub Actions 전체(`quality` 잡: cs·analyse·test, PHP 8.5/MySQL 8.0 + `coverage` 잡: job summary 에 리포트) |
+
+`feature → dev` 는 GitHub Squash merge 로 처리되어 로컬 훅도 CI 도 그 순간엔 동작하지 않는다 — 그래서 `feature/*` push 도 `dev` push 와 동일하게 `composer ci` 를 강제한다(건너뛰지 않는다). 이 단계를 생략하면 검증되지 않은 코드가 `dev` 에 쌓이고, 배포 PR 에서야 CI 가 처음 돌아 원인 추적 비용이 커진다 — 생략은 규칙 위반이다.
+
+#### self-hosted 러너에서 돈다
+
+GitHub 호스팅 러너(`ubuntu-latest`)가 아니라 **로컬 Mac을 self-hosted 러너로 등록해서** 돈다. 두 잡(`quality`, `coverage`) 모두 `runs-on: [self-hosted, macOS, ARM64]`.
+
+- **러너 위치**: `~/actions-runners/AICreo`(저장소 밖). `aicreo-mac-local-runner` 라는 이름으로 launchd 서비스(`actions.runner.pushwing-AICreo.aicreo-mac-local-runner`)로 상시 등록돼 있다 — Mac이 켜져 있으면 자동으로 리스닝한다.
+- **저장소가 Public** — self-hosted 러너에 `pull_request` 트리거가 걸려 있으면 외부 fork PR 코드가 러너에서 실행될 위험이 있어(공식적으로 알려진 위험), 저장소 설정에서 `fork-pr-contributor-approval` 을 `all_external_contributors` 로 켜 두었다. 외부 협업자의 PR은 관리자가 수동 승인하기 전까지 워크플로우가 실행되지 않는다.
+- **MySQL**: self-hosted **macOS** 러너는 `services:` 도커 컨테이너를 지원하지 않는다(Linux 러너 전용 기능). 대신 각 잡에서 `docker run` 으로 직접 기동하고 `if: always()` 스텝으로 정리한다. Redis는 캐시 핸들러 기본값이 `file` 이라 CI 에 필요 없다.
+- **포트**: 이 Mac은 이미 시스템 mysqld(3306)를 상시 띄워두고 있고, 같은 Mac에서 도는 다른 저장소 CI(AIFid MySQL `13306`)와도 겹치지 않게 **MySQL `23306`** 을 쓴다.
+- **호스팅 러너로 되돌리려면**: `runs-on` 을 `ubuntu-latest` 로 바꾸고 MySQL을 다시 `services:` 블록으로 되돌리면 된다(포트도 표준값 `3306`으로 원복 가능).
 
 **Cron (운영 — 단 1줄 등록):**
 ```
@@ -55,8 +79,12 @@ Linux 업로드 권한: `chmod -R 755 public/uploads writable`
 ```bash
 git config core.hooksPath .githooks
 ```
-- `.githooks/pre-commit` — 커밋 직전 스테이징된 PHP 파일에 PHP-CS-Fixer(`composer cs:fix` 규칙)를 자동 적용. 건너뛰려면 `git commit --no-verify`.
-- `.githooks/pre-push` — push 직전 품질 게이트(`composer ci` = cs·analyse·test, ~10초)를 실행해 CI 왕복 전에 로컬에서 실패를 걸러냄. 건너뛰려면 `git push --no-verify`.
+- `.githooks/pre-commit` — 커밋 직전 스테이징된 PHP 파일에 PHP-CS-Fixer(`composer cs:fix` 규칙)를 자동 적용(커밋을 막지는 않음).
+- `.githooks/pre-push` — 대상 브랜치별로 정책이 다르다:
+  - `main` 직접 push는 **무조건 차단**(배포는 `dev → main` PR 로만).
+  - 그 외 브랜치는 품질 게이트(`composer ci` = cs·analyse·test, ~10초)를 실행해 CI 왕복 전에 로컬에서 실패를 걸러냄.
+  - 문서 전용 변경(`*.md`, `docs/**`, `.claude/rules/**` 만 바뀐 push)은 검증을 자동으로 건너뜀. 코드가 한 줄이라도 섞이면 즉시 전체 검증으로 돌아간다.
+- 긴급 우회: `SKIP_HOOKS=1 git commit/push ...`(`main` 차단은 우회되지 않음). PHP·Composer 가 없는 환경에서는 해당 검증을 자동으로 건너뛴다.
 
 ## 상세 규칙 (모듈)
 
