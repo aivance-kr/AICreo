@@ -15,7 +15,7 @@
 ## 명령어
 
 ```bash
-php spark serve              # 개발 서버 실행 (http://localhost:8080)
+php spark serve --port 8306  # 개발 서버 실행 (http://localhost:8306)
 php spark migrate            # 대기 중인 마이그레이션 전체 실행 (테이블 생성 + 시딩)
 php spark migrate:rollback   # 마지막 마이그레이션 배치 롤백
 ```

@@ -200,7 +200,7 @@ chmod -R 755 writable
 
 ### 6. 개발 서버 실행
 ```bash
-php spark serve
+php spark serve --port 8306
 ```
 
 ---
