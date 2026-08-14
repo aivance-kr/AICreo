@@ -30,4 +30,7 @@ Thumbs.db
 /tmp/
 
 # 로컬 전용 매뉴얼 PDF (배포용, 저장소 미포함)
-docs/AiCreo-매뉴얼.pdf
+docs/AICreo-매뉴얼.pdf
+
+# impeccable 세션 상태(로컬 전용 — 절대 경로·서버 포트를 담는다)
+.impeccable/live/

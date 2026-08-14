@@ -1,12 +1,12 @@
-# SEO → GEO 적용 전략 (AiCreo 보일러플레이트)
+# SEO → GEO 적용 전략 (AICreo 보일러플레이트)
 
-> AiCreo(1인 웹에이전시용 CI4 보일러플레이트)에 SEO를 정비한 뒤 GEO(Generative Engine Optimization)를
+> AICreo(1인 웹에이전시용 CI4 보일러플레이트)에 SEO를 정비한 뒤 GEO(Generative Engine Optimization)를
 > 올려 **AI 검색(ChatGPT Search·Perplexity·Google AI Overviews·Gemini·Claude 등) 노출도**를 높이는 전략 문서.
 >
 > 본 문서 범위는 **전략·로드맵·아키텍처 설계**까지다. 실제 코드 구현은 후속 이슈로 분할한다(§9).
 >
 > **AICura 전략문서와의 근본 차이:** AICura는 JSON API만 존재해 "크롤링 표면 0"에서 SSR 레이어부터 신설해야 했다.
-> AiCreo는 **이미 SSR HTML 페이지(홈·동적페이지·게시판)와 `SeoHelper`가 존재**한다. 따라서 본 전략은
+> AICreo는 **이미 SSR HTML 페이지(홈·동적페이지·게시판)와 `SeoHelper`가 존재**한다. 따라서 본 전략은
 > "신설"이 아니라 **기존 SEO 기초 보강 → GEO 적층**이며, 무엇보다 이 산출물이 **보일러플레이트 제품 기능**으로
 > 내장되어 이 위에 배포되는 모든 클라이언트 사이트가 자동으로 혜택받도록 설계하는 것이 목표다.
 
@@ -21,14 +21,14 @@
 | 3 | AI 크롤러 정책 | **전체 허용** — GPTBot·OAI-SearchBot·PerplexityBot·Google-Extended·ClaudeBot·Bingbot 등 인용·학습 크롤러 모두 허용 (노출 극대화). 단, 클라이언트가 관리자에서 끌 수 있는 스위치 제공 | §6 |
 | 4 | 멀티테넌트 SEO 설정 | **admin `settings`로 노출** — 도메인·기본 OG 이미지·조직정보·검증코드를 코드 하드코딩이 아니라 관리자 화면에서 클라이언트가 입력 | §3.2, §8 |
 
-> AiCreo는 특정 서비스가 아니라 **재판매되는 템플릿**이다. 따라서 "특정 도메인/특정 업종"을 가정하지 않고
+> AICreo는 특정 서비스가 아니라 **재판매되는 템플릿**이다. 따라서 "특정 도메인/특정 업종"을 가정하지 않고
 > 모든 결정이 **설정 주입**으로 동작하도록 추상화하는 것이 1순위 제약이다.
 
 ---
 
-## 1. 배경 — 현재 AiCreo의 크롤링 표면
+## 1. 배경 — 현재 AICreo의 크롤링 표면
 
-AICura와 달리 AiCreo는 이미 공개 SSR HTML을 서빙한다. 현황을 정확히 진단한다.
+AICura와 달리 AICreo는 이미 공개 SSR HTML을 서빙한다. 현황을 정확히 진단한다.
 
 ### 1.1 이미 존재하는 것 (기반은 있음)
 
@@ -61,7 +61,7 @@ AICura와 달리 AiCreo는 이미 공개 SSR HTML을 서빙한다. 현황을 정
 | **AI 크롤러 명시 허용** | ⚠️ 와일드카드로만 허용, 의도 미명시 |
 | **baseURL** | ⚠️ 클라이언트별 도메인 주입 규약 미정 (`app/Config/App.php`) |
 
-> **결론:** AiCreo는 SSR 기반이 있으므로 AICura처럼 웹 레이어를 신설할 필요가 없다.
+> **결론:** AICreo는 SSR 기반이 있으므로 AICura처럼 웹 레이어를 신설할 필요가 없다.
 > 대신 (a) **`SeoHelper`를 canonical·robots·JSON-LD·Twitter까지 확장**하고, (b) **sitemap.xml·robots.txt·llms.txt를
 > 동적 라우트로 서빙**하며, (c) 이 모든 것을 **관리자 설정으로 제어 가능한 보일러플레이트 기능**으로 완성하면 된다.
 
@@ -82,7 +82,7 @@ AICura와 달리 AiCreo는 이미 공개 SSR HTML을 서빙한다. 현황을 정
 
 > **보일러플레이트 관점의 GEO 가치:** 소상공인·중소기업 클라이언트 사이트는 백링크·도메인 권위가 약해 전통 SEO 순위 경쟁에서
 > 불리하다. 반면 GEO는 **명료한 구조화 데이터와 사실 진술**이 강력한 신호라, 규모가 작아도 AI 검색에서 인용될 여지가 크다.
-> 즉 GEO는 AiCreo가 고객에게 제공할 **차별화된 세일즈 포인트**가 된다.
+> 즉 GEO는 AICreo가 고객에게 제공할 **차별화된 세일즈 포인트**가 된다.
 
 ---
 
@@ -162,7 +162,7 @@ CI4 파일 캐시 키는 `:` 등 예약문자를 금지하므로 언더스코어
 
 ## 4. 노출 콘텐츠 → schema.org 매핑
 
-GEO의 핵심은 **구조화 데이터로 사실을 기계 판독 가능하게** 만드는 것이다. AiCreo 실제 필드 기준 매핑:
+GEO의 핵심은 **구조화 데이터로 사실을 기계 판독 가능하게** 만드는 것이다. AICreo 실제 필드 기준 매핑:
 
 > ⚠️ **JSON-LD 구현 주의:** 인라인 JSON-LD는 (a) `</script>` 조기 종료 방지를 위해 `JSON_HEX_TAG`,
 > (b) 한글 이식성·테스트 하네스(비ASCII HTML 엔티티 변환) 우회를 위해 `JSON_UNESCAPED_UNICODE`를 **끄고**
@@ -356,7 +356,7 @@ Bing 미색인 = ChatGPT Search 미노출. → robots에 `Bingbot` 명시, **Bin
 
 ## 부록 B. AICura 전략문서 대비 요약
 
-| 항목 | AICura | AiCreo |
+| 항목 | AICura | AICreo |
 |------|--------|--------|
 | 시작 상태 | JSON API만 (크롤 표면 0) | SSR HTML + `SeoHelper` 존재 (기초 부분 완비) |
 | 1순위 작업 | SSR 웹 레이어 **신설** | 기존 `SeoHelper` **확장** + 크롤러 진입점 신설 |
