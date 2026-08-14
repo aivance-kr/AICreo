@@ -15,7 +15,7 @@
 </ul>
 
 <div class="alert alert-info">
-    <i class="bi bi-shield-lock me-2"></i>
+    <i class="bi bi-shield-lock me-2" aria-hidden="true"></i>
     소셜 로그인 키는 보안상 <strong>서버의 <code>.env</code> 파일</strong>에 직접 입력해야 합니다.<br>
     아래 형식을 참고하여 설정하세요.
 </div>
@@ -58,13 +58,13 @@
     <div class="card-body">
         <p class="small text-muted mb-2">각 소셜 앱 콘솔에 아래 URL을 등록하세요.</p>
         <table class="table table-sm small">
-            <thead class="table-light"><tr><th>제공자</th><th>콜백 URL</th></tr></thead>
+            <thead class="table-light"><tr><th scope="col">제공자</th><th scope="col">콜백 URL</th></tr></thead>
             <tbody>
-                <tr><td><i class="bi bi-n-circle-fill text-success me-1"></i>네이버</td>
+                <tr><td><i class="bi bi-n-circle-fill text-success me-1" aria-hidden="true"></i>네이버</td>
                     <td><code><?= base_url('auth/social/naver/callback') ?></code></td></tr>
-                <tr><td><i class="bi bi-chat-fill text-warning me-1"></i>카카오</td>
+                <tr><td><i class="bi bi-chat-fill text-warning me-1" aria-hidden="true"></i>카카오</td>
                     <td><code><?= base_url('auth/social/kakao/callback') ?></code></td></tr>
-                <tr><td><i class="bi bi-google text-danger me-1"></i>구글</td>
+                <tr><td><i class="bi bi-google text-danger me-1" aria-hidden="true"></i>구글</td>
                     <td><code><?= base_url('auth/social/google/callback') ?></code></td></tr>
             </tbody>
         </table>
@@ -97,32 +97,32 @@ oauth.google.client_secret = YOUR_GOOGLE_CLIENT_SECRET</code></pre>
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white fw-semibold">앱 등록 바로가기</div>
     <div class="list-group list-group-flush">
-        <a href="https://developers.naver.com/apps/#/register" target="_blank"
+        <a href="https://developers.naver.com/apps/#/register" target="_blank" rel="noopener"
            class="list-group-item list-group-item-action d-flex align-items-center gap-3">
             <span class="badge bg-success fs-6 px-2">N</span>
             <div>
                 <div class="fw-semibold small">네이버 개발자 센터</div>
                 <div class="text-muted small">애플리케이션 등록 → 네이버 로그인 API 사용 신청</div>
             </div>
-            <i class="bi bi-box-arrow-up-right ms-auto text-muted"></i>
+            <i class="bi bi-box-arrow-up-right ms-auto text-muted" aria-hidden="true"></i>
         </a>
-        <a href="https://developers.kakao.com/console/app" target="_blank"
+        <a href="https://developers.kakao.com/console/app" target="_blank" rel="noopener"
            class="list-group-item list-group-item-action d-flex align-items-center gap-3">
             <span class="badge bg-warning text-dark fs-6 px-2">K</span>
             <div>
                 <div class="fw-semibold small">카카오 개발자 콘솔</div>
                 <div class="text-muted small">앱 생성 → 카카오 로그인 활성화 → 동의항목 설정</div>
             </div>
-            <i class="bi bi-box-arrow-up-right ms-auto text-muted"></i>
+            <i class="bi bi-box-arrow-up-right ms-auto text-muted" aria-hidden="true"></i>
         </a>
-        <a href="https://console.cloud.google.com/apis/credentials" target="_blank"
+        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener"
            class="list-group-item list-group-item-action d-flex align-items-center gap-3">
             <span class="badge bg-danger fs-6 px-2">G</span>
             <div>
                 <div class="fw-semibold small">Google Cloud Console</div>
                 <div class="text-muted small">OAuth 2.0 클라이언트 ID 생성 → 웹 애플리케이션 유형 선택</div>
             </div>
-            <i class="bi bi-box-arrow-up-right ms-auto text-muted"></i>
+            <i class="bi bi-box-arrow-up-right ms-auto text-muted" aria-hidden="true"></i>
         </a>
     </div>
 </div>

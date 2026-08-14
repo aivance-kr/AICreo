@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/admin') ?>
 <?php $pageTitle = $board ? '게시판 수정' : '게시판 추가' ?>
 <?= $this->section('content') ?>
-<div class="mb-2"><a href="/admin/boards" class="text-muted small"><i class="bi bi-arrow-left"></i> 목록</a></div>
+<div class="mb-2"><a href="/admin/boards" class="text-muted small"><i class="bi bi-arrow-left" aria-hidden="true"></i> 목록</a></div>
 <div class="card" style="max-width:600px">
     <div class="card-header bg-white"><strong><?= $board ? '게시판 수정' : '게시판 추가' ?></strong></div>
     <div class="card-body">
@@ -11,33 +11,33 @@
         <form method="post" action="<?= $board ? "/admin/boards/{$board['id']}/edit" : '/admin/boards/create' ?>">
             <?= csrf_field() ?>
             <div class="mb-3">
-                <label class="form-label small">슬러그 (영문, -, _)</label>
-                <input type="text" name="slug" class="form-control form-control-sm"
+                <label for="board-form-slug" class="form-label small">슬러그 (영문, -, _)</label>
+                <input id="board-form-slug" type="text" name="slug" class="form-control form-control-sm"
                        value="<?= esc($board['slug'] ?? old('slug')) ?>"
                        <?= $board ? 'readonly' : 'required' ?> placeholder="예: free, notice, qna">
             </div>
             <div class="mb-3">
-                <label class="form-label small">게시판 이름</label>
-                <input type="text" name="name" class="form-control form-control-sm"
+                <label for="board-form-name" class="form-label small">게시판 이름</label>
+                <input id="board-form-name" type="text" name="name" class="form-control form-control-sm"
                        value="<?= esc($board['name'] ?? old('name')) ?>" required>
             </div>
             <div class="mb-3">
-                <label class="form-label small">설명</label>
-                <input type="text" name="description" class="form-control form-control-sm"
+                <label for="board-form-description" class="form-label small">설명</label>
+                <input id="board-form-description" type="text" name="description" class="form-control form-control-sm"
                        value="<?= esc($board['description'] ?? '') ?>">
             </div>
             <div class="row g-2 mb-3">
                 <div class="col">
-                    <label class="form-label small">읽기 권한</label>
-                    <select name="read_permission" class="form-select form-select-sm">
+                    <label for="board-form-read_permission" class="form-label small">읽기 권한</label>
+                    <select id="board-form-read_permission" name="read_permission" class="form-select form-select-sm">
                         <?php foreach (['guest' => '비회원(전체)', 'member' => '회원', 'admin' => '관리자'] as $v => $l): ?>
                             <option value="<?= $v ?>" <?= ($board['read_permission'] ?? 'guest') === $v ? 'selected' : '' ?>><?= $l ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col">
-                    <label class="form-label small">쓰기 권한</label>
-                    <select name="write_permission" class="form-select form-select-sm">
+                    <label for="board-form-write_permission" class="form-label small">쓰기 권한</label>
+                    <select id="board-form-write_permission" name="write_permission" class="form-select form-select-sm">
                         <?php foreach (['guest' => '비회원(전체)', 'member' => '회원', 'admin' => '관리자'] as $v => $l): ?>
                             <option value="<?= $v ?>" <?= ($board['write_permission'] ?? 'member') === $v ? 'selected' : '' ?>><?= $l ?></option>
                         <?php endforeach; ?>
@@ -46,13 +46,13 @@
             </div>
             <div class="row g-2 mb-3">
                 <div class="col">
-                    <label class="form-label small">페이지당 글 수</label>
-                    <input type="number" name="posts_per_page" class="form-control form-control-sm"
+                    <label for="board-form-posts_per_page" class="form-label small">페이지당 글 수</label>
+                    <input id="board-form-posts_per_page" type="number" name="posts_per_page" class="form-control form-control-sm"
                            value="<?= $board['posts_per_page'] ?? 15 ?>" min="5" max="100">
                 </div>
                 <div class="col">
-                    <label class="form-label small">순서</label>
-                    <input type="number" name="sort_order" class="form-control form-control-sm"
+                    <label for="board-form-sort_order" class="form-label small">순서</label>
+                    <input id="board-form-sort_order" type="number" name="sort_order" class="form-control form-control-sm"
                            value="<?= $board['sort_order'] ?? 0 ?>">
                 </div>
             </div>

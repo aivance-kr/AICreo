@@ -200,7 +200,7 @@ chmod -R 755 writable
 
 ### 6. 개발 서버 실행
 ```bash
-php spark serve
+php spark serve --port 8306
 ```
 
 ---
@@ -310,6 +310,26 @@ my-theme.zip
 | Zip-slip 방지 | `..` · `/` · `\` 시작 경로 차단 |
 | 확장자 화이트리스트 | `views/` → `.php` 만 허용 / `public/` → CSS·JS·이미지·폰트만 허용 |
 | 예약어 보호 | 테마명 `default` 사용 불가 |
+
+#### ⚠️ 레이아웃을 교체하는 테마가 지켜야 할 접근성 계약
+
+이 제품은 **KWCAG 2.2 준수를 전제**로 만들어져 있고, 그 기반의 일부가 `layouts/main.php` 에 들어 있습니다.
+테마가 이 파일을 교체하면 아래 세 가지를 **반드시 그대로 옮겨야** 합니다. 빠지면 인증 심사에서 지적됩니다.
+
+```php
+<!-- 1. 전역 토큰 — 색·초점 표시·건너뛰기 링크 스타일이 여기 있다 (테마 CSS보다 먼저) -->
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/themes/{테마명}/css/style.css">
+
+<!-- 2. 반복 영역 건너뛰기 링크 — <body> 의 첫 요소 -->
+<a class="skip-link" href="#main-content">본문 바로가기</a>
+
+<!-- 3. 본문 랜드마크 — 건너뛰기 링크의 목적지 -->
+<main id="main-content" tabindex="-1"> … </main>
+```
+
+게시판·인증 뷰는 보조 설명에 Bootstrap 의 `.visually-hidden` 을 쓰므로, 테마는 이 클래스를 덮어쓰거나 제거하면 안 됩니다.
+검증은 `composer test` 의 `ViewAccessibilityTest` 가 대신합니다.
 
 설치 완료 후 테마 카드에서 **이 테마 적용** 버튼으로 즉시 전환할 수 있습니다.
 

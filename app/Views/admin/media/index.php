@@ -7,7 +7,7 @@
     <div class="card-body">
         <div id="dropZone" class="border border-dashed rounded p-4 text-center text-muted"
              style="border-style:dashed!important; cursor:pointer">
-            <i class="bi bi-cloud-upload fs-2"></i>
+            <i class="bi bi-cloud-upload fs-2" aria-hidden="true"></i>
             <div>이미지를 드래그하거나 클릭하여 업로드</div>
             <div class="small text-muted">jpg, png, gif, webp, svg / 최대 5MB</div>
             <input type="file" id="fileInput" multiple accept="image/*" class="d-none">
@@ -22,20 +22,25 @@
     <div class="col-6 col-sm-4 col-md-3 col-xl-2" id="media-<?= $m['id'] ?>">
         <div class="card border-0 shadow-sm h-100">
             <div class="ratio ratio-1x1">
-                <img src="/<?= esc($m['file_path']) ?>" class="img-fluid object-fit-cover rounded-top" alt="<?= esc($m['alt']) ?>">
+                <img loading="lazy" src="/<?= esc($m['file_path']) ?>" class="img-fluid object-fit-cover rounded-top" alt="<?= esc($m['alt']) ?>">
             </div>
             <div class="card-body p-2">
                 <div class="small text-truncate text-muted mb-1" title="<?= esc($m['original_name']) ?>"><?= esc($m['original_name']) ?></div>
                 <div class="input-group input-group-sm">
-                    <input type="text" class="form-control form-control-sm" value="/<?= esc($m['file_path']) ?>"
+                    <label class="visually-hidden" for="media-path-<?= $m['id'] ?>"><?= esc($m['original_name']) ?> 경로</label>
+                    <input type="text" id="media-path-<?= $m['id'] ?>" class="form-control form-control-sm" value="/<?= esc($m['file_path']) ?>"
                            onclick="this.select()" readonly title="클릭하여 경로 복사">
                 </div>
                 <div class="d-flex gap-1 mt-1">
                     <button class="btn btn-xs btn-outline-secondary btn-sm flex-fill"
-                            onclick="copyPath('/<?= esc($m['file_path']) ?>')"><i class="bi bi-clipboard"></i></button>
-                    <form method="post" action="/admin/media/<?= $m['id'] ?>/delete" onsubmit="return confirm('삭제?')" class="flex-fill">
+                            onclick="copyPath('/<?= esc($m['file_path']) ?>')">
+                        <i class="bi bi-clipboard" aria-hidden="true"></i><span class="visually-hidden">경로 복사 — <?= esc($m['original_name']) ?></span>
+                    </button>
+                    <form method="post" action="/admin/media/<?= $m['id'] ?>/delete" onsubmit="return confirm('<?= esc($m['original_name'], 'js') ?> 파일을 삭제하시겠습니까?')" class="flex-fill">
                         <?= csrf_field() ?>
-                        <button class="btn btn-xs btn-outline-danger btn-sm w-100"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-xs btn-outline-danger btn-sm w-100">
+                            <i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">삭제 — <?= esc($m['original_name']) ?></span>
+                        </button>
                     </form>
                 </div>
             </div>

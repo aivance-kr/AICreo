@@ -8,7 +8,7 @@
     <!-- 업로드 카드 -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">
-            <h6 class="fw-semibold mb-1"><i class="bi bi-upload me-2"></i>테마 업로드</h6>
+            <h6 class="fw-semibold mb-1"><i class="bi bi-upload me-2" aria-hidden="true"></i>테마 업로드</h6>
             <p class="text-muted small mb-3">
                 ZIP 파일로 패키징된 테마를 업로드합니다.
                 파일명이 테마 이름이 됩니다 (예: <code>my-theme.zip</code> → <code>my-theme</code>).
@@ -30,7 +30,7 @@
             <!-- ZIP 구조 안내 (접기/펼치기) -->
             <div class="mt-3">
                 <a class="small text-muted" data-bs-toggle="collapse" href="#zipStructure" role="button">
-                    <i class="bi bi-info-circle me-1"></i>ZIP 구조 보기
+                    <i class="bi bi-info-circle me-1" aria-hidden="true"></i>ZIP 구조 보기
                 </a>
                 <div class="collapse mt-2" id="zipStructure">
                     <pre class="bg-light rounded p-3 small mb-0">my-theme.zip
@@ -64,11 +64,11 @@
                     <?php
                     $preview = FCPATH . "themes/{$theme['name']}/thumbnail.png";
                     if (is_file($preview)): ?>
-                        <img src="/themes/<?= esc($theme['name']) ?>/thumbnail.png"
+                        <img loading="lazy" src="/themes/<?= esc($theme['name']) ?>/thumbnail.png"
                              style="width:100%;height:120px;object-fit:cover" alt="">
                     <?php else: ?>
                         <div class="text-center text-muted">
-                            <i class="bi bi-palette fs-2"></i>
+                            <i class="bi bi-palette fs-2" aria-hidden="true"></i>
                             <div class="small mt-1"><?= esc($theme['label']) ?></div>
                         </div>
                     <?php endif; ?>
@@ -84,12 +84,12 @@
 
                     <div class="d-flex gap-2 mb-3">
                         <span class="badge bg-light text-dark border">
-                            <i class="bi bi-file-earmark-code me-1"></i>레이아웃
-                            <?= $theme['has_layout'] ? '<i class="bi bi-check text-success"></i>' : '<i class="bi bi-x text-muted"></i>' ?>
+                            <i class="bi bi-file-earmark-code me-1" aria-hidden="true"></i>레이아웃
+                            <?= $theme['has_layout'] ? '<i class="bi bi-check text-success" aria-hidden="true"></i>' : '<i class="bi bi-x text-muted" aria-hidden="true"></i>' ?>
                         </span>
                         <span class="badge bg-light text-dark border">
-                            <i class="bi bi-palette2 me-1"></i>CSS
-                            <?= $theme['has_css'] ? '<i class="bi bi-check text-success"></i>' : '<i class="bi bi-x text-muted"></i>' ?>
+                            <i class="bi bi-palette2 me-1" aria-hidden="true"></i>CSS
+                            <?= $theme['has_css'] ? '<i class="bi bi-check text-success" aria-hidden="true"></i>' : '<i class="bi bi-x text-muted" aria-hidden="true"></i>' ?>
                         </span>
                     </div>
 
@@ -110,7 +110,7 @@
         <?php if (empty($availableThemes)): ?>
         <div class="col-12">
             <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>
+                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
                 <code>app/Views/themes/</code> 폴더에 테마가 없습니다.
             </div>
         </div>
@@ -121,13 +121,18 @@
 <?= $this->endSection() ?>
 
 <!-- 중복 테마 확인 모달 -->
-<div class="modal fade" id="dupModal" tabindex="-1" aria-hidden="true">
+<?php /* 되돌릴 수 없는 덮어쓰기를 묻는 창이라 alertdialog 로 알린다 */ ?>
+<div class="modal fade" id="dupModal" tabindex="-1" role="alertdialog"
+     aria-labelledby="dupModalLabel" aria-describedby="dupModalDesc" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
         <div class="modal-content border-0 shadow">
             <div class="modal-body p-4 text-center">
-                <div class="mb-3" style="font-size:2.5rem">⚠️</div>
-                <h6 class="fw-semibold mb-2">이미 설치된 테마입니다</h6>
-                <p class="text-muted small mb-4">
+                <?php /* 이모지를 아이콘 대신 쓰지 않는다 (DESIGN.md) */ ?>
+                <div class="mb-3 text-warning" style="font-size:2.5rem">
+                    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                </div>
+                <h2 class="h6 fw-semibold mb-2" id="dupModalLabel">이미 설치된 테마입니다</h2>
+                <p class="text-muted small mb-4" id="dupModalDesc">
                     <code id="dupThemeName"></code> 테마가 이미 존재합니다.<br>
                     파일을 덮어쓰고 업데이트하시겠습니까?
                 </p>

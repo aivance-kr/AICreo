@@ -19,24 +19,24 @@
 </ul>
 
 <div class="card border-0 shadow-sm">
-    <table class="table table-hover mb-0 small">
+    <table class="table table-hover mb-0 small table-stack">
         <thead class="table-light">
-            <tr><th></th><th>이름</th><th>이메일</th><th>제목</th><th>날짜</th><th></th></tr>
+            <tr><th scope="col"><span class="visually-hidden">읽음 상태</span></th><th scope="col">이름</th><th scope="col">이메일</th><th scope="col">제목</th><th scope="col">날짜</th><th scope="col"><span class="visually-hidden">관리</span></th></tr>
         </thead>
         <tbody>
             <?php foreach ($inquiries as $inq): ?>
             <tr class="<?= ! $inq['is_read'] ? 'fw-semibold' : '' ?>">
-                <td><?php if (! $inq['is_read']): ?><span class="badge bg-danger">NEW</span><?php endif; ?></td>
-                <td><?= esc($inq['name']) ?></td>
-                <td><?= esc($inq['email']) ?></td>
-                <td>
+                <td data-label=""><?php if (! $inq['is_read']): ?><span class="badge bg-danger">NEW<span class="visually-hidden"> 읽지 않은 문의</span></span><?php endif; ?></td>
+                <td data-label="이름"><?= esc($inq['name']) ?></td>
+                <td data-label="이메일"><?= esc($inq['email']) ?></td>
+                <td data-label="제목">
                     <a href="/admin/inquiries/<?= $inq['id'] ?>" class="text-decoration-none text-dark">
                         <?= esc($inq['subject'] ?: mb_substr($inq['message'], 0, 30)) ?>
                     </a>
                 </td>
-                <td><?= substr($inq['created_at'], 0, 10) ?></td>
-                <td>
-                    <form method="post" action="/admin/inquiries/<?= $inq['id'] ?>/delete" class="d-inline" onsubmit="return confirm('삭제?')">
+                <td data-label="날짜"><?= esc(substr($inq['created_at'], 0, 10)) ?></td>
+                <td data-label="" class="cell-actions">
+                    <form method="post" action="/admin/inquiries/<?= $inq['id'] ?>/delete" class="d-inline" onsubmit="return confirm('<?= esc($inq['name'], 'js') ?>님의 문의를 삭제하시겠습니까?')">
                         <?= csrf_field() ?>
                         <button class="btn btn-sm btn-outline-danger">삭제</button>
                     </form>
