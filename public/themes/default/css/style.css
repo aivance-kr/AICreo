@@ -1,17 +1,14 @@
-/* ─── 기본 리셋 ────────────────────────────────── */
-:root {
-    --primary: #0d6efd;
-    --dark:    #1e2a38;
-}
-
+/* ─── 기본 ──────────────────────────────────────────
+   색·타이포 토큰은 /css/tokens.css 가 소유한다. 테마는 그중
+   바꾸고 싶은 변수만 여기서 다시 선언하면 이 값이 이긴다.       */
 body {
-    font-family: 'Noto Sans KR', -apple-system, sans-serif;
-    color: #333;
+    font-family: var(--font-sans);
+    color: var(--text-body);
 }
 
 /* ─── 네비게이션 ────────────────────────────────── */
 .navbar {
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-hairline);
 }
 .navbar-brand {
     font-size: 1.3rem;
@@ -20,6 +17,12 @@ body {
 .nav-link {
     font-weight: 500;
     font-size: .9rem;
+}
+/* 현재 위치 표시 — aria-current 와 짝이 되는 시각 신호 */
+.navbar-nav .nav-link.active {
+    font-weight: 700;
+    color: var(--primary);
+    box-shadow: inset 0 -2px 0 var(--primary);
 }
 
 /* ─── 히어로 ─────────────────────────────────────── */
@@ -69,7 +72,7 @@ body {
 
 /* ─── 푸터 ───────────────────────────────────────── */
 footer a {
-    color: #adb5bd;
+    color: #adb5bd; /* 다크 푸터 배경 대비 7.4:1 */
     text-decoration: none;
 }
 footer a:hover {
@@ -111,10 +114,9 @@ footer a:hover {
     display: none;
     position: fixed;
     z-index: 9999;
-    background: #fff;
+    background: var(--surface-raised);
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0,0,0,.22);
-    max-width: 380px;
     width: max-content;
     max-width: min(380px, calc(100vw - 40px));
 }
@@ -127,10 +129,10 @@ footer a:hover {
     font-size: 1.4rem;
     line-height: 1;
     cursor: pointer;
-    color: #888;
+    color: var(--text-muted);
     padding: 0 4px;
 }
-.site-popup-close:hover { color: #333; }
+.site-popup-close:hover { color: var(--text-strong); }
 .site-popup-img {
     display: block;
     width: 100%;
@@ -145,14 +147,14 @@ footer a:hover {
 .site-popup-body:first-child { padding-top: 2rem; }
 .site-popup-footer {
     padding: .5rem 1rem .75rem;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid var(--border-hairline);
 }
 .site-popup-today {
     display: flex;
     align-items: center;
     gap: .4rem;
     font-size: .8rem;
-    color: #888;
+    color: var(--text-muted);
     cursor: pointer;
     user-select: none;
 }

@@ -26,7 +26,7 @@
             <td>
                 <a href="/admin/boards/<?= $b['id'] ?>/edit" class="btn btn-xs btn-outline-secondary btn-sm">수정</a>
                 <a href="/admin/boards/<?= $b['id'] ?>/posts" class="btn btn-xs btn-outline-primary btn-sm">게시글</a>
-                <a href="/board/<?= esc($b['slug']) ?>" target="_blank" class="btn btn-xs btn-outline-dark btn-sm">미리보기</a>
+                <a href="/board/<?= esc($b['slug']) ?>" target="_blank" rel="noopener" class="btn btn-xs btn-outline-dark btn-sm">미리보기</a>
             </td>
         </tr>
         <?php endforeach; ?>

@@ -12,22 +12,34 @@
 
             <!-- 이미지 -->
             <div class="mb-3">
-                <label class="form-label fw-semibold">배너 이미지 <?= $banner ? '' : '<span class="text-danger">*</span>' ?></label>
+                <label for="banners-form-image" class="form-label fw-semibold">배너 이미지 <?= $banner ? '' : '<span class="text-danger">*</span>' ?></label>
                 <?php if ($banner): ?>
                 <div class="mb-2">
                     <img src="/<?= esc($banner['image_path']) ?>" alt="" style="max-width:300px;max-height:120px;object-fit:contain;border:1px solid #dee2e6;border-radius:4px">
                 </div>
                 <div class="form-text mb-1">새 파일을 선택하면 교체됩니다.</div>
                 <?php endif; ?>
-                <input type="file" name="image" class="form-control" accept=".jpg,.jpeg,.png,.gif"
+                <input id="banners-form-image" type="file" name="image" class="form-control" accept=".jpg,.jpeg,.png,.gif"
                        <?= $banner ? '' : 'required' ?>>
                 <div class="form-text">jpg, jpeg, png, gif / 최대 2MB</div>
             </div>
 
+            <!-- 대체 텍스트 -->
+            <div class="mb-3">
+                <label for="banners-form-alt_text" class="form-label fw-semibold">대체 텍스트</label>
+                <input id="banners-form-alt_text" type="text" name="alt_text" class="form-control" maxlength="255"
+                       value="<?= esc(old('alt_text', $banner['alt_text'] ?? '')) ?>"
+                       aria-describedby="banners-form-alt_text-help">
+                <div class="form-text" id="banners-form-alt_text-help">
+                    화면을 볼 수 없는 방문자에게 이 배너가 무엇인지 알려주는 문구입니다.
+                    예: &ldquo;봄맞이 신제품 20% 할인&rdquo;. <strong>링크를 넣은 배너는 필수</strong>입니다.
+                </div>
+            </div>
+
             <!-- 위치 -->
             <div class="mb-3">
-                <label class="form-label fw-semibold">위치 <span class="text-danger">*</span></label>
-                <select name="position" class="form-select" required>
+                <label for="banners-form-position" class="form-label fw-semibold">위치 <span class="text-danger">*</span></label>
+                <select id="banners-form-position" name="position" class="form-select" required>
                     <?php foreach ($positions as $val => $label): ?>
                     <option value="<?= $val ?>" <?= old('position', $banner['position'] ?? '') === $val ? 'selected' : '' ?>>
                         <?= $label ?>
@@ -38,15 +50,15 @@
 
             <!-- 링크 -->
             <div class="mb-3">
-                <label class="form-label fw-semibold">링크 URL</label>
-                <input type="url" name="link_url" class="form-control"
+                <label for="banners-form-link_url" class="form-label fw-semibold">링크 URL</label>
+                <input id="banners-form-link_url" type="url" name="link_url" class="form-control"
                        placeholder="https://example.com"
                        value="<?= esc(old('link_url', $banner['link_url'] ?? '')) ?>">
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-semibold">링크 열기</label>
-                <select name="link_target" class="form-select">
+                <label for="banners-form-link_target" class="form-label fw-semibold">링크 열기</label>
+                <select id="banners-form-link_target" name="link_target" class="form-select">
                     <option value="_self"  <?= old('link_target', $banner['link_target'] ?? '_self') === '_self'  ? 'selected' : '' ?>>현재 창</option>
                     <option value="_blank" <?= old('link_target', $banner['link_target'] ?? '_self') === '_blank' ? 'selected' : '' ?>>새 창</option>
                 </select>
@@ -54,8 +66,8 @@
 
             <!-- 우선순위 -->
             <div class="mb-3">
-                <label class="form-label fw-semibold">우선순위</label>
-                <input type="number" name="priority" class="form-control" style="width:120px"
+                <label for="banners-form-priority" class="form-label fw-semibold">우선순위</label>
+                <input id="banners-form-priority" type="number" name="priority" class="form-control" style="width:120px"
                        value="<?= esc(old('priority', $banner['priority'] ?? 0)) ?>" min="0">
                 <div class="form-text">숫자가 낮을수록 먼저 표시됩니다.</div>
             </div>
@@ -63,25 +75,25 @@
             <!-- 운영 기간 -->
             <div class="row g-3 mb-3">
                 <div class="col">
-                    <label class="form-label fw-semibold">시작일</label>
+                    <label for="banners-form-started_at" class="form-label fw-semibold">시작일</label>
                     <?php
                     $startedVal = '';
                     if (!empty($banner['started_at'])) {
                         $startedVal = str_replace(' ', 'T', substr($banner['started_at'], 0, 16));
                     }
                     ?>
-                    <input type="datetime-local" name="started_at" class="form-control"
+                    <input id="banners-form-started_at" type="datetime-local" name="started_at" class="form-control"
                            value="<?= esc(old('started_at', $startedVal)) ?>">
                 </div>
                 <div class="col">
-                    <label class="form-label fw-semibold">종료일</label>
+                    <label for="banners-form-ended_at" class="form-label fw-semibold">종료일</label>
                     <?php
                     $endedVal = '';
                     if (!empty($banner['ended_at'])) {
                         $endedVal = str_replace(' ', 'T', substr($banner['ended_at'], 0, 16));
                     }
                     ?>
-                    <input type="datetime-local" name="ended_at" class="form-control"
+                    <input id="banners-form-ended_at" type="datetime-local" name="ended_at" class="form-control"
                            value="<?= esc(old('ended_at', $endedVal)) ?>">
                     <div class="form-text">비워두면 기간 제한 없음.</div>
                 </div>

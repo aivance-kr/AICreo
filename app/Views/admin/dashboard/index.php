@@ -17,7 +17,7 @@
         <a href="<?= $c['href'] ?>" class="card border-0 shadow-sm text-decoration-none">
             <div class="card-body d-flex align-items-center gap-3">
                 <div class="bg-<?= $c['color'] ?> bg-opacity-10 rounded p-3">
-                    <i class="bi <?= $c['icon'] ?> fs-4 text-<?= $c['color'] ?>"></i>
+                    <i class="bi <?= $c['icon'] ?> fs-4 text-<?= $c['color'] ?>" aria-hidden="true"></i>
                 </div>
                 <div>
                     <div class="text-muted small"><?= $c['label'] ?></div>
@@ -65,7 +65,7 @@
             <div class="list-group list-group-flush">
                 <?php foreach ($recentPosts as $post): ?>
                 <a href="/board/<?= esc($post['board_slug']) ?>/<?= $post['id'] ?>"
-                   target="_blank"
+                   target="_blank" rel="noopener"
                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                     <div class="text-truncate" style="max-width:240px">
                         <span class="badge bg-light text-dark border me-1 small"><?= esc($post['board_name']) ?></span>

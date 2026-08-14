@@ -3,9 +3,10 @@
 
 <?= $this->section('content') ?>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="row g-2 mb-3" role="search">
     <div class="col-auto">
-        <select name="board_id" class="form-select form-select-sm">
+        <label class="visually-hidden" for="post-board">게시판 필터</label>
+        <select name="board_id" id="post-board" class="form-select form-select-sm">
             <option value="">전체 게시판</option>
             <?php foreach ($boards as $b): ?>
             <option value="<?= $b['id'] ?>" <?= $boardId === (int)$b['id'] ? 'selected' : '' ?>>
@@ -15,7 +16,8 @@
         </select>
     </div>
     <div class="col-auto">
-        <input type="text" name="q" class="form-control form-control-sm" placeholder="제목 / 작성자 검색"
+        <label class="visually-hidden" for="post-search">제목 또는 작성자 검색</label>
+        <input type="text" name="q" id="post-search" class="form-control form-control-sm" placeholder="제목 / 작성자 검색"
                value="<?= esc($keyword) ?>">
     </div>
     <div class="col-auto">
@@ -56,7 +58,7 @@
                         <?php if ($p['is_secret']): ?>
                             <span class="badge bg-secondary me-1">비밀</span>
                         <?php endif; ?>
-                        <a href="/board/<?= esc($p['board_slug']) ?>/<?= $p['id'] ?>" target="_blank"
+                        <a href="/board/<?= esc($p['board_slug']) ?>/<?= $p['id'] ?>" target="_blank" rel="noopener"
                            class="text-decoration-none text-dark">
                             <?= esc($p['title']) ?>
                         </a>

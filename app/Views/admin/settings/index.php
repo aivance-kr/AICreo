@@ -39,24 +39,25 @@
                         <label class="form-check-label small fw-semibold" for="chk_<?= esc($s['key']) ?>"><?= esc($s['label']) ?></label>
                     </div>
                 <?php else: ?>
-                <label class="form-label small fw-semibold"><?= esc($s['label']) ?></label>
+                <label class="form-label small fw-semibold" for="set_<?= esc($s['key']) ?>"><?= esc($s['label']) ?></label>
                 <?php if ($s['type'] === 'textarea'): ?>
-                    <textarea name="<?= esc($s['key']) ?>" class="form-control form-control-sm" rows="3"><?= esc($s['value']) ?></textarea>
+                    <textarea name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-control form-control-sm" rows="3"><?= esc($s['value']) ?></textarea>
                 <?php elseif ($s['key'] === 'org_type'): ?>
-                    <select name="<?= esc($s['key']) ?>" class="form-select form-select-sm">
+                    <select name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-select form-select-sm">
                         <?php foreach ($orgTypeOptions as $val => $label): ?>
                         <option value="<?= esc($val) ?>" <?= $s['value'] === $val ? 'selected' : '' ?>><?= esc($label) ?></option>
                         <?php endforeach; ?>
                     </select>
                 <?php elseif ($s['type'] === 'image'): ?>
                     <?php if ($s['value']): ?>
-                        <div class="mb-1"><img src="/<?= esc($s['value']) ?>" style="max-height:60px" class="img-thumbnail"></div>
+                        <div class="mb-1"><img src="/<?= esc($s['value']) ?>" style="max-height:60px" class="img-thumbnail" alt="<?= esc($s['label']) ?> 현재 이미지"></div>
                     <?php endif; ?>
-                    <input type="text" name="<?= esc($s['key']) ?>" class="form-control form-control-sm"
-                           value="<?= esc($s['value']) ?>" placeholder="uploads/media/... 경로 입력">
-                    <div class="form-text">미디어 라이브러리에서 이미지 경로를 복사하세요.</div>
+                    <input type="text" name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-control form-control-sm"
+                           value="<?= esc($s['value']) ?>" placeholder="uploads/media/... 경로 입력"
+                           aria-describedby="help_<?= esc($s['key']) ?>">
+                    <div class="form-text" id="help_<?= esc($s['key']) ?>">미디어 라이브러리에서 이미지 경로를 복사하세요.</div>
                 <?php else: ?>
-                    <input type="text" name="<?= esc($s['key']) ?>" class="form-control form-control-sm" value="<?= esc($s['value']) ?>">
+                    <input type="text" name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-control form-control-sm" value="<?= esc($s['value']) ?>">
                 <?php endif; ?>
                 <?php endif; ?>
             </div>

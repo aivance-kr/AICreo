@@ -1,0 +1,76 @@
+/*
+ * 전역 디자인 토큰
+ * ------------------------------------------------------------------
+ * 프론트 테마와 관리자 화면이 함께 참조하는 단일 색·타이포 기준이다.
+ * 테마 CSS(public/themes/{테마명}/css/style.css)는 이 파일 뒤에 로드되므로
+ * 같은 변수를 다시 선언하면 테마 값이 이긴다 — 테마 교체 지점을 깨지 않는다.
+ *
+ * 색 값 옆 비율은 실측한 명도 대비다. KWCAG 2.2 / WCAG 1.4.3 기준
+ * 본문 텍스트 4.5:1, 큰 텍스트·비텍스트 3:1 을 만족하는 값만 토큰이 된다.
+ */
+:root {
+    /* ─── 브랜드 (테마가 재정의하는 지점) ───────────────── */
+    --primary: #0d6efd;
+    --dark:    #1e2a38;
+    --danger:  #dc3545;
+
+    /* ─── 표면 ──────────────────────────────────────────── */
+    --surface-body:   #f1f3f5;
+    --surface-raised: #fff;
+    --border-subtle:  #e9ecef;
+    --border-hairline:#f0f0f0;
+
+    /* ─── 흰 배경 위 텍스트 ─────────────────────────────── */
+    --text-strong: #212529; /* 16.1:1 */
+    --text-body:   #333;    /* 12.6:1 */
+    --text-muted:  #6c757d; /*  4.7:1 — AA 최소선. 이보다 옅게 내리지 않는다 */
+
+    /* ─── 어두운 표면(--dark) 위 텍스트 ─────────────────── */
+    --on-dark-strong: #fff;     /* 15.4:1 */
+    --on-dark-body:   #a8b7c7; /*  7.1:1 */
+    --on-dark-muted:  #7e93a6; /*  4.6:1 — 구 #5a7080 은 2.8:1 로 미달이었다 */
+    --on-dark-raised: #2d3f54;
+
+    /* ─── 타이포 ────────────────────────────────────────── */
+    --font-sans: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+
+    /* ─── 레이아웃 ──────────────────────────────────────── */
+    --sidebar-w: 240px;
+
+    /* ─── 초점 표시 ─────────────────────────────────────── */
+    /* 밝은 표면 기준값. 어두운 표면에서는 그 컨테이너가 재정의한다. */
+    --focus-ring-color: #0a58ca; /* 흰 배경 대비 6.5:1 */
+    --focus-ring-width: 3px;
+}
+
+/* ─── 초점 가시성 (KWCAG «초점 이동과 표시») ─────────────
+   마우스 클릭에는 링을 띄우지 않고 키보드 이동에만 반응한다.       */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* ─── 반복 영역 건너뛰기 (KWCAG «반복 영역 건너뛰기») ─────
+   평소엔 화면 밖, 탭으로 도달하면 좌상단에 나타난다.
+   display:none 이나 visibility:hidden 은 초점을 받지 못해 쓰지 않는다. */
+.skip-link {
+    position: absolute;
+    top: 0;
+    left: -9999px;
+    z-index: 10000;
+    padding: .65rem 1.1rem;
+    background: var(--dark);
+    color: var(--on-dark-strong);
+    font-size: .9rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 0 0 .375rem 0;
+}
+.skip-link:focus {
+    left: 0;
+}
+.skip-link:focus-visible {
+    outline-color: var(--on-dark-strong);
+}
+

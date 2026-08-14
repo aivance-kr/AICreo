@@ -3,20 +3,23 @@
 
 <?= $this->section('content') ?>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="row g-2 mb-3" role="search">
     <div class="col-auto">
-        <input type="text" name="q" class="form-control form-control-sm" placeholder="닉네임 / 이메일 검색"
+        <label class="visually-hidden" for="user-search">닉네임 또는 이메일 검색</label>
+        <input type="text" name="q" id="user-search" class="form-control form-control-sm" placeholder="닉네임 / 이메일 검색"
                value="<?= esc($keyword) ?>">
     </div>
     <div class="col-auto">
-        <select name="role" class="form-select form-select-sm">
+        <label class="visually-hidden" for="user-role">역할 필터</label>
+        <select name="role" id="user-role" class="form-select form-select-sm">
             <option value="">전체 역할</option>
             <option value="member" <?= $role === 'member' ? 'selected' : '' ?>>일반회원</option>
             <option value="admin"  <?= $role === 'admin'  ? 'selected' : '' ?>>관리자</option>
         </select>
     </div>
     <div class="col-auto">
-        <select name="status" class="form-select form-select-sm">
+        <label class="visually-hidden" for="user-status">상태 필터</label>
+        <select name="status" id="user-status" class="form-select form-select-sm">
             <option value="">전체 상태</option>
             <option value="1" <?= $status === '1' ? 'selected' : '' ?>>활성</option>
             <option value="0" <?= $status === '0' ? 'selected' : '' ?>>비활성</option>

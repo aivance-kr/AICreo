@@ -13,43 +13,43 @@
             <div class="row g-3">
                 <?php if (! $page): ?>
                 <div class="col-md-6">
-                    <label class="form-label small">슬러그 (영문, -, _) *</label>
-                    <input type="text" name="slug" class="form-control form-control-sm"
+                    <label for="pages-form-slug" class="form-label small">슬러그 (영문, -, _) *</label>
+                    <input id="pages-form-slug" type="text" name="slug" class="form-control form-control-sm"
                            value="<?= old('slug') ?>" required placeholder="예: about, service">
                 </div>
                 <?php endif; ?>
                 <div class="col-md-<?= $page ? '6' : '6' ?>">
-                    <label class="form-label small">레이아웃</label>
-                    <select name="layout" class="form-select form-select-sm">
+                    <label for="pages-form-layout" class="form-label small">레이아웃</label>
+                    <select id="pages-form-layout" name="layout" class="form-select form-select-sm">
                         <?php foreach (['default' => '기본', 'contact' => '문의폼', 'landing' => '랜딩'] as $v => $l): ?>
                             <option value="<?= $v ?>" <?= ($page['layout'] ?? 'default') === $v ? 'selected' : '' ?>><?= $l ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-12">
-                    <label class="form-label small">제목 *</label>
-                    <input type="text" name="title" class="form-control" value="<?= esc(old('title', $page['title'] ?? '')) ?>" required>
+                    <label for="pages-form-title" class="form-label small">제목 *</label>
+                    <input id="pages-form-title" type="text" name="title" class="form-control" value="<?= esc(old('title', $page['title'] ?? '')) ?>" required>
                 </div>
                 <div class="col-12">
-                    <label class="form-label small">내용</label>
+                    <label for="editor" class="form-label small">내용</label>
                     <textarea name="content" id="editor" class="form-control" rows="12"><?= esc(old('content', $page['content'] ?? '')) ?></textarea>
                 </div>
                 <div class="col-12"><hr class="my-1"><p class="text-muted small mb-2">SEO 설정</p></div>
                 <div class="col-md-6">
-                    <label class="form-label small">메타 타이틀</label>
-                    <input type="text" name="meta_title" class="form-control form-control-sm" value="<?= esc(old('meta_title', $page['meta_title'] ?? '')) ?>">
+                    <label for="pages-form-meta_title" class="form-label small">메타 타이틀</label>
+                    <input id="pages-form-meta_title" type="text" name="meta_title" class="form-control form-control-sm" value="<?= esc(old('meta_title', $page['meta_title'] ?? '')) ?>">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label small">메타 설명</label>
-                    <input type="text" name="meta_desc" class="form-control form-control-sm" value="<?= esc(old('meta_desc', $page['meta_desc'] ?? '')) ?>">
+                    <label for="pages-form-meta_desc" class="form-label small">메타 설명</label>
+                    <input id="pages-form-meta_desc" type="text" name="meta_desc" class="form-control form-control-sm" value="<?= esc(old('meta_desc', $page['meta_desc'] ?? '')) ?>">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label small">순서</label>
-                    <input type="number" name="sort_order" class="form-control form-control-sm" value="<?= $page['sort_order'] ?? 0 ?>">
+                    <label for="pages-form-sort_order" class="form-label small">순서</label>
+                    <input id="pages-form-sort_order" type="number" name="sort_order" class="form-control form-control-sm" value="<?= $page['sort_order'] ?? 0 ?>">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label small">상태</label>
-                    <select name="status" class="form-select form-select-sm">
+                    <label for="pages-form-status" class="form-label small">상태</label>
+                    <select id="pages-form-status" name="status" class="form-select form-select-sm">
                         <option value="published" <?= ($page['status'] ?? 'published') === 'published' ? 'selected' : '' ?>>공개</option>
                         <option value="draft"     <?= ($page['status'] ?? '') === 'draft' ? 'selected' : '' ?>>초안</option>
                     </select>

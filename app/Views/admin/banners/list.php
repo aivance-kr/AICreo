@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <span class="text-muted small">총 <?= count($banners) ?>개</span>
     <a href="/admin/banners/create" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i>배너 등록
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>배너 등록
     </a>
 </div>
 
@@ -32,7 +32,7 @@
                 <?php foreach ($banners as $b): ?>
                 <tr>
                     <td>
-                        <img src="/<?= esc($b['image_path']) ?>" alt=""
+                        <img loading="lazy" src="/<?= esc($b['image_path']) ?>" alt=""
                              style="width:70px;height:40px;object-fit:cover;border-radius:4px">
                     </td>
                     <td><span class="badge bg-secondary"><?= esc($positions[$b['position']] ?? $b['position']) ?></span></td>

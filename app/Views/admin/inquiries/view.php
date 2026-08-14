@@ -2,7 +2,7 @@
 <?php $pageTitle = '문의 상세' ?>
 <?= $this->section('content') ?>
 
-<div class="mb-2"><a href="/admin/inquiries" class="text-muted small"><i class="bi bi-arrow-left"></i> 목록</a></div>
+<div class="mb-2"><a href="/admin/inquiries" class="text-muted small"><i class="bi bi-arrow-left" aria-hidden="true"></i> 목록</a></div>
 
 <div class="card border-0 shadow-sm" style="max-width:700px">
     <div class="card-body p-4">
@@ -21,7 +21,7 @@
         <div class="mt-3 text-end">
             <a href="mailto:<?= esc($inquiry['email']) ?>?subject=<?= rawurlencode('Re: ' . ($inquiry['subject'] ?: $inquiry['name'] . '님 문의 답장')) ?>"
                class="btn btn-primary btn-sm">
-                <i class="bi bi-reply me-1"></i>이메일로 답장
+                <i class="bi bi-reply me-1" aria-hidden="true"></i>이메일로 답장
             </a>
         </div>
     </div>

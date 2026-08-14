@@ -21,7 +21,7 @@
                 <td><span class="badge bg-secondary"><?= esc($p['layout']) ?></span></td>
                 <td><?= $p['status'] === 'published' ? '<span class="badge bg-success">공개</span>' : '<span class="badge bg-warning">초안</span>' ?></td>
                 <td class="text-end">
-                    <a href="/<?= esc($p['slug']) ?>" target="_blank" class="btn btn-sm btn-outline-dark">미리보기</a>
+                    <a href="/<?= esc($p['slug']) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-dark">미리보기</a>
                     <a href="/admin/pages/<?= $p['id'] ?>/edit" class="btn btn-sm btn-outline-secondary">수정</a>
                     <form method="post" action="/admin/pages/<?= $p['id'] ?>/delete" class="d-inline" onsubmit="return confirm('삭제?')">
                         <?= csrf_field() ?>

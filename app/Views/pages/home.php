@@ -29,9 +29,9 @@
             ?>
             <div class="col-md-4">
                 <div class="card h-100 border-0 shadow-sm text-center p-4">
-                    <i class="bi <?= $s['icon'] ?> fs-1 text-primary mb-3"></i>
-                    <h5 class="fw-bold"><?= $s['title'] ?></h5>
-                    <p class="text-muted small"><?= $s['desc'] ?></p>
+                    <i class="bi <?= esc($s['icon']) ?> fs-1 text-primary mb-3" aria-hidden="true"></i>
+                    <h3 class="h5 fw-bold"><?= esc($s['title']) ?></h3>
+                    <p class="text-muted small mb-0"><?= esc($s['desc']) ?></p>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -44,8 +44,8 @@
 <section class="py-5 bg-light">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">최신 공지사항</h5>
-            <a href="/board/notice" class="text-decoration-none small">전체보기 <i class="bi bi-chevron-right"></i></a>
+            <h2 class="h5 fw-bold mb-0">최신 공지사항</h2>
+            <a href="/board/notice" class="text-decoration-none small">전체보기 <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
         </div>
         <div class="list-group">
             <?php foreach ($latestPosts as $post): ?>
@@ -62,11 +62,11 @@
 <!-- CTA -->
 <section class="py-5 bg-dark text-white text-center">
     <div class="container">
-        <h3 class="fw-bold mb-2">프로젝트를 시작할 준비가 되셨나요?</h3>
-        <p class="text-secondary mb-4">지금 바로 문의하세요. 빠르게 답변드립니다.</p>
+        <h2 class="h3 fw-bold mb-2">프로젝트를 시작할 준비가 되셨나요?</h2>
+        <p class="text-white-50 mb-4">지금 바로 문의하세요. 빠르게 답변드립니다.</p>
         <?php if (!empty($settings['phone'])): ?>
             <a href="tel:<?= esc($settings['phone']) ?>" class="btn btn-outline-light me-2">
-                <i class="bi bi-telephone me-1"></i><?= esc($settings['phone']) ?>
+                <i class="bi bi-telephone me-1" aria-hidden="true"></i><span class="visually-hidden">전화 </span><?= esc($settings['phone']) ?>
             </a>
         <?php endif; ?>
         <a href="/contact" class="btn btn-primary">온라인 문의</a>

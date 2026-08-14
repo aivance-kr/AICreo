@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <span class="text-muted small">총 <?= count($popups) ?>개</span>
     <a href="/admin/popups/create" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i>팝업 등록
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>팝업 등록
     </a>
 </div>
 
@@ -34,7 +34,7 @@
                 <tr>
                     <td>
                         <?php if ($p['image_path']): ?>
-                        <img src="/<?= esc($p['image_path']) ?>" alt=""
+                        <img loading="lazy" src="/<?= esc($p['image_path']) ?>" alt=""
                              style="width:70px;height:40px;object-fit:cover;border-radius:4px">
                         <?php else: ?>
                         <span class="text-muted small">텍스트</span>
