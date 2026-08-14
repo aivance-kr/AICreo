@@ -57,14 +57,30 @@ jobs:
             -e MYSQL_DATABASE=ci4_agency_test \
             -p 43306:3306 \
             mysql:8.0
+          # 포트 바인딩 실패를 조용히 넘기지 않는다.
+          # docker run -d 는 포트를 못 잡아도 컨테이너 ID 를 찍고 성공한 것처럼
+          # 끝난 뒤 컨테이너만 죽는다. 그러면 아래 대기 루프가 60초를 헛돌고
+          # 테스트에서 "Connection refused" 143건으로만 드러나 원인이 가려진다.
+          sleep 2
+          if [ "$(docker inspect -f '{{.State.Running}}' ci-mysql-${{ github.run_id }})" != "true" ]; then
+            echo "::error::MySQL 컨테이너가 기동 직후 종료됐습니다 (포트 43306 충돌 가능성)"
+            docker logs ci-mysql-${{ github.run_id }} 2>&1 | tail -20
+            exit 1
+          fi
           # 공식 mysql 이미지는 초기화 중 임시 서버로 한 번 떴다가 재시작한다.
           # mysqladmin ping은 그 임시 서버 단계에서도 성공해버려 재시작 중
           # 붙으면 "server has gone away"가 나므로, 실제 인증 쿼리가
           # 성공할 때까지(=재시작이 끝날 때까지) 재시도한다.
+          ready=0
           for i in $(seq 1 60); do
-            docker exec ci-mysql-${{ github.run_id }} mysql -uroot -proot -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && break
+            docker exec ci-mysql-${{ github.run_id }} mysql -uroot -proot -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && { ready=1; break; }
             sleep 1
           done
+          if [ "$ready" != "1" ]; then
+            echo "::error::MySQL 이 60초 안에 준비되지 않았습니다"
+            docker logs ci-mysql-${{ github.run_id }} 2>&1 | tail -20
+            exit 1
+          fi
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -113,22 +129,40 @@ jobs:
           database.tests.username = root
           database.tests.password = root
           database.tests.DBDriver = MySQLi
-          database.tests.port = 43306
+          database.tests.port = 43307
           ENVEOF
 
       - name: MySQL 컨테이너 기동
         run: |
           docker rm -f ci-mysql-coverage-${{ github.run_id }} 2>/dev/null || true
+          # quality 잡과 이 잡은 서로 needs 가 없어 같은 러너에서 동시에 돈다.
+          # 둘 다 43306 을 쓰면 나중 컨테이너가 포트 바인딩에 실패해 즉시 죽고,
+          # docker run 은 ID 를 반환한 뒤라 성공처럼 보인 채 "Connection refused" 로만
+          # 드러난다. 그래서 이 잡은 43307 을 쓴다.
+          # (사용 중: 시스템 3306 · AIFid 13306 · ci4-board 33306 · quality 43306)
           docker run -d --name ci-mysql-coverage-${{ github.run_id }} \
             -e MYSQL_ROOT_PASSWORD=root \
             -e MYSQL_DATABASE=ci4_agency_test \
-            -p 43306:3306 \
+            -p 43307:3306 \
             mysql:8.0
+          # 포트 바인딩 실패를 조용히 넘기지 않는다 — 컨테이너가 살아있는지 먼저 본다.
+          sleep 2
+          if [ "$(docker inspect -f '{{.State.Running}}' ci-mysql-coverage-${{ github.run_id }})" != "true" ]; then
+            echo "::error::MySQL 컨테이너가 기동 직후 종료됐습니다 (포트 43307 충돌 가능성)"
+            docker logs ci-mysql-coverage-${{ github.run_id }} 2>&1 | tail -20
+            exit 1
+          fi
           # quality 잡과 동일한 이유 — 실제 인증 쿼리가 성공할 때까지 재시도.
+          ready=0
           for i in $(seq 1 60); do
-            docker exec ci-mysql-coverage-${{ github.run_id }} mysql -uroot -proot -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && break
+            docker exec ci-mysql-coverage-${{ github.run_id }} mysql -uroot -proot -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && { ready=1; break; }
             sleep 1
           done
+          if [ "$ready" != "1" ]; then
+            echo "::error::MySQL 이 60초 안에 준비되지 않았습니다"
+            docker logs ci-mysql-coverage-${{ github.run_id }} 2>&1 | tail -20
+            exit 1
+          fi
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
