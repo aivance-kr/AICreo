@@ -51,6 +51,20 @@
     border-radius: 2px;
 }
 
+/* ─── 터치 기기 입력 크기 ────────────────────────────────
+   iOS Safari 는 글자 16px 미만인 입력에 초점이 가면 화면을 강제로 확대하고
+   되돌리지 않는다. 관리자 화면이 쓰는 form-control-sm 은 14px 이라 그대로
+   두면 운영자가 폼을 채울 때마다 화면이 튄다.
+   화면 폭이 아니라 포인터 종류로 판정한다 — 터치 노트북도 대상이다. */
+@media (pointer: coarse) {
+    .form-control,
+    .form-select,
+    .form-control-sm,
+    .form-select-sm {
+        font-size: 16px;
+    }
+}
+
 /* ─── 반복 영역 건너뛰기 (KWCAG «반복 영역 건너뛰기») ─────
    평소엔 화면 밖, 탭으로 도달하면 좌상단에 나타난다.
    display:none 이나 visibility:hidden 은 초점을 받지 못해 쓰지 않는다. */
