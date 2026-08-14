@@ -98,6 +98,13 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
         }
 
         .badge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); display: inline-block; }
+
+        /* 화면에서 감춘 파일 입력은 초점을 받아도 보이지 않는다.
+           대신 짝이 되는 버튼 모양 레이블에 초점 링을 그린다. */
+        input[type="file"].visually-hidden:focus-visible + label.btn {
+            outline: var(--focus-ring-width) solid var(--focus-ring-color);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>

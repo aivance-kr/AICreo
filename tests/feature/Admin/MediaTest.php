@@ -29,6 +29,21 @@ final class MediaTest extends AdminTestCase
         $this->withSession($this->adminSession)->get('admin/media')->assertStatus(200);
     }
 
+    public function testPickerListReturnsJsonItems(): void
+    {
+        $id = $this->makeMedia();
+
+        $result = $this->withSession($this->adminSession)->get('admin/media/list');
+
+        $result->assertStatus(200);
+        $result->assertJSONFragment([
+            'currentPage' => 1,
+            'items'       => [
+                ['id' => $id, 'path' => 'uploads/media/abc123.jpg', 'name' => 'photo.jpg', 'alt' => ''],
+            ],
+        ]);
+    }
+
     public function testUploadWithoutFileReturnsError(): void
     {
         $result = $this->withSession($this->adminSession)->post('admin/media/upload');
