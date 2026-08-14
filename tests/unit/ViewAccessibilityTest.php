@@ -193,6 +193,39 @@ final class ViewAccessibilityTest extends CIUnitTestCase
     }
 
     /**
+     * 대화 상자는 이름을 가져야 한다.
+     * 이름이 없으면 스크린리더가 «대화 상자» 라고만 읽어, 무엇을 묻는 창인지 알 수 없다.
+     * (WCAG 4.1.2 · ARIA APG Dialog)
+     */
+    public function testModalsHaveAccessibleNames(): void
+    {
+        $offenders = [];
+
+        foreach ($this->markupContents() as $relative => $source) {
+            preg_match_all('/<div\b[^>]*class="[^"]*\bmodal\b[^"]*"[^>]*>/s', $source, $matches);
+
+            foreach ($matches[0] as $tag) {
+                // modal-dialog·modal-content·modal-body 등 내부 래퍼는 대상이 아니다
+                if (preg_match('/class="[^"]*\bmodal-[a-z]/', $tag) === 1) {
+                    continue;
+                }
+                if (str_contains($tag, 'aria-labelledby') || str_contains($tag, 'aria-label=')) {
+                    continue;
+                }
+                $offenders[] = $relative . ' → ' . trim((string) preg_replace('/\s+/', ' ', $tag));
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $offenders,
+            "이름 없는 대화 상자가 있습니다. 제목 요소에 id 를 주고\n"
+            . "모달에 aria-labelledby 로 연결하세요:\n- "
+            . implode("\n- ", $offenders),
+        );
+    }
+
+    /**
      * 레이아웃에는 반복 영역 건너뛰기 링크와 본문 랜드마크가 있어야 한다.
      * (WCAG 2.4.1 / 1.3.1 · KWCAG 「반복 영역 건너뛰기」)
      */

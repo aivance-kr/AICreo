@@ -72,6 +72,8 @@
                             <i class="bi bi-upload" aria-hidden="true"></i> 직접 업로드
                         </label>
                     </div>
+                    <?php /* 업로드 실패를 브라우저 alert 대신 필드 옆에 남긴다 */ ?>
+                    <div class="form-text text-danger" id="err_<?= esc($s['key']) ?>" role="alert"></div>
                 <?php else: ?>
                     <input type="text" name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-control form-control-sm" value="<?= esc($s['value']) ?>">
                 <?php endif; ?>
@@ -92,65 +94,166 @@
 <script>
 let mediaPickerTargetKey = null;
 let mediaPickerModalInstance = null;
+let mediaPickerTrigger = null; // 모달을 연 버튼 — 닫을 때 초점을 돌려준다
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text ?? '';
+const mediaPickerModalEl = document.getElementById('mediaPickerModal');
+const mediaPickerGrid    = document.getElementById('mediaPickerGrid');
+const mediaPickerPager   = document.getElementById('mediaPickerPagination');
 
-    return div.innerHTML;
+/** 요소를 만들어 돌려준다 — 문자열로 HTML 을 조립하지 않아 주입 표면이 없다 */
+function el(tag, attrs = {}, text = null) {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+        node.setAttribute(k, v);
+    }
+    if (text !== null) {
+        node.textContent = text;
+    }
+
+    return node;
 }
 
-function applyImageToField(key, path) {
+function applyImageToField(key, path, label) {
     document.getElementById('input_' + key).value = path;
-    document.getElementById('preview_' + key).innerHTML =
-        '<img src="/' + path + '" style="max-height:60px" class="img-thumbnail" alt="선택된 이미지">';
+
+    document.getElementById('preview_' + key).replaceChildren(el('img', {
+        src: '/' + path,
+        style: 'max-height:60px',
+        class: 'img-thumbnail',
+        alt: label || '선택한 이미지',
+    }));
+}
+
+function setFieldError(key, message) {
+    const box = document.getElementById('err_' + key);
+    if (box) {
+        box.textContent = message ?? '';
+    }
 }
 
 function openMediaPicker(key) {
     mediaPickerTargetKey = key;
+    mediaPickerTrigger   = document.activeElement;
+
     if (! mediaPickerModalInstance) {
-        mediaPickerModalInstance = new bootstrap.Modal(document.getElementById('mediaPickerModal'));
+        mediaPickerModalInstance = new bootstrap.Modal(mediaPickerModalEl);
     }
     loadMediaPickerList(1);
     mediaPickerModalInstance.show();
 }
 
-function selectMediaPickerItem(path) {
-    applyImageToField(mediaPickerTargetKey, path);
+// 프로그래밍 방식으로 연 모달은 Bootstrap 이 초점을 되돌려주지 않는다.
+// 닫힐 때 열었던 버튼으로 직접 돌려보낸다 — 안 그러면 초점이 body 로 떨어진다.
+mediaPickerModalEl.addEventListener('hidden.bs.modal', () => {
+    if (mediaPickerTrigger && document.contains(mediaPickerTrigger)) {
+        mediaPickerTrigger.focus();
+    }
+    mediaPickerTrigger = null;
+});
+
+// 그리드는 매번 다시 그려지므로 개별 요소가 아니라 컨테이너에서 위임 처리한다.
+mediaPickerGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-path]');
+    if (! btn) {
+        return;
+    }
+    applyImageToField(mediaPickerTargetKey, btn.dataset.path, btn.dataset.label);
+    setFieldError(mediaPickerTargetKey, '');
     mediaPickerModalInstance.hide();
-}
+});
 
-async function loadMediaPickerList(page) {
-    const grid = document.getElementById('mediaPickerGrid');
-    grid.innerHTML = '<div class="col-12 text-center text-muted py-4">불러오는 중...</div>';
+mediaPickerPager.addEventListener('click', (e) => {
+    const link = e.target.closest('[data-page]');
+    if (! link) {
+        return;
+    }
+    e.preventDefault();
+    loadMediaPickerList(Number(link.dataset.page), true);
+});
 
-    const res  = await fetch('/admin/media/list?page=' + page, { credentials: 'same-origin' });
-    const data = await res.json();
+function renderMediaPickerItems(items) {
+    const frag = document.createDocumentFragment();
 
-    if (data.items.length === 0) {
-        grid.innerHTML = '<div class="col-12 text-center text-muted py-4">업로드된 미디어가 없습니다.</div>';
-    } else {
-        grid.innerHTML = data.items.map(item => (
-            '<div class="col-4 col-md-3">' +
-                '<div class="card border-0 shadow-sm h-100" role="button" title="' + escapeHtml(item.name) + '" onclick="selectMediaPickerItem(\'' + item.path + '\')">' +
-                    '<div class="ratio ratio-1x1">' +
-                        '<img src="/' + item.path + '" class="img-fluid object-fit-cover rounded" alt="' + escapeHtml(item.alt) + '">' +
-                    '</div>' +
-                '</div>' +
-            '</div>'
-        )).join('');
+    for (const item of items) {
+        const name = (item.alt && item.alt.trim()) ? item.alt : item.name;
+
+        // role="button" 을 얹은 div 는 키보드로 도달·조작되지 않는다. 진짜 버튼을 쓴다.
+        const btn = el('button', {
+            type: 'button',
+            class: 'btn p-0 border-0 card shadow-sm h-100 w-100',
+            'data-path': item.path,
+            'data-label': name,
+            'aria-label': name + ' 선택',
+        });
+
+        const ratio = el('div', { class: 'ratio ratio-1x1' });
+        ratio.appendChild(el('img', {
+            src: '/' + item.path,
+            class: 'img-fluid object-fit-cover rounded',
+            alt: '', // 버튼이 이미 이름을 가지므로 중복해 읽지 않는다
+        }));
+        btn.appendChild(ratio);
+
+        const col = el('div', { class: 'col-4 col-md-3' });
+        col.appendChild(btn);
+        frag.appendChild(col);
     }
 
-    const pagination = document.getElementById('mediaPickerPagination');
+    return frag;
+}
+
+function renderMediaPickerPagination(data, focusCurrent) {
+    mediaPickerPager.replaceChildren();
     if (data.totalPages <= 1) {
-        pagination.innerHTML = '';
-    } else {
-        let html = '';
-        for (let p = 1; p <= data.totalPages; p++) {
-            html += '<li class="page-item ' + (p === data.currentPage ? 'active' : '') + '">' +
-                '<a class="page-link" href="#" onclick="event.preventDefault(); loadMediaPickerList(' + p + ')">' + p + '</a></li>';
+        return;
+    }
+
+    for (let p = 1; p <= data.totalPages; p++) {
+        const isCurrent = p === data.currentPage;
+        const li = el('li', { class: 'page-item' + (isCurrent ? ' active' : '') });
+        const a  = el('a', { class: 'page-link', href: '#', 'data-page': String(p) });
+
+        if (isCurrent) {
+            a.setAttribute('aria-current', 'page');
         }
-        pagination.innerHTML = html;
+        a.appendChild(el('span', { class: 'visually-hidden' }, '페이지 '));
+        a.appendChild(document.createTextNode(String(p)));
+
+        li.appendChild(a);
+        mediaPickerPager.appendChild(li);
+    }
+
+    // 페이지를 눌러 다시 그렸다면 초점이 사라진 요소에 남는다. 새 현재 페이지로 옮긴다.
+    if (focusCurrent) {
+        mediaPickerPager.querySelector('[aria-current="page"]')?.focus();
+    }
+}
+
+async function loadMediaPickerList(page, fromPager = false) {
+    mediaPickerGrid.setAttribute('aria-busy', 'true');
+    mediaPickerGrid.replaceChildren(
+        el('div', { class: 'col-12 text-center text-muted py-4' }, '불러오는 중...')
+    );
+
+    try {
+        const res  = await fetch('/admin/media/list?page=' + page, { credentials: 'same-origin' });
+        const data = await res.json();
+
+        if (data.items.length === 0) {
+            mediaPickerGrid.replaceChildren(
+                el('div', { class: 'col-12 text-center text-muted py-4' }, '업로드된 미디어가 없습니다.')
+            );
+        } else {
+            mediaPickerGrid.replaceChildren(renderMediaPickerItems(data.items));
+        }
+
+        renderMediaPickerPagination(data, fromPager);
+    } catch {
+        mediaPickerGrid.replaceChildren(
+            el('div', { class: 'col-12 text-center text-danger py-4' }, '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
+        );
+    } finally {
+        mediaPickerGrid.setAttribute('aria-busy', 'false');
     }
 }
 
@@ -160,18 +263,26 @@ async function uploadSettingImage(inputEl, key) {
         return;
     }
 
+    setFieldError(key, '');
+
     const fd = new FormData();
     fd.append('file', file);
 
-    const res  = await fetch('/admin/media/upload', { method: 'POST', body: fd, credentials: 'same-origin' });
-    const data = await res.json();
+    try {
+        const res  = await fetch('/admin/media/upload', { method: 'POST', body: fd, credentials: 'same-origin' });
+        const data = await res.json();
 
-    if (data.success) {
-        applyImageToField(key, data.path.replace(/^\//, ''));
-    } else {
-        alert(data.error);
+        if (data.success) {
+            applyImageToField(key, data.path.replace(/^\//, ''));
+        } else {
+            // 브라우저 alert 은 흐름을 막고 초점을 앗아간다. 필드 옆에 남긴다.
+            setFieldError(key, data.error ?? '업로드에 실패했습니다.');
+        }
+    } catch {
+        setFieldError(key, '업로드 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+        inputEl.value = '';
     }
-    inputEl.value = '';
 }
 </script>
 <?= $this->endSection() ?>

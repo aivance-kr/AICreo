@@ -121,13 +121,18 @@
 <?= $this->endSection() ?>
 
 <!-- 중복 테마 확인 모달 -->
-<div class="modal fade" id="dupModal" tabindex="-1" aria-hidden="true">
+<?php /* 되돌릴 수 없는 덮어쓰기를 묻는 창이라 alertdialog 로 알린다 */ ?>
+<div class="modal fade" id="dupModal" tabindex="-1" role="alertdialog"
+     aria-labelledby="dupModalLabel" aria-describedby="dupModalDesc" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
         <div class="modal-content border-0 shadow">
             <div class="modal-body p-4 text-center">
-                <div class="mb-3" style="font-size:2.5rem">⚠️</div>
-                <h6 class="fw-semibold mb-2">이미 설치된 테마입니다</h6>
-                <p class="text-muted small mb-4">
+                <?php /* 이모지를 아이콘 대신 쓰지 않는다 (DESIGN.md) */ ?>
+                <div class="mb-3 text-warning" style="font-size:2.5rem">
+                    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                </div>
+                <h2 class="h6 fw-semibold mb-2" id="dupModalLabel">이미 설치된 테마입니다</h2>
+                <p class="text-muted small mb-4" id="dupModalDesc">
                     <code id="dupThemeName"></code> 테마가 이미 존재합니다.<br>
                     파일을 덮어쓰고 업데이트하시겠습니까?
                 </p>
