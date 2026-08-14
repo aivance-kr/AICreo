@@ -44,6 +44,12 @@ composer rector:dry  # 코드 현대화 미리보기 (선택), composer rector �
 | `feature → dev` PR | CI 없음. 코드 리뷰만 — 직전 push 의 `composer ci` 가 유일한 방어선 |
 | `dev → main` PR | GitHub Actions 전체(`quality` 잡: cs·analyse·test, PHP 8.5/MySQL 8.0 + `coverage` 잡: job summary 에 리포트) |
 
+#### 배포는 `main` push 로 자동 실행된다
+
+`deploy.yml` 이 `push: branches: [main]` 에서 돌아 SSH 로 운영 서버에 `git reset --hard origin/main` → `composer install --no-dev` → `php spark migrate --all` → `cache:clear` 를 수행한다. **마이그레이션은 배포가 알아서 돌리므로 따로 실행할 필요가 없다.**
+
+> ⚠️ 예전에는 `workflow_run: workflows:[CI], branches:[main]` 으로 CI 성공 뒤에 배포하도록 걸려 있었다. 그런데 CI 트리거가 `pull_request: [main]` 로 바뀌면서(#244) **이 연결이 조용히 끊겼다** — `pull_request` 로 도는 CI 실행은 소속 브랜치가 head(`dev`)라 `branches: [main]` 필터에 걸리지 않는다. 그 결과 2026-07-16 이후 배포가 한 번도 돌지 않았고, 머지는 정상인데 운영 서버만 옛 코드로 남아 있었다(#255 배포 후 발견). **CI 트리거를 건드릴 때는 `deploy.yml` 이 그것에 의존하고 있지 않은지 반드시 함께 확인할 것.**
+
 `feature → dev` 는 GitHub Squash merge 로 처리되어 로컬 훅도 CI 도 그 순간엔 동작하지 않는다 — 그래서 `feature/*` push 도 `dev` push 와 동일하게 `composer ci` 를 강제한다(건너뛰지 않는다). 이 단계를 생략하면 검증되지 않은 코드가 `dev` 에 쌓이고, 배포 PR 에서야 CI 가 처음 돌아 원인 추적 비용이 커진다 — 생략은 규칙 위반이다.
 
 #### self-hosted 러너에서 돈다
