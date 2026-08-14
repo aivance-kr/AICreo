@@ -32,6 +32,30 @@ class MediaController extends BaseController
         ]);
     }
 
+    /**
+     * 다른 관리자 화면(사이트 설정 등)에서 쓰는 미디어 선택 모달용 목록 API.
+     */
+    public function pickerList(): ResponseInterface
+    {
+        $page   = (int) ($this->request->getGet('page') ?? 1);
+        $limit  = 24;
+        $offset = ($page - 1) * $limit;
+        $total  = $this->mediaModel->countAllResults();
+
+        $items = array_map(static fn (array $m): array => [
+            'id'   => $m['id'],
+            'path' => $m['file_path'],
+            'name' => $m['original_name'],
+            'alt'  => $m['alt'],
+        ], $this->mediaModel->getList($limit, $offset));
+
+        return $this->response->setJSON([
+            'items'       => $items,
+            'currentPage' => $page,
+            'totalPages'  => (int) ceil($total / $limit),
+        ]);
+    }
+
     public function upload(): ResponseInterface|string
     {
         $file = $this->request->getFile('file');

@@ -49,12 +49,21 @@
                         <?php endforeach; ?>
                     </select>
                 <?php elseif ($s['type'] === 'image'): ?>
-                    <?php if ($s['value']): ?>
-                        <div class="mb-1"><img src="/<?= esc($s['value']) ?>" style="max-height:60px" class="img-thumbnail"></div>
-                    <?php endif; ?>
-                    <input type="text" name="<?= esc($s['key']) ?>" class="form-control form-control-sm"
-                           value="<?= esc($s['value']) ?>" placeholder="uploads/media/... 경로 입력">
-                    <div class="form-text">미디어 라이브러리에서 이미지 경로를 복사하세요.</div>
+                    <div id="preview_<?= esc($s['key']) ?>" class="mb-1">
+                        <?php if ($s['value']): ?>
+                            <img src="/<?= esc($s['value']) ?>" style="max-height:60px" class="img-thumbnail">
+                        <?php endif; ?>
+                    </div>
+                    <input type="hidden" id="input_<?= esc($s['key']) ?>" name="<?= esc($s['key']) ?>" value="<?= esc($s['value']) ?>">
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openMediaPicker('<?= esc($s['key']) ?>')">
+                            <i class="bi bi-images"></i> 미디어에서 선택
+                        </button>
+                        <label class="btn btn-outline-primary btn-sm mb-0">
+                            <i class="bi bi-upload"></i> 직접 업로드
+                            <input type="file" accept="image/*" class="d-none" onchange="uploadSettingImage(this, '<?= esc($s['key']) ?>')">
+                        </label>
+                    </div>
                 <?php else: ?>
                     <input type="text" name="<?= esc($s['key']) ?>" class="form-control form-control-sm" value="<?= esc($s['value']) ?>">
                 <?php endif; ?>
@@ -68,4 +77,93 @@
     </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<?= $this->include('admin/settings/_media_picker_modal') ?>
+<script>
+let mediaPickerTargetKey = null;
+let mediaPickerModalInstance = null;
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text ?? '';
+
+    return div.innerHTML;
+}
+
+function applyImageToField(key, path) {
+    document.getElementById('input_' + key).value = path;
+    document.getElementById('preview_' + key).innerHTML =
+        '<img src="/' + path + '" style="max-height:60px" class="img-thumbnail">';
+}
+
+function openMediaPicker(key) {
+    mediaPickerTargetKey = key;
+    if (! mediaPickerModalInstance) {
+        mediaPickerModalInstance = new bootstrap.Modal(document.getElementById('mediaPickerModal'));
+    }
+    loadMediaPickerList(1);
+    mediaPickerModalInstance.show();
+}
+
+function selectMediaPickerItem(path) {
+    applyImageToField(mediaPickerTargetKey, path);
+    mediaPickerModalInstance.hide();
+}
+
+async function loadMediaPickerList(page) {
+    const grid = document.getElementById('mediaPickerGrid');
+    grid.innerHTML = '<div class="col-12 text-center text-muted py-4">불러오는 중...</div>';
+
+    const res  = await fetch('/admin/media/list?page=' + page, { credentials: 'same-origin' });
+    const data = await res.json();
+
+    if (data.items.length === 0) {
+        grid.innerHTML = '<div class="col-12 text-center text-muted py-4">업로드된 미디어가 없습니다.</div>';
+    } else {
+        grid.innerHTML = data.items.map(item => (
+            '<div class="col-4 col-md-3">' +
+                '<div class="card border-0 shadow-sm h-100" role="button" title="' + escapeHtml(item.name) + '" onclick="selectMediaPickerItem(\'' + item.path + '\')">' +
+                    '<div class="ratio ratio-1x1">' +
+                        '<img src="/' + item.path + '" class="img-fluid object-fit-cover rounded" alt="' + escapeHtml(item.alt) + '">' +
+                    '</div>' +
+                '</div>' +
+            '</div>'
+        )).join('');
+    }
+
+    const pagination = document.getElementById('mediaPickerPagination');
+    if (data.totalPages <= 1) {
+        pagination.innerHTML = '';
+    } else {
+        let html = '';
+        for (let p = 1; p <= data.totalPages; p++) {
+            html += '<li class="page-item ' + (p === data.currentPage ? 'active' : '') + '">' +
+                '<a class="page-link" href="#" onclick="event.preventDefault(); loadMediaPickerList(' + p + ')">' + p + '</a></li>';
+        }
+        pagination.innerHTML = html;
+    }
+}
+
+async function uploadSettingImage(inputEl, key) {
+    const file = inputEl.files[0];
+    if (! file) {
+        return;
+    }
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    const res  = await fetch('/admin/media/upload', { method: 'POST', body: fd, credentials: 'same-origin' });
+    const data = await res.json();
+
+    if (data.success) {
+        applyImageToField(key, data.path.replace(/^\//, ''));
+    } else {
+        alert(data.error);
+    }
+    inputEl.value = '';
+}
+</script>
 <?= $this->endSection() ?>

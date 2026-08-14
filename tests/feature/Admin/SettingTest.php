@@ -31,4 +31,13 @@ final class SettingTest extends AdminTestCase
         $this->assertSame('내 회사', $map['site_name']);
         $this->assertSame('새 설명', $map['site_desc']);
     }
+
+    public function testGeneralTabRendersMediaPickerControlsForImageFields(): void
+    {
+        $result = $this->withSession($this->adminSession)->get('admin/settings/general');
+
+        $result->assertStatus(200);
+        $result->assertSee('미디어에서 선택');
+        $result->assertSee('직접 업로드');
+    }
 }
