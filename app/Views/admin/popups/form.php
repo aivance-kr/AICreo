@@ -12,14 +12,14 @@
 
             <!-- 제목 -->
             <div class="mb-3">
-                <label class="form-label fw-semibold">제목 <span class="text-danger">*</span></label>
-                <input type="text" name="title" class="form-control"
+                <label for="popups-form-title" class="form-label fw-semibold">제목 <span class="text-danger">*</span></label>
+                <input id="popups-form-title" type="text" name="title" class="form-control"
                        value="<?= esc(old('title', $popup['title'] ?? '')) ?>" required>
             </div>
 
             <!-- 이미지 -->
             <div class="mb-3">
-                <label class="form-label fw-semibold">이미지</label>
+                <label for="popups-form-image" class="form-label fw-semibold">이미지</label>
                 <?php if ($popup && $popup['image_path']): ?>
                 <div class="mb-2">
                     <img src="/<?= esc($popup['image_path']) ?>" alt=""
@@ -27,20 +27,20 @@
                 </div>
                 <div class="form-text mb-1">새 파일을 선택하면 교체됩니다.</div>
                 <?php endif; ?>
-                <input type="file" name="image" class="form-control" accept=".jpg,.jpeg,.png,.gif">
+                <input id="popups-form-image" type="file" name="image" class="form-control" accept=".jpg,.jpeg,.png,.gif">
                 <div class="form-text">jpg, jpeg, png, gif / 최대 2MB (비워두면 이미지 없이 텍스트만 표시)</div>
             </div>
 
             <!-- 텍스트 본문 (TinyMCE) -->
             <div class="mb-3">
-                <label class="form-label fw-semibold">텍스트 본문</label>
+                <label for="popup-content-editor" class="form-label fw-semibold">텍스트 본문</label>
                 <textarea name="content" id="popup-content-editor" class="form-control" rows="6"><?= old('content', $popup['content'] ?? '') ?></textarea>
                 <div class="form-text">이미지와 함께 또는 단독으로 사용 가능합니다.</div>
             </div>
 
             <!-- 노출 범위 -->
             <div class="mb-3">
-                <label class="form-label fw-semibold">노출 범위</label>
+                <label for="show_scope" class="form-label fw-semibold">노출 범위</label>
                 <select name="show_scope" id="show_scope" class="form-select">
                     <?php foreach ($scopes as $val => $label): ?>
                     <option value="<?= $val ?>" <?= old('show_scope', $popup['show_scope'] ?? 'all') === $val ? 'selected' : '' ?>>
@@ -52,14 +52,14 @@
 
             <!-- 특정 페이지 선택 -->
             <div class="mb-3" id="specific-pages" style="display:none">
-                <label class="form-label fw-semibold">노출 페이지 선택</label>
+                <label for="popups-form-page_ids" class="form-label fw-semibold">노출 페이지 선택</label>
                 <div class="border rounded p-3" style="max-height:200px;overflow-y:auto">
                     <?php if (empty($allMenus)): ?>
                     <span class="text-muted small">등록된 메뉴가 없습니다.</span>
                     <?php endif; ?>
                     <?php foreach ($allMenus as $menu): ?>
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="page_ids[]"
+                        <input id="popups-form-page_ids" class="form-check-input" type="checkbox" name="page_ids[]"
                                id="menu_<?= $menu['id'] ?>" value="<?= $menu['id'] ?>"
                                <?= in_array($menu['id'], $pageIds) ? 'checked' : '' ?>>
                         <label class="form-check-label small" for="menu_<?= $menu['id'] ?>">
@@ -74,17 +74,17 @@
             <!-- 표시 좌표 -->
             <div class="row g-3 mb-3">
                 <div class="col-auto">
-                    <label class="form-label fw-semibold">X 좌표 (left)</label>
+                    <label for="popups-form-pos_x" class="form-label fw-semibold">X 좌표 (left)</label>
                     <div class="input-group" style="width:140px">
-                        <input type="number" name="pos_x" class="form-control"
+                        <input id="popups-form-pos_x" type="number" name="pos_x" class="form-control"
                                value="<?= esc(old('pos_x', $popup['pos_x'] ?? 20)) ?>" min="0">
                         <span class="input-group-text">px</span>
                     </div>
                 </div>
                 <div class="col-auto">
-                    <label class="form-label fw-semibold">Y 좌표 (top)</label>
+                    <label for="popups-form-pos_y" class="form-label fw-semibold">Y 좌표 (top)</label>
                     <div class="input-group" style="width:140px">
-                        <input type="number" name="pos_y" class="form-control"
+                        <input id="popups-form-pos_y" type="number" name="pos_y" class="form-control"
                                value="<?= esc(old('pos_y', $popup['pos_y'] ?? 20)) ?>" min="0">
                         <span class="input-group-text">px</span>
                     </div>
@@ -93,8 +93,8 @@
 
             <!-- 우선순위 -->
             <div class="mb-3">
-                <label class="form-label fw-semibold">우선순위</label>
-                <input type="number" name="priority" class="form-control" style="width:120px"
+                <label for="popups-form-priority" class="form-label fw-semibold">우선순위</label>
+                <input id="popups-form-priority" type="number" name="priority" class="form-control" style="width:120px"
                        value="<?= esc(old('priority', $popup['priority'] ?? 0)) ?>" min="0">
                 <div class="form-text">숫자가 낮을수록 먼저 표시됩니다.</div>
             </div>
@@ -102,25 +102,25 @@
             <!-- 운영 기간 -->
             <div class="row g-3 mb-3">
                 <div class="col">
-                    <label class="form-label fw-semibold">시작일</label>
+                    <label for="popups-form-started_at" class="form-label fw-semibold">시작일</label>
                     <?php
                     $startedVal = '';
                     if (!empty($popup['started_at'])) {
                         $startedVal = str_replace(' ', 'T', substr($popup['started_at'], 0, 16));
                     }
                     ?>
-                    <input type="datetime-local" name="started_at" class="form-control"
+                    <input id="popups-form-started_at" type="datetime-local" name="started_at" class="form-control"
                            value="<?= esc(old('started_at', $startedVal)) ?>">
                 </div>
                 <div class="col">
-                    <label class="form-label fw-semibold">종료일</label>
+                    <label for="popups-form-ended_at" class="form-label fw-semibold">종료일</label>
                     <?php
                     $endedVal = '';
                     if (!empty($popup['ended_at'])) {
                         $endedVal = str_replace(' ', 'T', substr($popup['ended_at'], 0, 16));
                     }
                     ?>
-                    <input type="datetime-local" name="ended_at" class="form-control"
+                    <input id="popups-form-ended_at" type="datetime-local" name="ended_at" class="form-control"
                            value="<?= esc(old('ended_at', $endedVal)) ?>">
                     <div class="form-text">비워두면 기간 제한 없음.</div>
                 </div>

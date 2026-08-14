@@ -4,17 +4,17 @@
 <div class="container py-4">
 <div class="mb-2">
     <a href="/board/<?= esc($board['slug']) ?>" class="text-decoration-none text-muted small">
-        <i class="bi bi-arrow-left"></i> <?= esc($board['name']) ?> 목록
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= esc($board['name']) ?> 목록
     </a>
 </div>
 
 <div class="card mb-4">
     <div class="card-header bg-white">
-        <h5 class="mb-1"><?= esc($post['title']) ?></h5>
+        <h1 class="h5 mb-1"><?= esc($post['title']) ?></h1>
         <div class="d-flex gap-3 text-muted small">
-            <span><i class="bi bi-person"></i> <?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
-            <span><i class="bi bi-clock"></i> <?= $post['created_at'] ?></span>
-            <span><i class="bi bi-eye"></i> <?= number_format($post['views']) ?></span>
+            <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span> <?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
+            <span><i class="bi bi-clock" aria-hidden="true"></i><span class="visually-hidden">작성일 </span> <?= $post['created_at'] ?></span>
+            <span><i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">조회수 </span> <?= number_format($post['views']) ?></span>
         </div>
     </div>
     <div class="card-body">
@@ -29,9 +29,10 @@
         <div class="row g-2 mt-2">
             <?php foreach ($images as $img): ?>
             <div class="col-auto">
-                <a href="/<?= esc($img['file_path']) ?>" target="_blank">
-                    <img src="/<?= esc($img['file_path']) ?>" alt="<?= esc($img['original_name']) ?>"
+                <a href="/<?= esc($img['file_path']) ?>" target="_blank" rel="noopener">
+                    <img loading="lazy" src="/<?= esc($img['file_path']) ?>" alt="<?= esc($img['original_name']) ?>"
                          class="img-thumbnail" style="max-height:200px;">
+                    <span class="visually-hidden">원본 이미지 보기 (새 창 열림)</span>
                 </a>
             </div>
             <?php endforeach; ?>
@@ -43,11 +44,11 @@
         <?php if ($attachments): ?>
         <hr>
         <div class="file-list">
-            <div class="text-muted small mb-1"><i class="bi bi-paperclip"></i> 첨부파일</div>
+            <div class="text-muted small mb-1"><i class="bi bi-paperclip" aria-hidden="true"></i> 첨부파일</div>
             <?php foreach ($attachments as $file): ?>
             <div>
                 <a href="/board/file/<?= $file['id'] ?>/download" class="text-decoration-none">
-                    <i class="bi bi-file-earmark"></i>
+                    <i class="bi bi-file-earmark" aria-hidden="true"></i>
                     <?= esc($file['original_name']) ?>
                     <span class="text-muted">(<?= round($file['file_size'] / 1024) ?>KB)</span>
                     <span class="text-muted small">↓<?= $file['download_count'] ?></span>
@@ -68,7 +69,7 @@
         <?php if ($canEdit): ?>
             <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/edit" class="btn btn-sm btn-outline-secondary">수정</a>
             <form method="post" action="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/delete"
-                  onsubmit="return confirm('삭제하시겠습니까?')">
+                  onsubmit="return confirm('이 게시글을 삭제하시겠습니까? 되돌릴 수 없습니다.')">
                 <?= csrf_field() ?>
                 <button class="btn btn-sm btn-outline-danger">삭제</button>
             </form>
@@ -83,7 +84,7 @@
 <!-- 댓글 -->
 <div id="comments" class="card mb-4">
     <div class="card-header bg-white">
-        <strong>댓글 <?= count($comments) ?>개</strong>
+        <h2 class="h6 mb-0">댓글 <?= count($comments) ?>개</h2>
     </div>
     <div class="list-group list-group-flush">
         <?php foreach ($comments as $c): ?>
@@ -94,9 +95,9 @@
                     <span class="text-muted small"><?= substr($c['created_at'], 0, 16) ?></span>
                     <?php if ($role === 'admin' || ($userId && $c['user_id'] == $userId)): ?>
                     <form method="post" action="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/comment/<?= $c['id'] ?>/delete"
-                          onsubmit="return confirm('삭제?')">
+                          onsubmit="return confirm('이 댓글을 삭제하시겠습니까?')">
                         <?= csrf_field() ?>
-                        <button class="btn btn-link btn-sm text-danger p-0">삭제</button>
+                        <button class="btn btn-link btn-sm text-danger p-0">삭제<span class="visually-hidden"> — <?= esc($c['user_nickname'] ?? mask_name($c['author_name'])) ?>님의 댓글</span></button>
                     </form>
                     <?php endif; ?>
                 </div>
@@ -113,15 +114,20 @@
             <?php if (! session()->get('user_id')): ?>
             <div class="row g-2 mb-2">
                 <div class="col-sm-3">
-                    <input type="text" name="author_name" class="form-control form-control-sm" placeholder="이름" required>
+                    <label class="visually-hidden" for="comment-author-name">이름</label>
+                    <input type="text" name="author_name" id="comment-author-name" class="form-control form-control-sm"
+                           placeholder="이름" required autocomplete="name">
                 </div>
                 <div class="col-sm-3">
-                    <input type="password" name="author_password" class="form-control form-control-sm" placeholder="비밀번호" required>
+                    <label class="visually-hidden" for="comment-author-password">비밀번호</label>
+                    <input type="password" name="author_password" id="comment-author-password" class="form-control form-control-sm"
+                           placeholder="비밀번호" required autocomplete="new-password">
                 </div>
             </div>
             <?php endif; ?>
             <div class="d-flex gap-2">
-                <textarea name="content" class="form-control form-control-sm" rows="2" placeholder="댓글을 입력하세요" required></textarea>
+                <label class="visually-hidden" for="comment-content">댓글 내용</label>
+                <textarea name="content" id="comment-content" class="form-control form-control-sm" rows="2" placeholder="댓글을 입력하세요" required></textarea>
                 <button class="btn btn-primary btn-sm px-3">등록</button>
             </div>
         </form>
@@ -129,17 +135,18 @@
 </div>
 
 <!-- 비회원 수정/삭제 모달 -->
-<div class="modal fade" id="guestModal" tabindex="-1">
+<div class="modal fade" id="guestModal" tabindex="-1" aria-labelledby="guestModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <form method="post" id="guestForm">
                 <?= csrf_field() ?>
                 <div class="modal-header">
-                    <h6 class="modal-title">비밀번호 확인</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h2 class="modal-title h6 mb-0" id="guestModalLabel">비밀번호 확인</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="password" name="author_password" class="form-control" placeholder="작성 시 비밀번호" required>
+                    <label class="form-label" for="guest-password">작성 시 입력한 비밀번호</label>
+                    <input type="password" name="author_password" id="guest-password" class="form-control" required autocomplete="current-password">
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary btn-sm">확인</button>

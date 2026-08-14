@@ -34,10 +34,7 @@ class BannerController extends BaseController
 
     public function store(): ResponseInterface|string
     {
-        $rules = [
-            'position' => 'required|in_list[' . implode(',', array_keys(BannerModel::POSITIONS)) . ']',
-        ];
-        if (! $this->validate($rules)) {
+        if (! $this->validate($this->validationRules())) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
@@ -77,6 +74,10 @@ class BannerController extends BaseController
             return redirect()->to('/admin/banners')->with('error', '배너를 찾을 수 없습니다.');
         }
 
+        if (! $this->validate($this->validationRules())) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
         $imagePath = $banner['image_path'];
 
         $file = $this->request->getFile('image');
@@ -105,6 +106,22 @@ class BannerController extends BaseController
     }
 
     /**
+     * 등록·수정 공용 검증 규칙.
+     *
+     * 링크가 걸린 배너는 대체 텍스트가 없으면 접근 가능한 이름이 없는 링크가
+     * 되므로(WCAG 2.4.4 / 4.1.2), link_url 이 있을 때 alt_text 를 필수로 건다.
+     *
+     * @return array<string, string>
+     */
+    private function validationRules(): array
+    {
+        return [
+            'position' => 'required|in_list[' . implode(',', array_keys(BannerModel::POSITIONS)) . ']',
+            'alt_text' => 'permit_empty|max_length[255]|required_with[link_url]',
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function collectData(string $imagePath): array
@@ -117,6 +134,7 @@ class BannerController extends BaseController
 
         return [
             'image_path'  => $imagePath,
+            'alt_text'    => $this->request->getPost('alt_text') ?: null,
             'link_url'    => $this->request->getPost('link_url') ?: null,
             'link_target' => $this->request->getPost('link_target') ?: '_self',
             'position'    => $this->request->getPost('position'),

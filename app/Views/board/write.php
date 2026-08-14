@@ -4,17 +4,17 @@
 <div class="container py-4">
 <div class="mb-2">
     <a href="/board/<?= esc($board['slug']) ?>" class="text-decoration-none text-muted small">
-        <i class="bi bi-arrow-left"></i> <?= esc($board['name']) ?> 목록
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= esc($board['name']) ?> 목록
     </a>
 </div>
 
 <div class="card">
     <div class="card-header bg-white">
-        <strong><?= $post ? '게시글 수정' : '글쓰기' ?></strong>
+        <h1 class="h6 mb-0"><?= $post ? '게시글 수정' : '글쓰기' ?></h1>
     </div>
     <div class="card-body">
         <?php if (session()->has('errors')): ?>
-        <div class="alert alert-danger">
+        <div class="alert alert-danger" role="alert">
             <?php foreach (session('errors') as $err): ?><div><?= esc($err) ?></div><?php endforeach; ?>
         </div>
         <?php endif; ?>
@@ -28,12 +28,19 @@
             <?php if (! session()->get('user_id')): ?>
             <div class="row g-2 mb-3">
                 <div class="col-sm-3">
-                    <input type="text" name="author_name" class="form-control form-control-sm"
-                           placeholder="이름 *" value="<?= old('author_name') ?>" required>
+                    <label class="form-label small" for="author-name">
+                        이름 <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span>
+                    </label>
+                    <input type="text" name="author_name" id="author-name" class="form-control form-control-sm"
+                           value="<?= old('author_name') ?>" required autocomplete="name">
                 </div>
                 <div class="col-sm-3">
-                    <input type="password" name="author_password" class="form-control form-control-sm"
-                           placeholder="비밀번호 (수정/삭제용) *" required>
+                    <label class="form-label small" for="author-password">
+                        비밀번호 <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span>
+                    </label>
+                    <input type="password" name="author_password" id="author-password" class="form-control form-control-sm"
+                           required autocomplete="new-password" aria-describedby="author-password-help">
+                    <div class="form-text" id="author-password-help">수정·삭제할 때 필요합니다.</div>
                 </div>
             </div>
             <?php endif; ?>
@@ -55,29 +62,33 @@
                            <?= ($post && $post['is_secret']) ? 'checked' : '' ?>>
                     <label for="is_secret" class="form-check-label small">비밀글</label>
                 </div>
-                <input type="text" name="title" class="form-control" placeholder="제목 *"
+                <label class="form-label" for="post-title">
+                    제목 <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span>
+                </label>
+                <input type="text" name="title" id="post-title" class="form-control"
                        value="<?= esc(old('title', $post['title'] ?? '')) ?>" required>
             </div>
 
             <div class="mb-3">
+                <label class="form-label" for="content-editor">내용</label>
                 <textarea name="content" id="content-editor" class="form-control" rows="12"><?= old('content', $post['content'] ?? '') ?></textarea>
             </div>
 
             <!-- 기존 파일 목록 (수정 시) -->
             <?php if (! empty($files)): ?>
-            <div class="mb-3">
-                <label class="form-label small text-muted">기존 첨부파일</label>
+            <fieldset class="mb-3">
+                <legend class="form-label small text-muted">기존 첨부파일</legend>
                 <?php foreach ($files as $file): ?>
                 <div class="d-flex align-items-center gap-2 mb-1">
                     <input type="checkbox" name="delete_files[]" value="<?= $file['id'] ?>" id="del_<?= $file['id'] ?>">
                     <label for="del_<?= $file['id'] ?>" class="small mb-0">
-                        <?= $file['is_image'] ? '<i class="bi bi-image"></i>' : '<i class="bi bi-file-earmark"></i>' ?>
+                        <?= $file['is_image'] ? '<i class="bi bi-image" aria-hidden="true"></i>' : '<i class="bi bi-file-earmark" aria-hidden="true"></i>' ?>
                         <?= esc($file['original_name']) ?>
                         <span class="text-danger small">(체크 시 삭제)</span>
                     </label>
                 </div>
                 <?php endforeach; ?>
-            </div>
+            </fieldset>
             <?php endif; ?>
 
             <!-- 파일 첨부 -->
@@ -91,7 +102,7 @@
             ?>
             <?php if ($allowedExts): ?>
             <div class="mb-3">
-                <label class="form-label small">파일 첨부</label>
+                <label class="form-label small" for="attachments">파일 첨부</label>
                 <input type="file" name="attachments[]" id="attachments"
                        class="form-control form-control-sm" multiple
                        accept="<?= implode(',', array_map(fn($e) => '.' . $e, $allowedExts)) ?>">
@@ -99,8 +110,8 @@
                     허용 형식: <span class="fw-semibold"><?= strtoupper(implode(', ', $allowedExts)) ?></span>
                     &nbsp;·&nbsp; 최대 <span class="fw-semibold">10MB</span> / 복수 선택 가능
                 </div>
-                <div id="fileErrors" class="mt-1"></div>
-                <div id="fileNames"  class="form-text text-muted mt-1"></div>
+                <div id="fileErrors" class="mt-1" role="alert" aria-live="assertive"></div>
+                <div id="fileNames"  class="form-text text-muted mt-1" aria-live="polite"></div>
             </div>
             <?php endif; ?>
 
@@ -165,7 +176,7 @@ if (attachInput) {
         const nameBox = document.getElementById('fileNames');
 
         errBox.innerHTML = errors.map(e =>
-            `<div class="text-danger small"><i class="bi bi-exclamation-circle"></i> ${e}</div>`
+            `<div class="text-danger small"><i class="bi bi-exclamation-circle" aria-hidden="true"></i> ${e}</div>`
         ).join('');
 
         nameBox.textContent = names.length ? '선택된 파일: ' + names.join(' / ') : '';

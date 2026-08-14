@@ -3,9 +3,10 @@
 
 <?= $this->section('content') ?>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="row g-2 mb-3" role="search">
     <div class="col-auto">
-        <select name="board_id" class="form-select form-select-sm">
+        <label class="visually-hidden" for="post-board">게시판 필터</label>
+        <select name="board_id" id="post-board" class="form-select form-select-sm">
             <option value="">전체 게시판</option>
             <?php foreach ($boards as $b): ?>
             <option value="<?= $b['id'] ?>" <?= $boardId === (int)$b['id'] ? 'selected' : '' ?>>
@@ -15,7 +16,8 @@
         </select>
     </div>
     <div class="col-auto">
-        <input type="text" name="q" class="form-control form-control-sm" placeholder="제목 / 작성자 검색"
+        <label class="visually-hidden" for="post-search">제목 또는 작성자 검색</label>
+        <input type="text" name="q" id="post-search" class="form-control form-control-sm" placeholder="제목 / 작성자 검색"
                value="<?= esc($keyword) ?>">
     </div>
     <div class="col-auto">
@@ -29,16 +31,16 @@
 
 <div class="card">
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 table-stack">
             <thead class="table-light">
                 <tr>
-                    <th>ID</th>
-                    <th>게시판</th>
-                    <th>제목</th>
-                    <th>작성자</th>
-                    <th>조회</th>
-                    <th>작성일</th>
-                    <th></th>
+                    <th scope="col">ID</th>
+                    <th scope="col">게시판</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">작성자</th>
+                    <th scope="col">조회</th>
+                    <th scope="col">작성일</th>
+                    <th scope="col"><span class="visually-hidden">관리</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -47,24 +49,24 @@
                 <?php endif; ?>
                 <?php foreach ($posts as $p): ?>
                 <tr>
-                    <td class="text-muted small"><?= $p['id'] ?></td>
-                    <td><span class="badge bg-light text-dark border"><?= esc($p['board_name']) ?></span></td>
-                    <td>
+                    <td data-label="ID" class="text-muted small"><?= $p['id'] ?></td>
+                    <td data-label="게시판"><span class="badge bg-light text-dark border"><?= esc($p['board_name']) ?></span></td>
+                    <td data-label="제목">
                         <?php if ($p['is_notice']): ?>
                             <span class="badge bg-warning text-dark me-1">공지</span>
                         <?php endif; ?>
                         <?php if ($p['is_secret']): ?>
                             <span class="badge bg-secondary me-1">비밀</span>
                         <?php endif; ?>
-                        <a href="/board/<?= esc($p['board_slug']) ?>/<?= $p['id'] ?>" target="_blank"
+                        <a href="/board/<?= esc($p['board_slug']) ?>/<?= $p['id'] ?>" target="_blank" rel="noopener"
                            class="text-decoration-none text-dark">
                             <?= esc($p['title']) ?>
                         </a>
                     </td>
-                    <td class="small"><?= esc($p['user_nickname'] ?? $p['author_name']) ?></td>
-                    <td class="small text-muted"><?= number_format($p['views']) ?></td>
-                    <td class="small text-muted"><?= date('Y-m-d', strtotime($p['created_at'])) ?></td>
-                    <td>
+                    <td data-label="작성자" class="small"><?= esc($p['user_nickname'] ?? $p['author_name']) ?></td>
+                    <td data-label="조회" class="small text-muted"><?= number_format($p['views']) ?></td>
+                    <td data-label="작성일" class="small text-muted"><?= date('Y-m-d', strtotime($p['created_at'])) ?></td>
+                    <td data-label="" class="cell-actions">
                         <form method="post" action="/admin/posts/<?= $p['id'] ?>/delete" class="d-inline"
                               onsubmit="return confirm('정말 삭제하시겠습니까?')">
                             <?= csrf_field() ?>

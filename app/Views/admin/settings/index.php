@@ -39,33 +39,41 @@
                         <label class="form-check-label small fw-semibold" for="chk_<?= esc($s['key']) ?>"><?= esc($s['label']) ?></label>
                     </div>
                 <?php else: ?>
-                <label class="form-label small fw-semibold"><?= esc($s['label']) ?></label>
+                <?php if ($s['type'] === 'image'): ?>
+                    <?php /* 이미지 항목은 컨트롤이 여러 개(선택 버튼 + 업로드)라 단일 label 이 아니라 그룹 이름으로 낸다 */ ?>
+                    <span class="d-block form-label small fw-semibold" id="lbl_<?= esc($s['key']) ?>"><?= esc($s['label']) ?></span>
+                <?php else: ?>
+                    <label class="form-label small fw-semibold" for="set_<?= esc($s['key']) ?>"><?= esc($s['label']) ?></label>
+                <?php endif; ?>
                 <?php if ($s['type'] === 'textarea'): ?>
-                    <textarea name="<?= esc($s['key']) ?>" class="form-control form-control-sm" rows="3"><?= esc($s['value']) ?></textarea>
+                    <textarea name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-control form-control-sm" rows="3"><?= esc($s['value']) ?></textarea>
                 <?php elseif ($s['key'] === 'org_type'): ?>
-                    <select name="<?= esc($s['key']) ?>" class="form-select form-select-sm">
+                    <select name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-select form-select-sm">
                         <?php foreach ($orgTypeOptions as $val => $label): ?>
                         <option value="<?= esc($val) ?>" <?= $s['value'] === $val ? 'selected' : '' ?>><?= esc($label) ?></option>
                         <?php endforeach; ?>
                     </select>
                 <?php elseif ($s['type'] === 'image'): ?>
-                    <div id="preview_<?= esc($s['key']) ?>" class="mb-1">
+                    <?php /* 선택한 이미지가 바뀌면 스크린리더에도 알린다 */ ?>
+                    <div id="preview_<?= esc($s['key']) ?>" class="mb-1" aria-live="polite">
                         <?php if ($s['value']): ?>
-                            <img src="/<?= esc($s['value']) ?>" style="max-height:60px" class="img-thumbnail">
+                            <img src="/<?= esc($s['value']) ?>" style="max-height:60px" class="img-thumbnail" alt="<?= esc($s['label']) ?> 현재 이미지">
                         <?php endif; ?>
                     </div>
                     <input type="hidden" id="input_<?= esc($s['key']) ?>" name="<?= esc($s['key']) ?>" value="<?= esc($s['value']) ?>">
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2" role="group" aria-labelledby="lbl_<?= esc($s['key']) ?>">
                         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openMediaPicker('<?= esc($s['key']) ?>')">
-                            <i class="bi bi-images"></i> 미디어에서 선택
+                            <i class="bi bi-images" aria-hidden="true"></i> 미디어에서 선택
                         </button>
-                        <label class="btn btn-outline-primary btn-sm mb-0">
-                            <i class="bi bi-upload"></i> 직접 업로드
-                            <input type="file" accept="image/*" class="d-none" onchange="uploadSettingImage(this, '<?= esc($s['key']) ?>')">
+                        <?php /* d-none 은 키보드 초점을 받지 못한다. 화면에서만 감추고 레이블로 조작한다. */ ?>
+                        <input type="file" id="upload_<?= esc($s['key']) ?>" accept="image/*" class="visually-hidden"
+                               onchange="uploadSettingImage(this, '<?= esc($s['key']) ?>')">
+                        <label class="btn btn-outline-primary btn-sm mb-0" for="upload_<?= esc($s['key']) ?>">
+                            <i class="bi bi-upload" aria-hidden="true"></i> 직접 업로드
                         </label>
                     </div>
                 <?php else: ?>
-                    <input type="text" name="<?= esc($s['key']) ?>" class="form-control form-control-sm" value="<?= esc($s['value']) ?>">
+                    <input type="text" name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-control form-control-sm" value="<?= esc($s['value']) ?>">
                 <?php endif; ?>
                 <?php endif; ?>
             </div>
@@ -95,7 +103,7 @@ function escapeHtml(text) {
 function applyImageToField(key, path) {
     document.getElementById('input_' + key).value = path;
     document.getElementById('preview_' + key).innerHTML =
-        '<img src="/' + path + '" style="max-height:60px" class="img-thumbnail">';
+        '<img src="/' + path + '" style="max-height:60px" class="img-thumbnail" alt="선택된 이미지">';
 }
 
 function openMediaPicker(key) {
