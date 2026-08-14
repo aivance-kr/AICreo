@@ -1,11 +1,17 @@
 name: Deploy
 
-# CI 워크플로우가 main 브랜치에서 성공적으로 완료된 뒤에만 배포한다.
-# (테스트/정적분석에 실패한 코드가 운영 서버에 반영되는 것을 방지)
+# main 에 반영되는 순간 배포한다.
+#
+# 검증은 이미 끝나 있다 — main 으로 들어오는 경로는 `dev → main` 배포 PR 뿐이고,
+# 그 PR 에서 CI(cs·analyse·test + coverage)가 돌아 통과해야만 머지할 수 있다.
+#
+# 예전에는 `workflow_run: workflows:[CI], branches:[main]` 으로 걸려 있었는데,
+# CI 트리거가 `pull_request: [main]` 로 바뀌면서(#244) 이 연결이 조용히 끊겼다.
+# pull_request 로 도는 CI 실행은 소속 브랜치가 head(dev)라 branches:[main] 필터에
+# 걸리지 않기 때문이다. 그 결과 2026-07-16 이후 배포가 한 번도 실행되지 않았고,
+# 머지는 됐는데 운영 서버만 옛 코드로 남아 있었다.
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  push:
     branches: [main]
   # Actions 탭에서 수동 실행 (배포 실패 후 재시도 등)
   workflow_dispatch:
@@ -19,9 +25,10 @@ jobs:
     name: 운영 서버 배포 (SSH)
     runs-on: ubuntu-latest
 
-    # 수동 실행이거나, CI가 성공(success)으로 끝난 경우에만 배포한다.
-    # (CI 실패·취소 시 자동 배포하지 않음)
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # 조건 없이 실행한다.
+    # 예전 조건은 github.event.workflow_run.conclusion 을 봤는데, push 트리거에는
+    # 그 값이 존재하지 않아 그대로 두면 잡이 통째로 건너뛰어진다.
+    # 검증은 dev → main PR 의 CI 가 이미 담당한다.
 
     steps:
       - name: SSH 접속 후 배포 실행
