@@ -25,7 +25,10 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
     <style>
         body  { background: var(--surface-body); font-family: var(--font-sans); color: var(--text-body); }
 
-        #sidebar { width: var(--sidebar-w); background: var(--dark); }
+        /* Bootstrap 오프캔버스가 992px 이상에서 배경을 transparent !important 로 강제 리셋한다.
+           #sidebar 는 ID 선택자라 특정성은 더 높지만 !important 없이는 그 규칙을 이길 수 없다 —
+           그래서 여기도 !important 로 맞춰 특정성 비교(ID > class)로 승부를 낸다. */
+        #sidebar { width: var(--sidebar-w); background: var(--dark) !important; }
         /* 어두운 표면 위에서는 초점 링을 밝은 쪽으로 뒤집는다 */
         #sidebar { --focus-ring-color: var(--on-dark-strong); }
         #sidebar .brand { padding: 1rem 1.2rem; color: var(--on-dark-strong); font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--on-dark-raised); }
