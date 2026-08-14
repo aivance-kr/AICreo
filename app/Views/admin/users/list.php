@@ -36,17 +36,17 @@
 
 <div class="card">
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 table-stack">
             <thead class="table-light">
                 <tr>
-                    <th>ID</th>
-                    <th>닉네임</th>
-                    <th>이메일</th>
-                    <th>역할</th>
-                    <th>상태</th>
-                    <th>가입일</th>
-                    <th>최근 로그인</th>
-                    <th></th>
+                    <th scope="col">ID</th>
+                    <th scope="col">닉네임</th>
+                    <th scope="col">이메일</th>
+                    <th scope="col">역할</th>
+                    <th scope="col">상태</th>
+                    <th scope="col">가입일</th>
+                    <th scope="col">최근 로그인</th>
+                    <th scope="col"><span class="visually-hidden">관리</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -55,10 +55,10 @@
                 <?php endif; ?>
                 <?php foreach ($users as $u): ?>
                 <tr>
-                    <td class="text-muted small"><?= $u['id'] ?></td>
-                    <td><?= esc($u['nickname']) ?></td>
-                    <td class="small"><?= esc($u['email']) ?></td>
-                    <td>
+                    <td data-label="ID" class="text-muted small"><?= $u['id'] ?></td>
+                    <td data-label="닉네임"><?= esc($u['nickname']) ?></td>
+                    <td data-label="이메일" class="small"><?= esc($u['email']) ?></td>
+                    <td data-label="역할">
                         <?php if ($u['role'] === 'admin'): ?>
                             <span class="badge bg-danger">관리자</span>
                         <?php else: ?>
@@ -68,14 +68,14 @@
                             <span class="badge bg-info text-dark"><?= esc($u['social_provider']) ?></span>
                         <?php endif; ?>
                     </td>
-                    <td>
+                    <td data-label="상태">
                         <?= $u['is_active']
                             ? '<span class="badge bg-success">활성</span>'
                             : '<span class="badge bg-secondary">비활성</span>' ?>
                     </td>
-                    <td class="small text-muted"><?= date('Y-m-d', strtotime($u['created_at'])) ?></td>
-                    <td class="small text-muted"><?= $u['last_login'] ? date('Y-m-d', strtotime($u['last_login'])) : '-' ?></td>
-                    <td>
+                    <td data-label="가입일" class="small text-muted"><?= date('Y-m-d', strtotime($u['created_at'])) ?></td>
+                    <td data-label="최근 로그인" class="small text-muted"><?= $u['last_login'] ? date('Y-m-d', strtotime($u['last_login'])) : '-' ?></td>
+                    <td data-label="" class="cell-actions">
                         <a href="/admin/users/<?= $u['id'] ?>/edit" class="btn btn-sm btn-outline-secondary">수정</a>
                         <?php if ((int)$u['id'] !== (int)session()->get('user_id')): ?>
                         <form method="post" action="/admin/users/<?= $u['id'] ?>/delete" class="d-inline"

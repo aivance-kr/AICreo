@@ -58,7 +58,7 @@
     <div class="card-body">
         <p class="small text-muted mb-2">각 소셜 앱 콘솔에 아래 URL을 등록하세요.</p>
         <table class="table table-sm small">
-            <thead class="table-light"><tr><th>제공자</th><th>콜백 URL</th></tr></thead>
+            <thead class="table-light"><tr><th scope="col">제공자</th><th scope="col">콜백 URL</th></tr></thead>
             <tbody>
                 <tr><td><i class="bi bi-n-circle-fill text-success me-1" aria-hidden="true"></i>네이버</td>
                     <td><code><?= base_url('auth/social/naver/callback') ?></code></td></tr>
