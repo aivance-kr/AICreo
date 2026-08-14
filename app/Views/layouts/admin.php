@@ -99,6 +99,13 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
 
         .badge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); display: inline-block; }
 
+        /* 초점이 sticky 상단바 아래로 숨지 않게 한다 (WCAG 2.2 2.4.11, AA).
+           Tab 으로 내려갈 때 브라우저가 요소를 화면 맨 위에 붙이는데,
+           상단바가 그 자리를 덮고 있어 초점이 보이지 않게 된다. */
+        #content :where(a, button, input, select, textarea, summary, [tabindex]) {
+            scroll-margin-top: 4rem;
+        }
+
         /* 화면에서 감춘 파일 입력은 초점을 받아도 보이지 않는다.
            대신 짝이 되는 버튼 모양 레이블에 초점 링을 그린다. */
         input[type="file"].visually-hidden:focus-visible + label.btn {

@@ -226,6 +226,35 @@ final class ViewAccessibilityTest extends CIUnitTestCase
     }
 
     /**
+     * 화면에 고정되는(sticky·fixed) 막대를 두면 Tab 초점이 그 아래로 숨는다.
+     * 브라우저가 초점 요소를 화면 맨 위에 붙이는데 그 자리를 막대가 덮기 때문이다.
+     * 그런 레이아웃은 초점용 스크롤 여백(scroll-margin)을 함께 둬야 한다.
+     * (WCAG 2.2 2.4.11 Focus Not Obscured — AA)
+     */
+    public function testStickyLayoutsReserveScrollMarginForFocus(): void
+    {
+        $offenders = [];
+
+        foreach ($this->viewContents() as $relative => $source) {
+            if (preg_match('/position:\s*(sticky|fixed)/', $source) !== 1) {
+                continue;
+            }
+            if (str_contains($source, 'scroll-margin')) {
+                continue;
+            }
+            $offenders[] = $relative;
+        }
+
+        $this->assertSame(
+            [],
+            $offenders,
+            "고정 막대를 쓰면서 초점 스크롤 여백이 없습니다.\n"
+            . "Tab 으로 이동한 요소가 막대에 가려 보이지 않게 됩니다:\n- "
+            . implode("\n- ", $offenders),
+        );
+    }
+
+    /**
      * 레이아웃에는 반복 영역 건너뛰기 링크와 본문 랜드마크가 있어야 한다.
      * (WCAG 2.4.1 / 1.3.1 · KWCAG 「반복 영역 건너뛰기」)
      */
