@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-14T02:17:09Z",
+  "title": "Design System: AiCreo",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "작업 파랑",
+        "canonical": "#0d6efd",
+        "tonalRamp": ["#031633", "#052c65", "#084298", "#0a58ca", "#0d6efd", "#3d8bfd", "#6ea8fe", "#9ec5fe"]
+      },
+      "dark": {
+        "role": "secondary",
+        "displayName": "먹 네이비",
+        "canonical": "#1e2a38",
+        "tonalRamp": ["#0a0e13", "#131b24", "#1e2a38", "#2d3f54", "#3d5470", "#5a7080", "#7e93a6", "#a8b7c7"]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "경고 빨강",
+        "canonical": "#dc3545",
+        "tonalRamp": ["#2c0b0e", "#58151c", "#842029", "#b02a37", "#dc3545", "#e35d6a", "#ea868f", "#f1aeb5"]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "보조 회색",
+        "canonical": "#6c757d",
+        "tonalRamp": ["#212529", "#343a40", "#495057", "#6c757d", "#adb5bd", "#ced4da", "#dee2e6", "#f8f9fa"]
+      },
+      "surface-body": {
+        "role": "neutral",
+        "displayName": "작업대 회색",
+        "canonical": "#f1f3f5",
+        "tonalRamp": ["#212529", "#343a40", "#495057", "#6c757d", "#adb5bd", "#dee2e6", "#f1f3f5", "#ffffff"]
+      },
+      "focus-ring": {
+        "role": "neutral",
+        "displayName": "초점 파랑",
+        "canonical": "#0a58ca",
+        "tonalRamp": ["#031633", "#052c65", "#084298", "#0a58ca", "#0d6efd", "#3d8bfd", "#6ea8fe", "#9ec5fe"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "프론트 홈 히어로의 사이트명. 페이지당 한 번." },
+      "headline": { "displayName": "Headline", "purpose": "동적 페이지·문의 페이지의 h1." },
+      "title": { "displayName": "Title", "purpose": "섹션 제목과 카드 헤더." },
+      "body": { "displayName": "Body", "purpose": "본문. 게시글 본문은 줄높이 1.8." },
+      "label": { "displayName": "Label", "purpose": "사이드바 구획 레이블과 카드 셀 항목명. 대문자 + 자간 0.06em." }
+    },
+    "shadows": [
+      {
+        "name": "surface-lift",
+        "value": "0 .125rem .25rem rgba(0,0,0,.075)",
+        "purpose": "카드·상단바가 바닥에서 살짝 떠 있음을 알리는 기본 그림자."
+      },
+      {
+        "name": "overlay-deep",
+        "value": "0 8px 32px rgba(0,0,0,.22)",
+        "purpose": "팝업 레이어 전용. 페이지 흐름 밖으로 완전히 벗어난 요소에만 허용한다."
+      }
+    ],
+    "motion": [
+      {
+        "name": "bootstrap-default",
+        "value": "cubic-bezier(0.25, 0.1, 0.25, 1)",
+        "purpose": "오프캔버스 서랍·알림 페이드 등 부트스트랩 기본 전환. 자체 모션 어휘를 만들지 않는다."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "576px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "992px" },
+      { "name": "xl", "value": "1200px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "화면당 하나뿐인 주요 행동 — 저장·등록·문의 보내기.",
+      "html": "<button class=\"ds-btn-primary\">저장</button>",
+      "css": ".ds-btn-primary { background: var(--primary, #0d6efd); color: #fff; border: 1px solid transparent; border-radius: .375rem; padding: .375rem .75rem; font-family: var(--font-sans, sans-serif); font-size: 1rem; line-height: 1.5; cursor: pointer; transition: background .15s ease-in-out; } .ds-btn-primary:hover { background: #0b5ed7; } .ds-btn-primary:focus-visible { outline: 3px solid var(--focus-ring-color, #0a58ca); outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "목록 행에서 반복되는 부차 행동 — 수정·미리보기.",
+      "html": "<button class=\"ds-btn-outline\">수정</button>",
+      "css": ".ds-btn-outline { background: transparent; color: #6c757d; border: 1px solid #6c757d; border-radius: .375rem; padding: .25rem .5rem; font-family: var(--font-sans, sans-serif); font-size: .875rem; min-height: 32px; cursor: pointer; transition: background .15s, color .15s; } .ds-btn-outline:hover { background: #6c757d; color: #fff; } .ds-btn-outline:focus-visible { outline: 3px solid var(--focus-ring-color, #0a58ca); outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "삭제 전용. 실행 전 무엇을 지우는지 이름을 밝히는 확인을 띄운다.",
+      "html": "<button class=\"ds-btn-danger\">삭제</button>",
+      "css": ".ds-btn-danger { background: transparent; color: var(--danger, #dc3545); border: 1px solid var(--danger, #dc3545); border-radius: .375rem; padding: .25rem .5rem; font-family: var(--font-sans, sans-serif); font-size: .875rem; min-height: 32px; cursor: pointer; transition: background .15s, color .15s; } .ds-btn-danger:hover { background: var(--danger, #dc3545); color: #fff; } .ds-btn-danger:focus-visible { outline: 3px solid var(--focus-ring-color, #0a58ca); outline-offset: 2px; }"
+    },
+    {
+      "name": "Labeled Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "레이블·필수 표시·오류 문구가 한 묶음. 오류는 색만으로 표시하지 않는다.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-demo-email\">이메일 <span aria-hidden=\"true\">*</span><span class=\"ds-sr\">(필수)</span></label><input class=\"ds-input\" id=\"ds-demo-email\" type=\"email\" autocomplete=\"email\" aria-describedby=\"ds-demo-email-help\"><div class=\"ds-help\" id=\"ds-demo-email-help\">연락받을 주소를 적어주세요.</div></div>",
+      "css": ".ds-field { font-family: var(--font-sans, sans-serif); max-width: 22rem; } .ds-label { display: block; margin-bottom: .5rem; color: #212529; font-size: 1rem; } .ds-label span[aria-hidden] { color: #dc3545; } .ds-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; } .ds-input { display: block; width: 100%; padding: .375rem .75rem; font-size: 1rem; line-height: 1.5; color: #333; background: #fff; border: 1px solid #dee2e6; border-radius: .375rem; } .ds-input:focus-visible { outline: 3px solid var(--focus-ring-color, #0a58ca); outline-offset: 2px; } .ds-help { margin-top: .25rem; font-size: .875rem; color: #6c757d; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "작업대 회색 위에 얹히는 종이 흰색 표면. 테두리 없이 그림자로만 경계를 만든다.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">최근 문의</h3><p class=\"ds-card-body\">어제 들어온 문의 3건이 아직 열리지 않았습니다.</p></div>",
+      "css": ".ds-card { background: #fff; border: 0; border-radius: .75rem; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); padding: 1rem 1.25rem; font-family: var(--font-sans, sans-serif); max-width: 22rem; } .ds-card-title { margin: 0 0 .5rem; font-size: 1.25rem; font-weight: 700; color: #212529; } .ds-card-body { margin: 0; font-size: 1rem; line-height: 1.6; color: #333; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "sidebar-nav-item",
+      "description": "관리자 사이드바 항목. 활성 상태는 바탕색 + aria-current 로 함께 표시한다.",
+      "html": "<nav class=\"ds-side\"><div class=\"ds-side-section\">콘텐츠</div><a class=\"ds-side-link\" href=\"#\">페이지 관리</a><a class=\"ds-side-link ds-side-link--active\" href=\"#\" aria-current=\"page\">게시판 관리</a></nav>",
+      "css": ".ds-side { background: var(--dark, #1e2a38); padding: .5rem 0; width: 240px; font-family: var(--font-sans, sans-serif); border-radius: .5rem; } .ds-side-section { color: #7e93a6; font-size: .7rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: .8rem 1.2rem .2rem; } .ds-side-link { display: block; color: #a8b7c7; padding: .6rem 1.2rem; font-size: .875rem; text-decoration: none; } .ds-side-link:hover, .ds-side-link--active { color: #fff; background: #2d3f54; } .ds-side-link:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }"
+    },
+    {
+      "name": "Skip Link",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "시그니처 요소. 평소 화면 밖에 있다가 탭 초점을 받으면 좌상단으로 들어온다. 레이아웃을 교체하는 테마도 반드시 옮겨야 한다.",
+      "html": "<a class=\"ds-skip\" href=\"#main-content\">본문 바로가기</a><p class=\"ds-skip-hint\">Tab 키로 초점을 주면 나타납니다.</p>",
+      "css": ".ds-skip { position: absolute; top: 0; left: -9999px; z-index: 10; padding: .65rem 1.1rem; background: var(--dark, #1e2a38); color: #fff; font-family: var(--font-sans, sans-serif); font-size: .9rem; font-weight: 600; text-decoration: none; border-radius: 0 0 .375rem 0; } .ds-skip:focus { left: 0; } .ds-skip-hint { margin: 3rem 0 0; font-family: var(--font-sans, sans-serif); font-size: .8rem; color: #6c757d; }"
+    },
+    {
+      "name": "Stacked Table Row",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "768px 미만에서 목록 표가 바뀌는 형태. 각 칸의 이름은 data-label 이 들고 있다.",
+      "html": "<div class=\"ds-stack-row\"><div class=\"ds-stack-cell\" data-label=\"이름\">홍*동</div><div class=\"ds-stack-cell\" data-label=\"이메일\">hong@example.com</div><div class=\"ds-stack-cell ds-stack-actions\"><button class=\"ds-btn-outline-mini\">수정</button></div></div>",
+      "css": ".ds-stack-row { border: 1px solid #e9ecef; border-radius: .5rem; background: #fff; padding: .25rem .75rem; font-family: var(--font-sans, sans-serif); max-width: 22rem; } .ds-stack-cell { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .45rem 0; min-width: 0; overflow-wrap: anywhere; text-align: right; font-size: .875rem; color: #333; } .ds-stack-cell + .ds-stack-cell { border-top: 1px solid #f0f0f0; } .ds-stack-cell::before { content: attr(data-label); flex: 0 0 auto; font-size: .75rem; font-weight: 600; color: #6c757d; } .ds-stack-actions { justify-content: flex-end; } .ds-stack-actions::before { content: none; } .ds-btn-outline-mini { background: transparent; color: #6c757d; border: 1px solid #6c757d; border-radius: .375rem; padding: .25rem .5rem; font-size: .875rem; min-height: 40px; cursor: pointer; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "백지 (The Blank Sheet)",
+    "overview": "AiCreo는 자기 얼굴을 갖지 않기로 선택한 시스템이다. 이 제품은 특정 서비스가 아니라 클라이언트마다 다시 팔리는 템플릿이고, 그래서 코어가 취향을 주장하는 순간 다음 납품이 느려진다. 기본값은 의도적으로 비어 있다 — 부트스트랩 기본에 가까운 파랑, 중립 회색, 장식 없는 표면. 개성은 테마가 토큰을 덮어쓰며 싣는다.\n\n비어 있다는 것이 아무렇게나라는 뜻은 아니다. 백지는 구조와 접근성에 대해서는 단호하다. 명도 대비, 초점 표시, 레이블 연결, 건너뛰기 링크는 테마가 바꿀 수 있는 취향이 아니라 코어가 보장하는 계약이다. KWCAG 2.2 준수가 납품 계약 조건이기 때문에, 색은 양보하고 대비는 양보하지 않는다.\n\n무게중심은 관리자 화면에 있다. 이 제품의 주 사용자는 개발자가 떠난 뒤 홈페이지를 혼자 굴리는 비개발자 운영자이고, 그가 매일 보는 화면은 프론트가 아니라 /admin이다. 그래서 시스템의 성격은 «차분하고 또렷하게» — 눈에 띄려 하지 않되, 무엇이 눌리는지 무엇이 지금 위치인지는 즉시 읽혀야 한다.",
+    "keyCharacteristics": [
+      "중립 기본값, 테마가 덮어쓰는 단일 토큰 층 (/css/tokens.css)",
+      "어두운 사이드바 / 밝은 작업 영역이라는 두 표면 체계",
+      "대비는 실측값으로 관리 — 토큰 주석에 비율이 박혀 있다",
+      "그림자는 상태와 오버레이에만, 나머지는 색조 층으로 깊이를 만든다",
+      "좁은 화면에서 표는 행 단위 카드로 재구성된다"
+    ],
+    "rules": [
+      {
+        "name": "The Measured Contrast Rule",
+        "body": "새 색을 토큰에 추가할 때는 대비 비율을 계산해 주석에 적는다. --text-muted(#6c757d, 4.7:1)가 밝은 표면의 하한이고 --on-dark-muted(#7e93a6, 4.6:1)가 어두운 표면의 하한이다. 이보다 옅은 회색은 토큰이 될 수 없다.",
+        "section": "colors"
+      },
+      {
+        "name": "The Theme Override Rule",
+        "body": "색은 반드시 var(--토큰)으로 참조한다. 뷰나 컴포넌트에 헥사를 직접 박으면 테마 교체가 그 지점만 비껴간다. 예외는 외부 브랜드 규정 색(네이버 #03C75A, 카카오 #FEE500)뿐이다.",
+        "section": "colors"
+      },
+      {
+        "name": "The Level-Is-Meaning Rule",
+        "body": "제목 태그는 크기가 아니라 문서 구조로 고른다. 작게 보이고 싶으면 <h1 class=\"h5\">처럼 시각 크기를 클래스로 낮추되 레벨은 유지한다. 페이지마다 h1은 정확히 하나다.",
+        "section": "typography"
+      },
+      {
+        "name": "The 16px Touch Floor Rule",
+        "body": "터치 기기(pointer: coarse)에서 모든 입력은 16px이다. 그 아래로 내려가면 iOS Safari가 초점 순간 화면을 강제 확대하고 되돌리지 않는다.",
+        "section": "typography"
+      },
+      {
+        "name": "The Stacked Table Rule",
+        "body": "768px 미만에서 목록 표는 가로 스크롤 대신 행 단위 카드로 쌓는다(.table-stack). 각 td는 data-label로 항목명을 들고, 조작 버튼 칸은 cell-actions로 우측 정렬된다. 열이 6개를 넘는 표를 옆으로 긁게 만들면 운영자가 조작 버튼을 찾지 못한다.",
+        "section": "layout"
+      },
+      {
+        "name": "The Overlay-Only Deep Shadow Rule",
+        "body": "0 8px 32px 급의 그림자는 페이지 흐름 밖에 있는 요소에만 쓴다. 카드·버튼·입력이 이 그림자를 쓰면 무엇이 진짜 떠 있는지 알 수 없어진다.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 색을 var(--토큰)으로 참조한다. 새 색이 필요하면 tokens.css에 대비 비율과 함께 추가한다.",
+      "Do 제목 레벨을 문서 구조로 고르고, 크기는 h1 class=\"h5\"처럼 클래스로 조정한다.",
+      "Do 모든 입력에 for/id 레이블을 붙이고, 오류는 색과 문구를 함께 낸다.",
+      "Do 6열 이상 목록 표에 .table-stack과 data-label을 적용한다.",
+      "Do 아이콘만 있는 버튼에 .visually-hidden 텍스트나 aria-label을 넣는다.",
+      "Do 외부 CDN 자원에 integrity + crossorigin을 붙인다."
+    ],
+    "donts": [
+      "Don't --text-muted(4.7:1)보다 옅은 회색을 본문·레이블에 쓴다.",
+      "Don't 어두운 배경에 부트스트랩 .text-secondary를 쓴다 (3.4:1로 미달). .text-white-50을 쓴다.",
+      "Don't placeholder를 레이블 대신 쓴다.",
+      "Don't 깊은 그림자(0 8px 32px)를 오버레이가 아닌 요소에 쓴다.",
+      "Don't 색 있는 굵은 좌측 테두리, 각진 블록 그림자, 그라디언트 글자 같은 형태 장치를 코어에 넣는다 — 개성은 테마의 몫이다.",
+      "Don't 터치 기기 입력을 16px 미만으로 내린다.",
+      "Don't 테마 레이아웃에서 tokens.css·건너뛰기 링크·main 랜드마크를 빠뜨린다."
+    ]
+  }
+}

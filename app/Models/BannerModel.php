@@ -17,7 +17,7 @@ class BannerModel extends Model
     protected $primaryKey    = 'id';
     protected $useTimestamps = true;
     protected $allowedFields = [
-        'image_path', 'link_url', 'link_target', 'position',
+        'image_path', 'alt_text', 'link_url', 'link_target', 'position',
         'priority', 'is_active', 'started_at', 'ended_at',
     ];
     protected $afterInsert = ['clearCacheCallback'];

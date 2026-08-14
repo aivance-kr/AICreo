@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "appRoot": "/Users/jongwonbyun/claude-works/AiCreo",
+  "repoRoot": "/Users/jongwonbyun/claude-works/AiCreo",
+  "contextRoot": "/Users/jongwonbyun/claude-works/AiCreo",
+  "sessionRoot": "/Users/jongwonbyun/claude-works/AiCreo/.impeccable/live",
+  "productPath": "/Users/jongwonbyun/claude-works/AiCreo/PRODUCT.md",
+  "designPath": "/Users/jongwonbyun/claude-works/AiCreo/DESIGN.md",
+  "resolvedFrom": "fallback"
+}

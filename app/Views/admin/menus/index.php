@@ -8,13 +8,13 @@
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <strong>현재 메뉴</strong>
-                <span class="small text-muted"><i class="bi bi-arrows-move me-1"></i>드래그해서 순서 변경</span>
+                <span class="small text-muted"><i class="bi bi-arrows-move me-1" aria-hidden="true"></i>드래그해서 순서 변경</span>
             </div>
             <ul class="list-group list-group-flush" id="menuRoot">
                 <?php foreach ($menuTree as $top): ?>
                 <li class="list-group-item" data-id="<?= $top['id'] ?>">
                     <div class="d-flex align-items-start gap-2">
-                        <span class="drag-handle text-muted" style="cursor:grab"><i class="bi bi-grip-vertical"></i></span>
+                        <span class="drag-handle text-muted" style="cursor:grab"><i class="bi bi-grip-vertical" aria-hidden="true"></i></span>
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -36,7 +36,7 @@
                                 <?php foreach ($top['children'] as $child): ?>
                                 <li class="list-group-item py-2" data-id="<?= $child['id'] ?>">
                                     <div class="d-flex align-items-center gap-2">
-                                        <span class="drag-handle text-muted" style="cursor:grab"><i class="bi bi-grip-vertical"></i></span>
+                                        <span class="drag-handle text-muted" style="cursor:grab"><i class="bi bi-grip-vertical" aria-hidden="true"></i></span>
                                         <div class="flex-grow-1 d-flex justify-content-between align-items-center">
                                             <div>
                                                 &nbsp;&nbsp;└ <?= esc($child['title']) ?>
@@ -74,24 +74,24 @@
                     <?= csrf_field() ?>
                     <input type="hidden" id="menuId" name="_menu_id" value="">
                     <div class="mb-2">
-                        <label class="form-label small">제목 *</label>
+                        <label for="mTitle" class="form-label small">제목 *</label>
                         <input type="text" name="title" id="mTitle" class="form-control form-control-sm" required>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small">URL *</label>
+                        <label for="mUrl" class="form-label small">URL *</label>
                         <input type="text" name="url" id="mUrl" class="form-control form-control-sm" required placeholder="/about">
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small">상위 메뉴 ID (없으면 비워두세요)</label>
+                        <label for="mParent" class="form-label small">상위 메뉴 ID (없으면 비워두세요)</label>
                         <input type="number" name="parent_id" id="mParent" class="form-control form-control-sm" placeholder="없음">
                     </div>
                     <div class="row g-2 mb-2">
                         <div class="col">
-                            <label class="form-label small">순서</label>
+                            <label for="mSort" class="form-label small">순서</label>
                             <input type="number" name="sort_order" id="mSort" class="form-control form-control-sm" value="0">
                         </div>
                         <div class="col">
-                            <label class="form-label small">링크 타겟</label>
+                            <label for="mTarget" class="form-label small">링크 타겟</label>
                             <select name="target" id="mTarget" class="form-select form-select-sm">
                                 <option value="_self">같은 창</option>
                                 <option value="_blank">새 창</option>
