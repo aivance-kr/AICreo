@@ -1,84 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title><?= lang('Errors.badRequest') ?></title>
+<?php
+/**
+ * 400 Bad Request
+ *
+ * CodeIgniter4 는 errors/html/error_{상태코드}.php 가 있으면 자동으로 이 파일을
+ * 쓴다(ExceptionHandler::determineView). 별도 매핑 설정은 필요하지 않다.
+ *
+ * $code, $message 는 프레임워크가 넘겨준다. $message 는 $exception->getMessage()
+ * 원문이라 SQL 조각·파일 경로·클래스명이 섞일 수 있으므로 운영에서는 내보내지
+ * 않는다 — CI4 기본 production.php 가 지키던 선을 그대로 유지한다.
+ */
+$errCode    = $code ?? 400;
+$errHeading = '잘못된 요청입니다';
+$errMessage = (ENVIRONMENT !== 'production' && ! empty($message))
+    ? $message
+    : '요청 형식을 확인한 뒤 다시 시도해 주세요.';
 
-    <style>
-        div.logo {
-            height: 200px;
-            width: 155px;
-            display: inline-block;
-            opacity: 0.08;
-            position: absolute;
-            top: 2rem;
-            left: 50%;
-            margin-left: -73px;
-        }
-        body {
-            height: 100%;
-            background: #fafafa;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            color: #777;
-            font-weight: 300;
-        }
-        h1 {
-            font-weight: lighter;
-            letter-spacing: normal;
-            font-size: 3rem;
-            margin-top: 0;
-            margin-bottom: 0;
-            color: #222;
-        }
-        .wrap {
-            max-width: 1024px;
-            margin: 5rem auto;
-            padding: 2rem;
-            background: #fff;
-            text-align: center;
-            border: 1px solid #efefef;
-            border-radius: 0.5rem;
-            position: relative;
-        }
-        pre {
-            white-space: normal;
-            margin-top: 1.5rem;
-        }
-        code {
-            background: #fafafa;
-            border: 1px solid #efefef;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            display: block;
-        }
-        p {
-            margin-top: 1.5rem;
-        }
-        .footer {
-            margin-top: 2rem;
-            border-top: 1px solid #efefef;
-            padding: 1em 2em 0 2em;
-            font-size: 85%;
-            color: #999;
-        }
-        a:active,
-        a:link,
-        a:visited {
-            color: #dd4814;
-        }
-    </style>
-</head>
-<body>
-<div class="wrap">
-    <h1>400</h1>
-
-    <p>
-        <?php if (ENVIRONMENT !== 'production') : ?>
-            <?= nl2br(esc($message)) ?>
-        <?php else : ?>
-            <?= lang('Errors.sorryBadRequest') ?>
-        <?php endif; ?>
-    </p>
-</div>
-</body>
-</html>
+include __DIR__ . '/_partials/page.php';
