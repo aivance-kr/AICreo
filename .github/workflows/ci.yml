@@ -104,7 +104,10 @@ jobs:
 
       - name: 컨테이너 정리
         if: always()
-        run: docker rm -f ci-mysql-${{ github.run_id }} 2>/dev/null || true
+        # -v 를 빼면 컨테이너만 지워지고 /var/lib/mysql 익명 볼륨이 남는다.
+        # 매 실행마다 수백 MB 씩 쌓여 결국 러너의 Docker 디스크가 가득 차고,
+        # MySQL 이 "No space left on device" 로 기동조차 못 하게 된다.
+        run: docker rm -f -v ci-mysql-${{ github.run_id }} 2>/dev/null || true
 
   coverage:
     name: 커버리지 리포트
@@ -194,7 +197,10 @@ jobs:
 
       - name: 컨테이너 정리
         if: always()
-        run: docker rm -f ci-mysql-coverage-${{ github.run_id }} 2>/dev/null || true
+        # -v 를 빼면 컨테이너만 지워지고 /var/lib/mysql 익명 볼륨이 남는다.
+        # 매 실행마다 수백 MB 씩 쌓여 결국 러너의 Docker 디스크가 가득 차고,
+        # MySQL 이 "No space left on device" 로 기동조차 못 하게 된다.
+        run: docker rm -f -v ci-mysql-coverage-${{ github.run_id }} 2>/dev/null || true
 
   notify:
     name: Slack 알림

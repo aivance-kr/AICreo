@@ -54,6 +54,7 @@ GitHub 호스팅 러너(`ubuntu-latest`)가 아니라 **로컬 Mac을 self-hoste
 - **저장소가 Public** — self-hosted 러너에 `pull_request` 트리거가 걸려 있으면 외부 fork PR 코드가 러너에서 실행될 위험이 있어(공식적으로 알려진 위험), 저장소 설정에서 `fork-pr-contributor-approval` 을 `all_external_contributors` 로 켜 두었다. 외부 협업자의 PR은 관리자가 수동 승인하기 전까지 워크플로우가 실행되지 않는다.
 - **MySQL**: self-hosted **macOS** 러너는 `services:` 도커 컨테이너를 지원하지 않는다(Linux 러너 전용 기능). 대신 각 잡에서 `docker run` 으로 직접 기동하고 `if: always()` 스텝으로 정리한다. Redis는 캐시 핸들러 기본값이 `file` 이라 CI 에 필요 없다.
 - **포트**: 이 Mac은 여러 저장소의 self-hosted 러너를 동시에 호스팅한다. 시스템 mysqld(`3306`)·AIFid(`13306`)·ci4-board(`33306`)·AILicet/AITessera(`23306`) 등과 겹치지 않게 **`quality` 잡은 MySQL `43306`, `coverage` 잡은 `43307`** 을 쓴다. 새 포트를 고를 땐 `~/claude-works/*/.github/workflows/ci.yml` 을 함께 grep 해서 겹치는 값이 없는지 반드시 확인할 것 — 처음 `23306`으로 골랐다가 다른 두 저장소와 충돌해 CI 가 실패했었다.
+- **컨테이너 정리는 반드시 `docker rm -f -v`.** `-v` 가 없으면 컨테이너만 지워지고 `/var/lib/mysql` 익명 볼륨이 남는다. 매 실행마다 수백 MB 씩 쌓여 러너의 Docker 디스크를 채우고, 어느 날 갑자기 MySQL 이 `No space left on device` 로 기동조차 못 하게 된다. 실제로 2026-07-17 부터 한 달간 210개(44GB)가 누적돼 PR #255 배포 CI 가 막혔다. 막혔을 때 회수: `docker volume prune -f`(사용 중 볼륨은 건드리지 않는다).
 - **두 잡은 서로 `needs` 가 없어 같은 러너에서 동시에 돈다.** 그래서 잡마다 호스트 포트가 달라야 한다. 같은 포트를 쓰면 나중 컨테이너가 바인딩에 실패해 즉시 죽는데, `docker run -d` 는 그 전에 컨테이너 ID 를 찍고 성공한 것처럼 끝나므로 **테스트의 "Connection refused" 수백 건으로만 드러나 원인이 가려진다.** 실제로 PR #255 에서 이 방식으로 `quality` 만 실패했다. 지금은 각 잡이 기동 직후 컨테이너 생존과 준비 완료를 확인하고 실패하면 `docker logs` 와 함께 즉시 중단한다.
 - **호스팅 러너로 되돌리려면**: `runs-on` 을 `ubuntu-latest` 로 바꾸고 MySQL을 다시 `services:` 블록으로 되돌리면 된다(포트도 표준값 `3306`으로 원복 가능).
 
