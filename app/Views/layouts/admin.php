@@ -36,6 +36,11 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
         #sidebar .nav-link:hover,
         #sidebar .nav-link.active { color: var(--on-dark-strong); background: var(--on-dark-raised); }
         #sidebar .nav-section { color: var(--on-dark-muted); font-size: .7rem; padding: .8rem 1.2rem .2rem; letter-spacing: .06em; text-transform: uppercase; }
+        /* Bootstrap .text-danger(#dc3545)는 사이드바 배경 위에서 3.2:1 로 AA 미달이었다 —
+           어두운 표면 전용 danger 톤(5.2:1)으로 이 컨테이너 안에서만 되돌린다.
+           .text-danger 자체가 !important 라 특정성이 아니라 !important 로만 이길 수 있다. */
+        #sidebar .nav-link.text-danger { color: var(--on-dark-danger) !important; }
+        #sidebar .nav-link.text-danger:hover { color: var(--on-dark-strong) !important; }
 
         #topbar { background: var(--surface-raised); border-bottom: 1px solid var(--border-subtle); padding: .6rem 1rem; position: sticky; top: 0; z-index: 100; }
         #content { padding: 1.25rem 1rem; }
@@ -52,6 +57,26 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
            프론트·관리자가 함께 참조한다(2026-08-19, 감사 후 통합). */
 
         .badge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); display: inline-block; }
+
+        /* 도움말(매뉴얼) 렌더링 — CommonMark 출력 최소 타이포. 게시글 본문(post-content)과
+           같은 줄높이 리듬을 따른다. 원본 마크다운의 h1~h4 는 컨트롤러에서 한 단계씩
+           낮춰 h2~h5 로 렌더링된다(페이지의 실제 h1 과 중복되지 않도록) — 아래 선택자는
+           그 낮춰진 레벨을 기준으로 한다. */
+        .manual-content { line-height: 1.7; }
+        .manual-content h2 { font-size: 1.25rem; margin: 0 0 1rem; }
+        .manual-content h3 { font-size: 1.1rem; margin: 2rem 0 .75rem; padding-top: .5rem; border-top: 1px solid var(--border-hairline); }
+        .manual-content h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+        .manual-content h4 { font-size: 1rem; margin: 1.5rem 0 .5rem; }
+        .manual-content h5 { font-size: .9rem; margin: 1.25rem 0 .5rem; }
+        .manual-content p, .manual-content ul, .manual-content ol { margin-bottom: .75rem; }
+        .manual-content table { width: 100%; margin-bottom: 1rem; border-collapse: collapse; font-size: .875rem; }
+        .manual-content th, .manual-content td { padding: .5rem .75rem; border: 1px solid var(--border-subtle); text-align: left; }
+        .manual-content th { background: var(--surface-body); }
+        .manual-content code { background: var(--surface-body); padding: .1rem .35rem; border-radius: .25rem; font-size: .875em; }
+        .manual-content pre { background: var(--surface-body); padding: 1rem; border-radius: .5rem; overflow-x: auto; }
+        .manual-content pre code { background: none; padding: 0; }
+        .manual-content blockquote { padding-left: 1rem; color: var(--text-muted); font-style: italic; margin: 0 0 .75rem; }
+        .manual-content a { color: var(--primary); }
 
         /* 초점이 sticky 상단바 아래로 숨지 않게 한다 (WCAG 2.2 2.4.11, AA).
            Tab 으로 내려갈 때 브라우저가 요소를 화면 맨 위에 붙이는데,
@@ -74,7 +99,7 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
 
 <div class="offcanvas-lg offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel">
     <div class="offcanvas-header d-lg-none">
-        <h2 class="offcanvas-title h6 mb-0 text-white" id="sidebarLabel">관리자 메뉴</h2>
+        <span class="offcanvas-title h6 mb-0 text-white" id="sidebarLabel">관리자 메뉴</span>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="메뉴 닫기"></button>
     </div>
 
@@ -130,6 +155,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             </a>
 
             <div class="nav-section mt-3">사이트</div>
+            <a href="/admin/help" class="nav-link <?= str_starts_with($uri, 'admin/help') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/help') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-question-circle me-2" aria-hidden="true"></i>도움말
+            </a>
             <a href="/" target="_blank" rel="noopener" class="nav-link">
                 <i class="bi bi-box-arrow-up-right me-2" aria-hidden="true"></i>사이트 보기<span class="visually-hidden"> (새 창 열림)</span>
             </a>
