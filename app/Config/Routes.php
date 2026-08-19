@@ -53,6 +53,9 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('', 'Admin\DashboardController::index');
     $routes->get('dashboard', 'Admin\DashboardController::index');
 
+    // 도움말
+    $routes->get('help', 'Admin\HelpController::index');
+
     // 페이지 관리
     $routes->get('pages', 'Admin\PageManagerController::index');
     $routes->get('pages/create', 'Admin\PageManagerController::create');

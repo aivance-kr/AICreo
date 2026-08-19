@@ -26,7 +26,7 @@
 </div>
 
 <!-- 검색 -->
-<form class="d-flex gap-2 mb-3" method="get" role="search">
+<form class="d-flex flex-wrap gap-2 mb-3" method="get" role="search">
     <label class="visually-hidden" for="search-type">검색 범위</label>
     <select name="type" id="search-type" class="form-select form-select-sm" style="width:120px">
         <option value="title"   <?= $searchType === 'title'   ? 'selected' : '' ?>>제목</option>
@@ -43,7 +43,8 @@
     <?php endif; ?>
 </form>
 
-<table class="table table-hover board-table">
+<div class="table-responsive">
+<table class="table table-hover board-table table-stack">
     <caption class="visually-hidden"><?= esc($board['name']) ?> 게시글 목록</caption>
     <thead>
         <tr>
@@ -58,16 +59,16 @@
         <!-- 공지 -->
         <?php foreach ($notices as $post): ?>
         <tr class="table-warning">
-            <td class="text-center"><span class="badge-notice">공지</span></td>
-            <td>
+            <td class="text-center" data-label=""><span class="badge text-bg-warning">공지</span></td>
+            <td data-label="제목">
                 <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>" class="text-decoration-none text-dark fw-semibold">
                     <?= esc($post['title']) ?>
                     <?php if ($post['is_secret']): ?> <i class="bi bi-lock-fill text-muted small" aria-hidden="true"></i><span class="visually-hidden">비밀글</span><?php endif; ?>
                 </a>
             </td>
-            <td class="text-center text-muted small"><?= esc(mask_name($post['author_name'])) ?></td>
-            <td class="text-center text-muted small"><?= substr($post['created_at'], 0, 10) ?></td>
-            <td class="text-center text-muted small"><?= number_format($post['views']) ?></td>
+            <td class="text-center text-muted small" data-label="작성자"><?= esc(mask_name($post['author_name'])) ?></td>
+            <td class="text-center text-muted small" data-label="날짜"><?= substr($post['created_at'], 0, 10) ?></td>
+            <td class="text-center text-muted small" data-label="조회"><?= number_format($post['views']) ?></td>
         </tr>
         <?php endforeach; ?>
 
@@ -77,22 +78,23 @@
         <?php endif; ?>
         <?php foreach ($posts as $i => $post): ?>
         <tr>
-            <td class="text-center text-muted small">
+            <td class="text-center text-muted small" data-label="번호">
                 <?= $total - (($currentPage - 1) * $board['posts_per_page']) - $i ?>
             </td>
-            <td>
+            <td data-label="제목">
                 <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>" class="text-decoration-none text-dark">
                     <?= esc($post['title']) ?>
                     <?php if ($post['is_secret']): ?> <i class="bi bi-lock-fill text-muted small" aria-hidden="true"></i><span class="visually-hidden">비밀글</span><?php endif; ?>
                 </a>
             </td>
-            <td class="text-center text-muted small"><?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></td>
-            <td class="text-center text-muted small"><?= substr($post['created_at'], 0, 10) ?></td>
-            <td class="text-center text-muted small"><?= number_format($post['views']) ?></td>
+            <td class="text-center text-muted small" data-label="작성자"><?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></td>
+            <td class="text-center text-muted small" data-label="날짜"><?= substr($post['created_at'], 0, 10) ?></td>
+            <td class="text-center text-muted small" data-label="조회"><?= number_format($post['views']) ?></td>
         </tr>
         <?php endforeach; ?>
     </tbody>
 </table>
+</div>
 
 <!-- 페이지네이션 -->
 <?php if ($totalPages > 1): ?>
