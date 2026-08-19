@@ -76,7 +76,9 @@ GitHub 호스팅 러너(`ubuntu-latest`)가 아니라 **로컬 Mac을 self-hoste
 
 ```bash
 cp env .env
-# .env 편집: DB 접속 정보, CI_ENVIRONMENT, TinyMCE 키
+# .env 편집: DB 접속 정보, CI_ENVIRONMENT, TinyMCE 키, app.baseURL(로컬은 기본값 8306 그대로 두되
+#            8306이 아닌 다른 포트로 띄우거나 배포 시엔 반드시 실제 URL로 바꿀 것 — CI4는 baseURL이
+#            없거나 빈 문자열이면 자동 감지하지 않고 예외를 던진다)
 php spark migrate
 # app/Config/App.php: appTimezone = 'Asia/Seoul' 설정
 ```
