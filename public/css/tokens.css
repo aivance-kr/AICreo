@@ -30,6 +30,7 @@
     --on-dark-body:   #a8b7c7; /*  7.1:1 */
     --on-dark-muted:  #7e93a6; /*  4.6:1 — 구 #5a7080 은 2.8:1 로 미달이었다 */
     --on-dark-raised: #2d3f54;
+    --on-dark-danger: #ff6b6b; /*  5.2:1 — Bootstrap 기본 danger(#dc3545)는 3.2:1 로 미달이었다 */
 
     /* ─── 타이포 ────────────────────────────────────────── */
     --font-sans: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
