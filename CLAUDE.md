@@ -15,10 +15,12 @@
 ## 명령어
 
 ```bash
-php spark serve --port 8306  # 개발 서버 실행 (http://localhost:8306)
+php spark serve --host 127.0.0.1 --port 8306  # 개발 서버 실행 (http://creo.test, Caddy 리버스 프록시 경유)
 php spark migrate            # 대기 중인 마이그레이션 전체 실행 (테이블 생성 + 시딩)
 php spark migrate:rollback   # 마지막 마이그레이션 배치 롤백
 ```
+
+> ⚠️ **`--host` 를 빼면 `creo.test` 접속이 `502 Bad Gateway` 로 실패한다.** `--host` 없이 기본값 `localhost` 로 바인딩하면 이 macOS 환경에서는 IPv6(`::1`)로만 리슨되는데, `creo.test` 를 프록시하는 공용 Caddy(`~/claude-works/dev-proxy/Caddyfile`)는 `127.0.0.1:8306`(IPv4)로 연결을 시도해 거부당한다. 반드시 `--host 127.0.0.1` 을 명시할 것.
 
 **검증 게이트 — 어디서 무엇을 돌리는가.** 검증은 로컬에서 끝낸다. `feature → dev` PR 에는 CI 를 걸지 않고(코드 리뷰만), CI 는 `dev → main` 배포 PR 에서만 돈다.
 
