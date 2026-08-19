@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-14T02:17:09Z",
+  "generatedAt": "2026-08-19T00:15:20Z",
   "title": "Design System: AICreo",
   "extensions": {
     "colorMeta": {
@@ -122,6 +122,14 @@
       "description": "관리자 사이드바 항목. 활성 상태는 바탕색 + aria-current 로 함께 표시한다.",
       "html": "<nav class=\"ds-side\"><div class=\"ds-side-section\">콘텐츠</div><a class=\"ds-side-link\" href=\"#\">페이지 관리</a><a class=\"ds-side-link ds-side-link--active\" href=\"#\" aria-current=\"page\">게시판 관리</a></nav>",
       "css": ".ds-side { background: var(--dark, #1e2a38); padding: .5rem 0; width: 240px; font-family: var(--font-sans, sans-serif); border-radius: .5rem; } .ds-side-section { color: #7e93a6; font-size: .7rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: .8rem 1.2rem .2rem; } .ds-side-link { display: block; color: #a8b7c7; padding: .6rem 1.2rem; font-size: .875rem; text-decoration: none; } .ds-side-link:hover, .ds-side-link--active { color: #fff; background: #2d3f54; } .ds-side-link:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }"
+    },
+    {
+      "name": "Front GNB Nav Link",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "프론트 상단 내비게이션 항목. 활성 메뉴는 굵게 + 작업 파랑 + 밑줄 대신 하단 2px 인셋 그림자로 표시해 레이아웃 흔들림 없이 위치를 알린다.",
+      "html": "<nav class=\"ds-gnb\"><a class=\"ds-gnb-link\" href=\"#\">회사소개</a><a class=\"ds-gnb-link ds-gnb-link--active\" href=\"#\" aria-current=\"page\">공지사항</a><a class=\"ds-gnb-link\" href=\"#\">문의하기</a></nav>",
+      "css": ".ds-gnb { display: flex; gap: 1.5rem; border-bottom: 1px solid #f0f0f0; font-family: var(--font-sans, sans-serif); } .ds-gnb-link { padding: .75rem 0; color: #333; font-weight: 500; font-size: .9rem; text-decoration: none; } .ds-gnb-link--active { font-weight: 700; color: var(--primary, #0d6efd); box-shadow: inset 0 -2px 0 var(--primary, #0d6efd); } .ds-gnb-link:focus-visible { outline: 3px solid var(--focus-ring-color, #0a58ca); outline-offset: 2px; }"
     },
     {
       "name": "Skip Link",
