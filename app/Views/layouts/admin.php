@@ -48,57 +48,8 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             #content { margin-left: var(--sidebar-w); padding: 1.5rem; }
         }
 
-        /* 표에 담긴 조작 버튼이 좁은 화면에서 뭉치지 않도록 최소 터치 여유를 준다 */
-        .btn-sm { min-height: 32px; }
-        @media (max-width: 991.98px) {
-            .btn-sm { min-height: 40px; display: inline-flex; align-items: center; }
-        }
-
-        /* 좁은 화면에서 목록 표를 행 단위 카드로 쌓는다.
-           열이 6~9개인 표를 가로로 긁게 만들면 운영자가 조작 버튼을 찾지 못한다.
-           각 칸의 이름은 td 의 data-label 이 들고 있다. */
-        @media (max-width: 767.98px) {
-            .table-stack thead { display: none; }
-            .table-stack,
-            .table-stack tbody,
-            .table-stack tr,
-            .table-stack td { display: block; width: 100%; }
-
-            .table-stack tr {
-                border: 1px solid var(--border-subtle);
-                border-radius: .5rem;
-                background: var(--surface-raised);
-                padding: .25rem .75rem;
-                margin-bottom: .75rem;
-            }
-            .table-stack td {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 1rem;
-                border: 0;
-                padding: .45rem 0;
-                /* 긴 이메일·제목이 카드를 밀어내지 않도록 줄바꿈을 허용한다 */
-                min-width: 0;
-                overflow-wrap: anywhere;
-                text-align: right;
-            }
-            .table-stack td + td { border-top: 1px solid var(--border-hairline); }
-            .table-stack td::before {
-                content: attr(data-label);
-                flex: 0 0 auto;
-                font-size: .75rem;
-                font-weight: 600;
-                color: var(--text-muted);
-            }
-            /* 이름이 없는 칸(배지·조작 버튼)은 레이블 자리를 만들지 않는다 */
-            .table-stack td[data-label='']::before { content: none; }
-            .table-stack td.cell-actions {
-                justify-content: flex-end;
-                flex-wrap: wrap;
-                gap: .35rem;
-            }
-        }
+        /* .btn-sm 터치 여유·.table-stack 반응형 표는 /css/tokens.css 로 옮겨
+           프론트·관리자가 함께 참조한다(2026-08-19, 감사 후 통합). */
 
         .badge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); display: inline-block; }
 
