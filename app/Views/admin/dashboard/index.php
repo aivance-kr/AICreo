@@ -2,6 +2,19 @@
 <?php $pageTitle = '대시보드' ?>
 <?= $this->section('content') ?>
 
+<!-- 빠른 작업 — 매일 반복하는 작성 액션을 사이드바 재탐색 없이 바로 시작한다 -->
+<div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="/admin/pages/create" class="btn btn-primary btn-sm">
+        <i class="bi bi-file-earmark-plus me-1" aria-hidden="true"></i>새 페이지
+    </a>
+    <a href="/admin/banners/create" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-image me-1" aria-hidden="true"></i>배너 등록
+    </a>
+    <a href="/admin/popups/create" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-window-plus me-1" aria-hidden="true"></i>팝업 등록
+    </a>
+</div>
+
 <!-- 통계 카드 -->
 <div class="row g-3 mb-4">
     <?php
@@ -12,15 +25,20 @@
         ['label' => '미읽음 문의','value' => $stats['unread_inquiries'],'icon' => 'bi-bell',       'color' => 'warning', 'href' => '/admin/inquiries?filter=unread'],
     ];
     foreach ($cards as $c):
+        // 조치가 필요한 값(미읽음 문의 > 0)만 무게를 다르게 줘 참고용 총계와 구분한다.
+        $needsAction = $c['label'] === '미읽음 문의' && $c['value'] > 0;
     ?>
     <div class="col-sm-6 col-xl-3">
-        <a href="<?= $c['href'] ?>" class="card border-0 shadow-sm text-decoration-none">
+        <a href="<?= $c['href'] ?>" class="card border-0 shadow-sm text-decoration-none<?= $needsAction ? ' bg-warning bg-opacity-10' : '' ?>">
             <div class="card-body d-flex align-items-center gap-3">
-                <div class="bg-<?= $c['color'] ?> bg-opacity-10 rounded p-3">
-                    <i class="bi <?= $c['icon'] ?> fs-4 text-<?= $c['color'] ?>" aria-hidden="true"></i>
+                <div class="bg-<?= $c['color'] ?> <?= $needsAction ? '' : 'bg-opacity-10' ?> rounded p-3">
+                    <i class="bi <?= $c['icon'] ?> fs-4 <?= $needsAction ? 'text-white' : 'text-' . $c['color'] ?>" aria-hidden="true"></i>
                 </div>
                 <div>
-                    <div class="text-muted small"><?= $c['label'] ?></div>
+                    <div class="text-muted small">
+                        <?= $c['label'] ?>
+                        <?php if ($needsAction): ?><span class="fw-semibold text-warning-emphasis">· 확인 필요</span><?php endif; ?>
+                    </div>
                     <div class="fs-4 fw-bold text-dark"><?= number_format($c['value']) ?></div>
                 </div>
             </div>
