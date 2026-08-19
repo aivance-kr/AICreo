@@ -10,7 +10,7 @@
         <h1 class="display-5 fw-bold"><?= esc($settings['site_name'] ?? '') ?></h1>
         <p class="lead mb-4"><?= esc($settings['site_desc'] ?? '') ?></p>
         <a href="/contact" class="btn btn-light btn-lg me-2">문의하기</a>
-        <a href="/service" class="btn btn-outline-light btn-lg">서비스 보기</a>
+        <a href="/service" class="btn btn-outline-light btn-lg text-white fw-bold">서비스 보기</a>
     </div>
 </section>
 
@@ -21,9 +21,9 @@
         <div class="row g-4">
             <?php
             $services = [
-                ['icon' => 'bi-laptop',    'title' => '웹사이트 제작', 'desc' => '기업 홈페이지부터 쇼핑몰까지 빠르고 정확하게 제작합니다.'],
-                ['icon' => 'bi-phone',     'title' => '반응형 디자인', 'desc' => '모든 기기에서 최적화된 화면을 제공합니다.'],
-                ['icon' => 'bi-headset',   'title' => '유지보수',      'desc' => '제작 후에도 지속적인 관리와 지원을 제공합니다.'],
+                ['icon' => 'bi-laptop',    'title' => '웹사이트 제작', 'desc' => '기획부터 디자인, 개발까지 한 번에 진행합니다.'],
+                ['icon' => 'bi-phone',     'title' => '반응형 디자인', 'desc' => 'PC·태블릿·모바일 어디서 봐도 깨지지 않는 화면을 만듭니다.'],
+                ['icon' => 'bi-headset',   'title' => '유지보수',      'desc' => '오픈 후에도 콘텐츠 수정과 오류 대응까지 함께합니다.'],
             ];
             foreach ($services as $s):
             ?>
@@ -40,13 +40,15 @@
 </section>
 
 <!-- 최신 공지 -->
-<?php if (!empty($latestPosts)): ?>
 <section class="py-5 bg-light">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="h5 fw-bold mb-0">최신 공지사항</h2>
+            <?php if (!empty($latestPosts)): ?>
             <a href="/board/notice" class="text-decoration-none small">전체보기 <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+            <?php endif; ?>
         </div>
+        <?php if (!empty($latestPosts)): ?>
         <div class="list-group">
             <?php foreach ($latestPosts as $post): ?>
             <a href="/board/notice/<?= $post['id'] ?>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
@@ -55,15 +57,24 @@
             </a>
             <?php endforeach; ?>
         </div>
+        <?php else: ?>
+        <div class="list-group">
+            <div class="list-group-item text-muted small">
+                아직 등록된 공지사항이 없습니다.
+                <?php if ($authUser['role'] === 'admin'): ?>
+                    <a href="/board/notice/write" class="text-decoration-none">첫 공지 등록하기 <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </section>
-<?php endif; ?>
 
 <!-- CTA -->
 <section class="py-5 bg-dark text-white text-center">
     <div class="container">
         <h2 class="h3 fw-bold mb-2">프로젝트를 시작할 준비가 되셨나요?</h2>
-        <p class="text-white-50 mb-4">지금 바로 문의하세요. 빠르게 답변드립니다.</p>
+        <p class="text-white-50 mb-4">궁금한 점을 남겨주시면 담당자가 직접 확인 후 연락드립니다.</p>
         <?php if (!empty($settings['phone'])): ?>
             <a href="tel:<?= esc($settings['phone']) ?>" class="btn btn-outline-light me-2">
                 <i class="bi bi-telephone me-1" aria-hidden="true"></i><span class="visually-hidden">전화 </span><?= esc($settings['phone']) ?>
