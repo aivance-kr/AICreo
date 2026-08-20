@@ -20,7 +20,7 @@ php spark migrate            # 대기 중인 마이그레이션 전체 실행 (�
 php spark migrate:rollback   # 마지막 마이그레이션 배치 롤백
 ```
 
-> ⚠️ **`--host` 를 빼면 `creo.test` 접속이 `502 Bad Gateway` 로 실패한다.** `--host` 없이 기본값 `localhost` 로 바인딩하면 이 macOS 환경에서는 IPv6(`::1`)로만 리슨되는데, `creo.test` 를 프록시하는 공용 Caddy(`~/Codex-works/dev-proxy/Caddyfile`)는 `127.0.0.1:8306`(IPv4)로 연결을 시도해 거부당한다. 반드시 `--host 127.0.0.1` 을 명시할 것.
+> ⚠️ **`--host` 를 빼면 `creo.test` 접속이 `502 Bad Gateway` 로 실패한다.** `--host` 없이 기본값 `localhost` 로 바인딩하면 이 macOS 환경에서는 IPv6(`::1`)로만 리슨되는데, `creo.test` 를 프록시하는 공용 Caddy(`~/claude-works/dev-proxy/Caddyfile`)는 `127.0.0.1:8306`(IPv4)로 연결을 시도해 거부당한다. 반드시 `--host 127.0.0.1` 을 명시할 것.
 
 **검증 게이트 — 어디서 무엇을 돌리는가.** 검증은 로컬에서 끝낸다. `feature → dev` PR 에는 CI 를 걸지 않고(코드 리뷰만), CI 는 `dev → main` 배포 PR 에서만 돈다.
 
@@ -61,7 +61,7 @@ GitHub 호스팅 러너(`ubuntu-latest`)가 아니라 **로컬 Mac을 self-hoste
 - **러너 위치**: `~/actions-runners/AICreo`(저장소 밖). `aicreo-mac-local-runner` 라는 이름으로 launchd 서비스(`actions.runner.pushwing-AICreo.aicreo-mac-local-runner`)로 상시 등록돼 있다 — Mac이 켜져 있으면 자동으로 리스닝한다.
 - **저장소가 Public** — self-hosted 러너에 `pull_request` 트리거가 걸려 있으면 외부 fork PR 코드가 러너에서 실행될 위험이 있어(공식적으로 알려진 위험), 저장소 설정에서 `fork-pr-contributor-approval` 을 `all_external_contributors` 로 켜 두었다. 외부 협업자의 PR은 관리자가 수동 승인하기 전까지 워크플로우가 실행되지 않는다.
 - **MySQL**: self-hosted **macOS** 러너는 `services:` 도커 컨테이너를 지원하지 않는다(Linux 러너 전용 기능). 대신 각 잡에서 `docker run` 으로 직접 기동하고 `if: always()` 스텝으로 정리한다. Redis는 캐시 핸들러 기본값이 `file` 이라 CI 에 필요 없다.
-- **포트**: 이 Mac은 여러 저장소의 self-hosted 러너를 동시에 호스팅한다. 시스템 mysqld(`3306`)·AIFid(`13306`)·ci4-board(`33306`)·AILicet/AITessera(`23306`) 등과 겹치지 않게 **`quality` 잡은 MySQL `43306`, `coverage` 잡은 `43307`** 을 쓴다. 새 포트를 고를 땐 `~/Codex-works/*/.github/workflows/ci.yml` 을 함께 grep 해서 겹치는 값이 없는지 반드시 확인할 것 — 처음 `23306`으로 골랐다가 다른 두 저장소와 충돌해 CI 가 실패했었다.
+- **포트**: 이 Mac은 여러 저장소의 self-hosted 러너를 동시에 호스팅한다. 시스템 mysqld(`3306`)·AIFid(`13306`)·ci4-board(`33306`)·AILicet/AITessera(`23306`) 등과 겹치지 않게 **`quality` 잡은 MySQL `43306`, `coverage` 잡은 `43307`** 을 쓴다. 새 포트를 고를 땐 `~/claude-works/*/.github/workflows/ci.yml` 을 함께 grep 해서 겹치는 값이 없는지 반드시 확인할 것 — 처음 `23306`으로 골랐다가 다른 두 저장소와 충돌해 CI 가 실패했었다.
 - **컨테이너 정리는 반드시 `docker rm -f -v`.** `-v` 가 없으면 컨테이너만 지워지고 `/var/lib/mysql` 익명 볼륨이 남는다. 매 실행마다 수백 MB 씩 쌓여 러너의 Docker 디스크를 채우고, 어느 날 갑자기 MySQL 이 `No space left on device` 로 기동조차 못 하게 된다. 실제로 2026-07-17 부터 한 달간 210개(44GB)가 누적돼 PR #255 배포 CI 가 막혔다. 막혔을 때 회수: `docker volume prune -f`(사용 중 볼륨은 건드리지 않는다).
 - **두 잡은 서로 `needs` 가 없어 같은 러너에서 동시에 돈다.** 그래서 잡마다 호스트 포트가 달라야 한다. 같은 포트를 쓰면 나중 컨테이너가 바인딩에 실패해 즉시 죽는데, `docker run -d` 는 그 전에 컨테이너 ID 를 찍고 성공한 것처럼 끝나므로 **테스트의 "Connection refused" 수백 건으로만 드러나 원인이 가려진다.** 실제로 PR #255 에서 이 방식으로 `quality` 만 실패했다. 지금은 각 잡이 기동 직후 컨테이너 생존과 준비 완료를 확인하고 실패하면 `docker logs` 와 함께 즉시 중단한다.
 - **호스팅 러너로 되돌리려면**: `runs-on` 을 `ubuntu-latest` 로 바꾸고 MySQL을 다시 `services:` 블록으로 되돌리면 된다(포트도 표준값 `3306`으로 원복 가능).
@@ -98,6 +98,77 @@ git config core.hooksPath .githooks
   - 문서 전용 변경(`*.md`, `docs/**`, `.claude/rules/**`, `.codex/rules/**` 만 바뀐 push)은 검증을 자동으로 건너뜀. 코드가 한 줄이라도 섞이면 즉시 전체 검증으로 돌아간다.
 - 긴급 우회: `SKIP_HOOKS=1 git commit/push ...`(`main` 차단은 우회되지 않음). PHP·Composer 가 없는 환경에서는 해당 검증을 자동으로 건너뛴다.
 
-## 상세 규칙 (모듈)
+## 아키텍처 세부 규칙
 
-- **아키텍처** (테마 시스템, BaseController, 인증·라우팅, CSRF 예외, 캐싱, OAuth, 파일 업로드, DB 스키마): [`.codex/rules/architecture.md`](.codex/rules/architecture.md)
+### 테마 시스템
+
+`ThemeView`(`app/Libraries/ThemeView.php`)가 CI4 기본 렌더러를 대체합니다. 뷰 탐색 순서:
+
+1. `app/Views/themes/{active_theme}/{view}.php`
+2. `app/Views/themes/default/{view}.php`
+3. `app/Views/{view}.php` (관리자 뷰, 콘텐츠 뷰 — 테마 적용 대상 아님)
+
+활성 테마는 `settings.active_theme`에 저장됩니다(캐시됨). 새 테마는 `app/Views/themes/{name}/`와 `public/themes/{name}/`에 파일을 두어 추가하며, default와 다른 부분만 재정의하면 됩니다. `Config/Services.php`가 `ThemeView`를 공유 렌더러로 연결합니다.
+
+### BaseController — 전역 데이터 주입
+
+모든 컨트롤러는 `BaseController`를 상속합니다. 매 요청마다 실행되는 `initController()`가 `$this->viewData`에 다음을 주입합니다:
+
+- `$settings` — 사이트 전역 키-값 설정 (캐시됨)
+- `$menus` — 내비게이션 트리 (캐시됨)
+- `$authUser` — 세션 기반 사용자 정보 (id, nickname, role, loggedIn)
+- `$subLeftBanners` — 활성 사이드바 배너 (캐시됨, 관리자 경로에서는 건너뜀)
+- `$activePopups` — 현재 URI에 대한 활성 팝업 (캐시됨)
+- `$unreadInquiries` — 읽지 않은 문의 수 (admin 역할만)
+
+컨트롤러에서는 `$this->render('view/path', $extraData)`를 사용 — `$viewData`를 자동으로 병합합니다.
+
+### 인증 & 라우팅
+
+- 인증 필터 별칭: `auth` → `App\Filters\AuthFilter`
+- 사용법: `['filter' => 'auth:member']` 또는 `['filter' => 'auth:admin']`
+- 모든 `/admin/*` 경로는 `auth:admin` 필요
+- 동적 페이지 catch-all `(:segment)`는 `Routes.php`에서 반드시 맨 마지막에 위치
+
+### CSRF 예외
+
+다음 경로는 CSRF 토큰 없이 POST를 받으며(에디터 / 미디어 업로드), `Config/Filters.php`에서 제외됩니다:
+
+- `board/image-upload`
+- `admin/media/upload`
+
+### 캐싱 전략
+
+CI4 파일 캐시를 다음에 사용합니다:
+
+- `site_settings` — 전체 설정 키-값 맵 (`SettingModel`)
+- `nav_menus` — 메뉴 트리 (`MenuModel`)
+- `active_banners_{position}` — 위치별 배너 (`BannerModel`)
+- `active_popups` — 전체 활성 팝업 + 페이지 URL 매핑 (`PopupModel`)
+
+모델 콜백(`afterInsert/Update/Delete`)이 관리자 쓰기 시 해당 캐시 키를 무효화합니다. 배너/팝업 만료는 캐시된 데이터에 대해 PHP에서 검사하므로 시간 기반 캐시 무효화가 필요 없습니다.
+
+### 소셜 로그인 (OAuth)
+
+`AbstractOAuthProvider` 기반 클래스와 `GoogleProvider`, `NaverProvider`, `KakaoProvider`로 구성됩니다. `OAuthFactory::create(string $provider)`가 프로바이더를 해석합니다. 키는 `Config/OAuth.php`에 있으며 `.env`에서 읽습니다.
+
+### 파일 업로드
+
+| 클래스 | 용도 |
+| --- | --- |
+| `FileUploader` | 게시글 첨부파일 — 확장자 화이트리스트, 최대 10 MB, 랜덤 hex 파일명 |
+| `ImageUploader` | 배너 / 팝업 이미지 — 이미지 전용, 최대 2 MB |
+| `MediaUploader` | 관리자 미디어 라이브러리 — 드래그 앤 드롭, `media` 테이블에 경로 저장 |
+
+### DB 스키마 요약
+
+```
+users               — 회원 / 관리자 역할, 소셜 로그인 필드
+settings            — 키-값 사이트 설정 (active_theme, smtp 등)
+menus               — 2단계 내비게이션 트리
+pages               — slug 기반 동적 페이지
+boards / posts / post_files / post_comments  — 게시판 시스템
+inquiries           — 문의 폼 제출
+banners / popups / popup_pages               — 마케팅 오버레이
+media               — 미디어 라이브러리
+```
