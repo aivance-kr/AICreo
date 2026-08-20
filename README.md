@@ -464,7 +464,7 @@ flowchart TD
 | 🟦 청록색 | PR 진행 | `feature → dev`는 코드 리뷰만(CI 없음), `dev → main` 배포 PR 에서만 CI(cs·analyse·test + coverage) 실행 |
 | 🟢 초록색 | 병합·배포 | Squash merge(브랜치 자동 삭제), main 배포 완료 |
 
-> 상세 규칙(Squash vs Merge commit, 문서 전용 예외, 브랜치 자동 삭제 정책)은 `~/.claude/rules/git-workflow.md` 참고.
+> 상세 규칙(Squash vs Merge commit, 문서 전용 예외, 브랜치 자동 삭제 정책)은 전역 `AGENTS.md`의 Git workflow 섹션 참고.
 
 ---
 

@@ -1,0 +1,103 @@
+# AGENTS.md
+
+이 파일은 이 저장소에서 작업할 때 Codex(Codex.ai/code)에 대한 가이드를 제공합니다.
+
+> **공통 규칙은 전역 [`~/.codex/AGENTS.md`](~/.codex/AGENTS.md) 에서 자동 상속**된다(언어·Git 워크플로우·보안·코드 스타일·테스트·API·LSP). 이 문서는 **AICreo 저장소 전용** 규칙만 정의한다.
+
+## 저장소 개요
+
+1인 웹 에이전시를 위한 CodeIgniter 4 기업 홈페이지 템플릿(게시판 CMS / 사이트 빌더)입니다 — 동적 페이지, 게시판 시스템, 문의 폼, 관리자 패널을 제공합니다.
+
+저장소 루트가 하나의 CI4 프로젝트입니다. 모든 `php spark`, `composer`, `git` 명령은 루트에서 실행합니다.
+
+> **PHP 8.5+ 필수** (`composer.json` `require`/`platform` 고정). PHPStan 레벨 6.
+
+## 명령어
+
+```bash
+php spark serve --host 127.0.0.1 --port 8306  # 개발 서버 실행 (http://creo.test, Caddy 리버스 프록시 경유)
+php spark migrate            # 대기 중인 마이그레이션 전체 실행 (테이블 생성 + 시딩)
+php spark migrate:rollback   # 마지막 마이그레이션 배치 롤백
+```
+
+> ⚠️ **`--host` 를 빼면 `creo.test` 접속이 `502 Bad Gateway` 로 실패한다.** `--host` 없이 기본값 `localhost` 로 바인딩하면 이 macOS 환경에서는 IPv6(`::1`)로만 리슨되는데, `creo.test` 를 프록시하는 공용 Caddy(`~/Codex-works/dev-proxy/Caddyfile`)는 `127.0.0.1:8306`(IPv4)로 연결을 시도해 거부당한다. 반드시 `--host 127.0.0.1` 을 명시할 것.
+
+**검증 게이트 — 어디서 무엇을 돌리는가.** 검증은 로컬에서 끝낸다. `feature → dev` PR 에는 CI 를 걸지 않고(코드 리뷰만), CI 는 `dev → main` 배포 PR 에서만 돈다.
+
+```
+feature/*  ──[로컬 검증: composer ci]──▶  dev  ──[PR + 코드 리뷰]──▶  dev → main PR ──[CI]──▶  main
+                    ↑
+              여기가 실질적 게이트 (feature → dev 는 Squash merge 라 CI 가 없다)
+```
+
+```bash
+composer cs          # PHP-CS-Fixer 스타일 점검 (dry-run)
+composer cs:fix      # 스타일 자동 정규화
+composer analyse     # PHPStan 정적 분석 (레벨 6)
+composer test        # PHPUnit (테스트 DB는 MySQL)
+composer ci          # cs + analyse + test 한 번에 — push 전 이걸로 CI 미리 통과
+composer rector:dry  # 코드 현대화 미리보기 (선택), composer rector 로 적용
+```
+
+| 시점 | 무엇을 |
+|------|--------|
+| 개발 중 | `composer analyse` + `composer test` 수시 실행 |
+| push 전 (`main` 제외 모든 브랜치) | `composer ci` 필수 — 실패하면 push 하지 않는다. `pre-push` 훅이 강제한다 |
+| `feature → dev` PR | CI 없음. 코드 리뷰만 — 직전 push 의 `composer ci` 가 유일한 방어선 |
+| `dev → main` PR | GitHub Actions 전체(`quality` 잡: cs·analyse·test, PHP 8.5/MySQL 8.0 + `coverage` 잡: job summary 에 리포트) |
+
+#### 배포는 `main` push 로 자동 실행된다
+
+`deploy.yml` 이 `push: branches: [main]` 에서 돌아 SSH 로 운영 서버에 `git reset --hard origin/main` → `composer install --no-dev` → `php spark migrate --all` → `cache:clear` 를 수행한다. **마이그레이션은 배포가 알아서 돌리므로 따로 실행할 필요가 없다.**
+
+> ⚠️ 예전에는 `workflow_run: workflows:[CI], branches:[main]` 으로 CI 성공 뒤에 배포하도록 걸려 있었다. 그런데 CI 트리거가 `pull_request: [main]` 로 바뀌면서(#244) **이 연결이 조용히 끊겼다** — `pull_request` 로 도는 CI 실행은 소속 브랜치가 head(`dev`)라 `branches: [main]` 필터에 걸리지 않는다. 그 결과 2026-07-16 이후 배포가 한 번도 돌지 않았고, 머지는 정상인데 운영 서버만 옛 코드로 남아 있었다(#255 배포 후 발견). **CI 트리거를 건드릴 때는 `deploy.yml` 이 그것에 의존하고 있지 않은지 반드시 함께 확인할 것.**
+
+`feature → dev` 는 GitHub Squash merge 로 처리되어 로컬 훅도 CI 도 그 순간엔 동작하지 않는다 — 그래서 `feature/*` push 도 `dev` push 와 동일하게 `composer ci` 를 강제한다(건너뛰지 않는다). 이 단계를 생략하면 검증되지 않은 코드가 `dev` 에 쌓이고, 배포 PR 에서야 CI 가 처음 돌아 원인 추적 비용이 커진다 — 생략은 규칙 위반이다.
+
+#### self-hosted 러너에서 돈다
+
+GitHub 호스팅 러너(`ubuntu-latest`)가 아니라 **로컬 Mac을 self-hosted 러너로 등록해서** 돈다. 두 잡(`quality`, `coverage`) 모두 `runs-on: [self-hosted, macOS, ARM64]`.
+
+- **러너 위치**: `~/actions-runners/AICreo`(저장소 밖). `aicreo-mac-local-runner` 라는 이름으로 launchd 서비스(`actions.runner.pushwing-AICreo.aicreo-mac-local-runner`)로 상시 등록돼 있다 — Mac이 켜져 있으면 자동으로 리스닝한다.
+- **저장소가 Public** — self-hosted 러너에 `pull_request` 트리거가 걸려 있으면 외부 fork PR 코드가 러너에서 실행될 위험이 있어(공식적으로 알려진 위험), 저장소 설정에서 `fork-pr-contributor-approval` 을 `all_external_contributors` 로 켜 두었다. 외부 협업자의 PR은 관리자가 수동 승인하기 전까지 워크플로우가 실행되지 않는다.
+- **MySQL**: self-hosted **macOS** 러너는 `services:` 도커 컨테이너를 지원하지 않는다(Linux 러너 전용 기능). 대신 각 잡에서 `docker run` 으로 직접 기동하고 `if: always()` 스텝으로 정리한다. Redis는 캐시 핸들러 기본값이 `file` 이라 CI 에 필요 없다.
+- **포트**: 이 Mac은 여러 저장소의 self-hosted 러너를 동시에 호스팅한다. 시스템 mysqld(`3306`)·AIFid(`13306`)·ci4-board(`33306`)·AILicet/AITessera(`23306`) 등과 겹치지 않게 **`quality` 잡은 MySQL `43306`, `coverage` 잡은 `43307`** 을 쓴다. 새 포트를 고를 땐 `~/Codex-works/*/.github/workflows/ci.yml` 을 함께 grep 해서 겹치는 값이 없는지 반드시 확인할 것 — 처음 `23306`으로 골랐다가 다른 두 저장소와 충돌해 CI 가 실패했었다.
+- **컨테이너 정리는 반드시 `docker rm -f -v`.** `-v` 가 없으면 컨테이너만 지워지고 `/var/lib/mysql` 익명 볼륨이 남는다. 매 실행마다 수백 MB 씩 쌓여 러너의 Docker 디스크를 채우고, 어느 날 갑자기 MySQL 이 `No space left on device` 로 기동조차 못 하게 된다. 실제로 2026-07-17 부터 한 달간 210개(44GB)가 누적돼 PR #255 배포 CI 가 막혔다. 막혔을 때 회수: `docker volume prune -f`(사용 중 볼륨은 건드리지 않는다).
+- **두 잡은 서로 `needs` 가 없어 같은 러너에서 동시에 돈다.** 그래서 잡마다 호스트 포트가 달라야 한다. 같은 포트를 쓰면 나중 컨테이너가 바인딩에 실패해 즉시 죽는데, `docker run -d` 는 그 전에 컨테이너 ID 를 찍고 성공한 것처럼 끝나므로 **테스트의 "Connection refused" 수백 건으로만 드러나 원인이 가려진다.** 실제로 PR #255 에서 이 방식으로 `quality` 만 실패했다. 지금은 각 잡이 기동 직후 컨테이너 생존과 준비 완료를 확인하고 실패하면 `docker logs` 와 함께 즉시 중단한다.
+- **호스팅 러너로 되돌리려면**: `runs-on` 을 `ubuntu-latest` 로 바꾸고 MySQL을 다시 `services:` 블록으로 되돌리면 된다(포트도 표준값 `3306`으로 원복 가능).
+
+**Cron (운영 — 단 1줄 등록):**
+```
+* * * * * cd /path/to/app && php spark tasks:run >> /dev/null 2>&1
+```
+`Config/Tasks.php`가 `settings` 테이블에서 활성화된 잡을 읽어 등록. 활성화·주기는 `/admin/schedule`에서 관리.
+
+## 초기 설정
+
+```bash
+cp env .env
+# .env 편집: DB 접속 정보, CI_ENVIRONMENT, TinyMCE 키, app.baseURL(로컬은 기본값 8306 그대로 두되
+#            8306이 아닌 다른 포트로 띄우거나 배포 시엔 반드시 실제 URL로 바꿀 것 — CI4는 baseURL이
+#            없거나 빈 문자열이면 자동 감지하지 않고 예외를 던진다)
+php spark migrate
+# app/Config/App.php: appTimezone = 'Asia/Seoul' 설정
+```
+
+기본 관리자 계정: `admin@example.com` / `admin1234!`
+
+Linux 업로드 권한: `chmod -R 755 public/uploads writable`
+
+**Git 훅 활성화 (클론 후 1회):**
+```bash
+git config core.hooksPath .githooks
+```
+- `.githooks/pre-commit` — 커밋 직전 스테이징된 PHP 파일에 PHP-CS-Fixer(`composer cs:fix` 규칙)를 자동 적용(커밋을 막지는 않음).
+- `.githooks/pre-push` — 대상 브랜치별로 정책이 다르다:
+  - `main` 직접 push는 **무조건 차단**(배포는 `dev → main` PR 로만).
+  - 그 외 브랜치는 품질 게이트(`composer ci` = cs·analyse·test, ~10초)를 실행해 CI 왕복 전에 로컬에서 실패를 걸러냄.
+  - 문서 전용 변경(`*.md`, `docs/**`, `.claude/rules/**`, `.codex/rules/**` 만 바뀐 push)은 검증을 자동으로 건너뜀. 코드가 한 줄이라도 섞이면 즉시 전체 검증으로 돌아간다.
+- 긴급 우회: `SKIP_HOOKS=1 git commit/push ...`(`main` 차단은 우회되지 않음). PHP·Composer 가 없는 환경에서는 해당 검증을 자동으로 건너뛴다.
+
+## 상세 규칙 (모듈)
+
+- **아키텍처** (테마 시스템, BaseController, 인증·라우팅, CSRF 예외, 캐싱, OAuth, 파일 업로드, DB 스키마): [`.codex/rules/architecture.md`](.codex/rules/architecture.md)
