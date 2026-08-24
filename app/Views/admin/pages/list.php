@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-between mb-3">
-    <div></div>
+    <p class="text-muted small mb-0 align-self-center">슬러그를 <code>home</code>으로 만든 공개 페이지는 홈페이지(`/`)에 표시됩니다.</p>
     <a href="/admin/pages/create" class="btn btn-primary btn-sm">+ 페이지 추가</a>
 </div>
 
