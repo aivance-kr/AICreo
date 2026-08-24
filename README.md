@@ -66,7 +66,7 @@
 |------|------|
 | 백엔드 | CodeIgniter 4 (PHP ^8.5) |
 | 프론트 | Bootstrap 5 · Bootstrap Icons |
-| 에디터 | TinyMCE 6 (CDN · API 키 `.env` 관리) |
+| 에디터 | TinyMCE 6 (API 키가 필요 없는 jsDelivr CDN) |
 | DB | MySQL / MariaDB |
 | 인증 | CI4 Session 기반 |
 | 캐시 | CI4 File Cache (설정·메뉴) |
@@ -182,8 +182,9 @@ database.default.username = your_db_user
 database.default.password = your_db_password
 database.default.DBDriver = MySQLi
 
-# TinyMCE API 키 (https://www.tiny.cloud 에서 발급)
-editor.tinymce_api_key = your-tinymce-api-key
+# TinyMCE Cloud를 사용할 때만 API 키를 설정합니다.
+# 현재 에디터는 도메인 등록이 필요 없는 jsDelivr CDN을 사용합니다.
+editor.tinymce_api_key =
 ```
 
 ### 4. 마이그레이션 실행
@@ -427,7 +428,7 @@ app/Views/themes/{테마명}/components/footer.php
 | 카드 테두리 깨짐 | `.card` CSS를 `border-radius` 직접 지정 → `--bs-card-border-radius` / `--bs-card-inner-border-radius` CSS 변수로 교체 |
 | 카드 내부 깨짐 | `.card`에 `overflow: hidden` 추가, 둥근 모서리 밖 배경 삐져나옴 방지 |
 | 게시판 위지윅 에디터 | 글쓰기·수정에 TinyMCE 6 적용, 이미지 붙여넣기·업로드용 `POST board/image-upload` 엔드포인트 추가 (로그인 필수) |
-| TinyMCE API 키 | `Config/Editor.php` 추가, `.env`의 `editor.tinymce_api_key`로 관리 |
+| TinyMCE 로더 | 도메인 등록 경고를 피하기 위해 API 키가 필요 없는 jsDelivr CDN 사용 |
 
 ---
 
