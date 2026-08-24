@@ -22,10 +22,9 @@
 
 # app.baseURL 은 반드시 설정해야 한다 — CI4 는 이 값이 없거나 빈 문자열이면
 # 유효한 URL 이 아니라며 예외를 던진다(자동 감지하지 않는다). 아래 값은 이
-# 저장소가 문서화한 로컬 개발 포트(README/CLAUDE.md 의 `php spark serve
-# --port 8306`)에 맞춘 기본값이다 — 운영 배포 시에는 반드시 실제 도메인으로
-# 바꿔야 한다.
-app.baseURL = 'http://localhost:8306/'
+# 저장소가 문서화한 로컬 Caddy 주소(`http://creo.test/`)에 맞춘 기본값이다 —
+# 운영 배포 시에는 반드시 실제 도메인으로 바꿔야 한다.
+app.baseURL = 'http://creo.test/'
 # If you have trouble with `.`, you could also use `_`.
 # app_baseURL = ''
 # app.forceGlobalSecureRequests = false
