@@ -40,11 +40,11 @@
 
 - **PHP 8.5+** — `composer.json`의 require/platform에 고정
 - **MySQL / MariaDB** — 운영 및 테스트용 DB
-- **Composer**, TinyMCE API 키(에디터용, https://www.tiny.cloud 발급)
+- **Composer** (TinyMCE는 API 키가 필요 없는 공개 CDN을 사용)
 
 ### 설치 절차
 
-1. **환경 파일 생성** — `cp env .env` 후 DB 접속 정보, `CI_ENVIRONMENT`, TinyMCE 키 편집
+1. **환경 파일 생성** — `cp env .env` 후 DB 접속 정보와 `CI_ENVIRONMENT` 편집
 2. **타임존 설정** — `app/Config/App.php`의 `appTimezone = 'Asia/Seoul'`
 3. **마이그레이션** — `php spark migrate` (테이블 생성 + 기본 데이터: 게시판 3개 · 관리자 계정)
 4. **업로드 권한** (Linux) — `chmod -R 755 public/uploads writable`

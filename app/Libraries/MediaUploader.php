@@ -57,6 +57,8 @@ class MediaUploader
             'id'      => $id,
             'path'    => '/' . $relativePath,
             'url'     => base_url($relativePath),
+            // TinyMCE의 images_upload_url 응답 계약을 함께 지원한다.
+            'location' => base_url($relativePath),
         ];
     }
 }
