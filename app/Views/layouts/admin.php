@@ -28,7 +28,12 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
         /* Bootstrap 오프캔버스가 992px 이상에서 배경을 transparent !important 로 강제 리셋한다.
            #sidebar 는 ID 선택자라 특정성은 더 높지만 !important 없이는 그 규칙을 이길 수 없다 —
            그래서 여기도 !important 로 맞춰 특정성 비교(ID > class)로 승부를 낸다. */
-        #sidebar { width: var(--sidebar-w); background: var(--dark) !important; }
+        #sidebar {
+            width: var(--sidebar-w);
+            background: var(--dark) !important;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
         /* 어두운 표면 위에서는 초점 링을 밝은 쪽으로 뒤집는다 */
         #sidebar { --focus-ring-color: var(--on-dark-strong); }
         #sidebar .brand { padding: 1rem 1.2rem; color: var(--on-dark-strong); font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--on-dark-raised); }
@@ -48,7 +53,13 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
         /* 데스크톱에서만 사이드바를 고정 배치한다.
            그 아래 폭에서는 Bootstrap 오프캔버스가 맡으므로 여백을 주지 않는다. */
         @media (min-width: 992px) {
-            #sidebar { position: fixed; top: 0; left: 0; min-height: 100vh; }
+            #sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                max-height: 100dvh;
+            }
             #topbar  { margin-left: var(--sidebar-w); padding: .6rem 1.5rem; }
             #content { margin-left: var(--sidebar-w); padding: 1.5rem; }
         }
