@@ -15,7 +15,7 @@
                 <div class="col-md-6">
                     <label for="pages-form-slug" class="form-label small">슬러그 (영문, -, _) *</label>
                     <input id="pages-form-slug" type="text" name="slug" class="form-control form-control-sm"
-                           value="<?= old('slug') ?>" required placeholder="예: about, service">
+                           value="<?= old('slug') ?>" required placeholder="예: about, service (홈은 home)">
                 </div>
                 <?php endif; ?>
                 <div class="col-md-<?= $page ? '6' : '6' ?>">

@@ -4,6 +4,17 @@
 <!-- 메인 상단 배너 -->
 <?= view('components/banner_slot', ['banners' => $mainTopBanners]) ?>
 
+<?php if (trim((string) ($page['content'] ?? '')) !== ''): ?>
+<!-- 관리자 페이지 관리에서 슬러그 home으로 저장한 홈 콘텐츠 -->
+<section class="py-5">
+    <div class="container">
+        <h1 class="visually-hidden"><?= esc($page['title']) ?></h1>
+        <div class="page-content">
+            <?= $page['content'] /* TinyMCE HTML 콘텐츠 */ ?>
+        </div>
+    </div>
+</section>
+<?php else: ?>
 <!-- 히어로 -->
 <section class="py-5 bg-primary text-white">
     <div class="container py-4 text-center">
@@ -83,6 +94,7 @@
         <a href="/contact" class="btn btn-primary">온라인 문의</a>
     </div>
 </section>
+<?php endif; ?>
 
 <!-- 메인 하단 배너 -->
 <?= view('components/banner_slot', ['banners' => $mainBotBanners]) ?>

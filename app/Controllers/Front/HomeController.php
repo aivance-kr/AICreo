@@ -7,6 +7,7 @@ namespace App\Controllers\Front;
 use App\Controllers\BaseController;
 use App\Models\BannerModel;
 use App\Models\BoardModel;
+use App\Models\PageModel;
 use App\Models\PostModel;
 
 class HomeController extends BaseController
@@ -27,11 +28,14 @@ class HomeController extends BaseController
         }
 
         $bannerModel = new BannerModel();
+        $homePage    = (new PageModel())->getBySlug('home');
 
         return $this->render('pages/home', [
             'page' => [
-                'title'     => $this->viewData['settings']['site_name'] ?? '',
-                'meta_desc' => $this->viewData['settings']['site_desc'] ?? '',
+                'title'      => $homePage['title'] ?? $this->viewData['settings']['site_name'] ?? '',
+                'meta_title' => ($homePage['meta_title'] ?? '') ?: ($homePage['title'] ?? $this->viewData['settings']['site_name'] ?? ''),
+                'meta_desc'  => ($homePage['meta_desc'] ?? '') ?: ($this->viewData['settings']['site_desc'] ?? ''),
+                'content'    => $homePage['content'] ?? '',
             ],
             'latestPosts'    => $latestPosts,
             'mainTopBanners' => $bannerModel->getActiveByPosition('main_top'),
