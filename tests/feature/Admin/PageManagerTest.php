@@ -40,6 +40,22 @@ final class PageManagerTest extends AdminTestCase
         $this->assertStringNotContainsString('우리의 서비스', $home->getBody());
     }
 
+    public function testPublishedEmptyHomePageStillReplacesDefaultHome(): void
+    {
+        (new PageModel())->insert([
+            'slug'    => 'home',
+            'title'   => 'EMPTY_HOME_TITLE_MARKER',
+            'content' => '',
+            'status'  => 'published',
+        ]);
+
+        $home = $this->get('/');
+
+        $home->assertStatus(200);
+        $this->assertStringContainsString('EMPTY_HOME_TITLE_MARKER', $home->getBody());
+        $this->assertStringNotContainsString('우리의 서비스', $home->getBody());
+    }
+
     public function testCreateRejectsInvalidSlug(): void
     {
         $result = $this->withSession($this->adminSession)->post('admin/pages/create', [

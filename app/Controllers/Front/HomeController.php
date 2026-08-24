@@ -32,10 +32,11 @@ class HomeController extends BaseController
 
         return $this->render('pages/home', [
             'page' => [
-                'title'      => $homePage['title'] ?? $this->viewData['settings']['site_name'] ?? '',
-                'meta_title' => ($homePage['meta_title'] ?? '') ?: ($homePage['title'] ?? $this->viewData['settings']['site_name'] ?? ''),
-                'meta_desc'  => ($homePage['meta_desc'] ?? '') ?: ($this->viewData['settings']['site_desc'] ?? ''),
-                'content'    => $homePage['content'] ?? '',
+                'title'          => $homePage['title'] ?? $this->viewData['settings']['site_name'] ?? '',
+                'meta_title'     => ($homePage['meta_title'] ?? '') ?: ($homePage['title'] ?? $this->viewData['settings']['site_name'] ?? ''),
+                'meta_desc'      => ($homePage['meta_desc'] ?? '') ?: ($this->viewData['settings']['site_desc'] ?? ''),
+                'content'        => $homePage['content'] ?? '',
+                'is_custom_home' => $homePage !== null,
             ],
             'latestPosts'    => $latestPosts,
             'mainTopBanners' => $bannerModel->getActiveByPosition('main_top'),

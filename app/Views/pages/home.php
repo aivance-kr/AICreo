@@ -4,11 +4,15 @@
 <!-- 메인 상단 배너 -->
 <?= view('components/banner_slot', ['banners' => $mainTopBanners]) ?>
 
-<?php if (trim((string) ($page['content'] ?? '')) !== ''): ?>
+<?php if ($page['is_custom_home'] ?? false): ?>
 <!-- 관리자 페이지 관리에서 슬러그 home으로 저장한 홈 콘텐츠 -->
 <section class="py-5">
     <div class="container">
-        <h1 class="visually-hidden"><?= esc($page['title']) ?></h1>
+        <?php if (trim((string) ($page['content'] ?? '')) === ''): ?>
+            <h1 class="h2 fw-bold mb-4"><?= esc($page['title']) ?></h1>
+        <?php else: ?>
+            <h1 class="visually-hidden"><?= esc($page['title']) ?></h1>
+        <?php endif; ?>
         <div class="page-content">
             <?= $page['content'] /* TinyMCE HTML 콘텐츠 */ ?>
         </div>
