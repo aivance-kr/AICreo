@@ -27,8 +27,9 @@ class HomeController extends BaseController
                 ->findAll(3);
         }
 
-        $bannerModel = new BannerModel();
-        $homePage    = (new PageModel())->getBySlug('home');
+        $bannerModel       = new BannerModel();
+        $homePage          = (new PageModel())->getBySlug('home');
+        $showLatestNotices = ($this->viewData['settings']['home_show_latest_notices'] ?? '1') === '1';
 
         return $this->render('pages/home', [
             'page' => [
@@ -38,9 +39,10 @@ class HomeController extends BaseController
                 'content'        => $homePage['content'] ?? '',
                 'is_custom_home' => $homePage !== null,
             ],
-            'latestPosts'    => $latestPosts,
-            'mainTopBanners' => $bannerModel->getActiveByPosition('main_top'),
-            'mainBotBanners' => $bannerModel->getActiveByPosition('main_bottom'),
+            'latestPosts'       => $latestPosts,
+            'showLatestNotices' => $showLatestNotices,
+            'mainTopBanners'    => $bannerModel->getActiveByPosition('main_top'),
+            'mainBotBanners'    => $bannerModel->getActiveByPosition('main_bottom'),
         ]);
     }
 }

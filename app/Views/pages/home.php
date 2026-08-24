@@ -54,6 +54,9 @@
     </div>
 </section>
 
+<?php endif; ?>
+
+<?php if ($showLatestNotices ?? true): ?>
 <!-- 최신 공지 -->
 <section class="py-5 bg-light">
     <div class="container">
@@ -76,7 +79,7 @@
         <div class="list-group">
             <div class="list-group-item text-muted small">
                 아직 등록된 공지사항이 없습니다.
-                <?php if ($authUser['role'] === 'admin'): ?>
+                <?php if (($authUser['role'] ?? '') === 'admin'): ?>
                     <a href="/board/notice/write" class="text-decoration-none">첫 공지 등록하기 <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
                 <?php endif; ?>
             </div>
@@ -84,7 +87,9 @@
         <?php endif; ?>
     </div>
 </section>
+<?php endif; ?>
 
+<?php if (!($page['is_custom_home'] ?? false)): ?>
 <!-- CTA -->
 <section class="py-5 bg-dark text-white text-center">
     <div class="container">

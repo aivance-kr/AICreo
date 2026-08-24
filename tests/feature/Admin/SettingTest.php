@@ -40,4 +40,19 @@ final class SettingTest extends AdminTestCase
         $result->assertSee('미디어에서 선택');
         $result->assertSee('직접 업로드');
     }
+
+    public function testAdminCanToggleLatestHomeNotices(): void
+    {
+        $result = $this->withSession($this->adminSession)->get('admin/settings/general');
+
+        $result->assertStatus(200);
+        $result->assertSee('홈 최신 공지사항 표시');
+
+        $result = $this->withSession($this->adminSession)->post('admin/settings/general', [
+            'home_show_latest_notices' => '0',
+        ]);
+
+        $result->assertRedirectTo('/admin/settings/general');
+        $this->assertSame('0', (new SettingModel())->getAllAsMap()['home_show_latest_notices']);
+    }
 }
