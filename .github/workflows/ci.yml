@@ -168,7 +168,7 @@ jobs:
         run: |
           php --version
           composer --version
-          php -r '$required = ["intl", "mbstring", "mysqli", "pcov"]; foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
+          php -r '$required = ["intl", "mbstring", "mysqli", "xdebug"]; foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3
@@ -176,7 +176,7 @@ jobs:
       - name: Tests with coverage
         run: |
           mkdir -p build
-          vendor/bin/phpunit \
+          XDEBUG_MODE=coverage vendor/bin/phpunit \
             --coverage-text=build/coverage.txt \
             --coverage-cobertura=build/cobertura.xml
 
@@ -186,7 +186,11 @@ jobs:
           {
             echo '### 📊 커버리지'
             echo '```'
-            cat build/coverage.txt
+            if [ -f build/coverage.txt ]; then
+              cat build/coverage.txt
+            else
+              echo '커버리지 리포트가 생성되지 않았습니다.'
+            fi
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
