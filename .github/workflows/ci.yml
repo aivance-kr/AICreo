@@ -81,13 +81,11 @@ jobs:
             exit 1
           fi
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: intl, mbstring, mysqli
-          coverage: none
-          tools: composer:v2
+      - name: PHP 환경 확인
+        run: |
+          php --version
+          composer --version
+          php -r '$required = ["intl", "mbstring", "mysqli"]; foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3
@@ -166,13 +164,11 @@ jobs:
             exit 1
           fi
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: intl, mbstring, mysqli
-          coverage: pcov
-          tools: composer:v2
+      - name: PHP 및 커버리지 확장 확인
+        run: |
+          php --version
+          composer --version
+          php -r '$required = ["intl", "mbstring", "mysqli", "pcov"]; foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3
