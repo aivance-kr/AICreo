@@ -287,6 +287,25 @@ final class ViewAccessibilityTest extends CIUnitTestCase
     }
 
     /**
+     * 관리자 메뉴가 뷰포트보다 길어져도 마지막 항목까지 접근할 수 있어야 한다.
+     */
+    public function testAdminSidebarCanScrollWhenMenuExceedsViewport(): void
+    {
+        $source = (string) file_get_contents(APPPATH . 'Views/layouts/admin.php');
+
+        $this->assertStringContainsString(
+            'overflow-y: auto',
+            $source,
+            '관리자 사이드바에 세로 스크롤이 없어 뷰포트 아래 메뉴에 접근할 수 없습니다.',
+        );
+        $this->assertStringContainsString(
+            'height: 100vh',
+            $source,
+            '관리자 사이드바가 뷰포트 높이를 기준으로 제한되지 않습니다.',
+        );
+    }
+
+    /**
      * 뷰에서 원시 슈퍼글로벌을 직접 읽지 않는다(보안 규칙).
      */
     public function testViewsDoNotTouchSuperglobals(): void

@@ -10,6 +10,8 @@
 단순 홈페이지는 3~5일, 중형 사이트는 1~2주 납품을 목표로 설계된 보일러플레이트입니다.
 
 > 📘 **운영자·개발자 통합 매뉴얼**: 각 관리자 화면의 입력 필드·옵션·동작과 방문자 기능을 정리한 상세 매뉴얼은 [`docs/manual.md`](docs/manual.md) 를 참고하세요.
+>
+> 🏛️ **시스템 아키텍처**: CodeIgniter 4 요청 흐름, 인증·관리자 경계, 데이터 계층과 외부 연동 구조는 [아키텍처 다이어그램](architecture/aicreo-architecture.html)에서 확인할 수 있습니다.
 
 ---
 
@@ -66,7 +68,7 @@
 |------|------|
 | 백엔드 | CodeIgniter 4 (PHP ^8.5) |
 | 프론트 | Bootstrap 5 · Bootstrap Icons |
-| 에디터 | TinyMCE 6 (CDN · API 키 `.env` 관리) |
+| 에디터 | TinyMCE 6 (API 키가 필요 없는 jsDelivr CDN) |
 | DB | MySQL / MariaDB |
 | 인증 | CI4 Session 기반 |
 | 캐시 | CI4 File Cache (설정·메뉴) |
@@ -182,8 +184,9 @@ database.default.username = your_db_user
 database.default.password = your_db_password
 database.default.DBDriver = MySQLi
 
-# TinyMCE API 키 (https://www.tiny.cloud 에서 발급)
-editor.tinymce_api_key = your-tinymce-api-key
+# TinyMCE Cloud를 사용할 때만 API 키를 설정합니다.
+# 현재 에디터는 도메인 등록이 필요 없는 jsDelivr CDN을 사용합니다.
+editor.tinymce_api_key =
 ```
 
 ### 4. 마이그레이션 실행
@@ -427,7 +430,7 @@ app/Views/themes/{테마명}/components/footer.php
 | 카드 테두리 깨짐 | `.card` CSS를 `border-radius` 직접 지정 → `--bs-card-border-radius` / `--bs-card-inner-border-radius` CSS 변수로 교체 |
 | 카드 내부 깨짐 | `.card`에 `overflow: hidden` 추가, 둥근 모서리 밖 배경 삐져나옴 방지 |
 | 게시판 위지윅 에디터 | 글쓰기·수정에 TinyMCE 6 적용, 이미지 붙여넣기·업로드용 `POST board/image-upload` 엔드포인트 추가 (로그인 필수) |
-| TinyMCE API 키 | `Config/Editor.php` 추가, `.env`의 `editor.tinymce_api_key`로 관리 |
+| TinyMCE 로더 | 도메인 등록 경고를 피하기 위해 API 키가 필요 없는 jsDelivr CDN 사용 |
 
 ---
 
@@ -464,7 +467,7 @@ flowchart TD
 | 🟦 청록색 | PR 진행 | `feature → dev`는 코드 리뷰만(CI 없음), `dev → main` 배포 PR 에서만 CI(cs·analyse·test + coverage) 실행 |
 | 🟢 초록색 | 병합·배포 | Squash merge(브랜치 자동 삭제), main 배포 완료 |
 
-> 상세 규칙(Squash vs Merge commit, 문서 전용 예외, 브랜치 자동 삭제 정책)은 `~/.claude/rules/git-workflow.md` 참고.
+> 상세 규칙(Squash vs Merge commit, 문서 전용 예외, 브랜치 자동 삭제 정책)은 전역 `AGENTS.md`의 Git workflow 섹션 참고.
 
 ---
 

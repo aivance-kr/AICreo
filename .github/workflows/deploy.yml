@@ -23,7 +23,7 @@ concurrency:
 jobs:
   deploy:
     name: 운영 서버 배포 (SSH)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
 
     # 조건 없이 실행한다.
     # 예전 조건은 github.event.workflow_run.conclusion 을 봤는데, push 트리거에는

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AiCreo CodeIgniter 4 Architecture",
+    "output": "aicreo-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/pushwing/AICreo.git",
+      "revision": "65e6e558b1886dbf420d1a57f5dbb3333f68f6d2"
+    },
+    "views": [
+      {
+        "id": "request-rendering",
+        "label": "요청과 렌더링",
+        "focus": ["browser", "caddy", "routes", "base", "theme", "views"],
+        "note": "브라우저 요청이 Routes와 BaseController를 거쳐 테마 뷰로 렌더링됩니다."
+      },
+      {
+        "id": "admin-data",
+        "label": "관리자와 데이터",
+        "focus": ["browser", "auth", "admin", "models", "mysql", "operations"],
+        "note": "관리자 필터와 서비스 경계를 거쳐 모델, 캐시, 저장소가 변경됩니다."
+      },
+      {
+        "id": "external-integrations",
+        "label": "외부 연동",
+        "focus": ["browser", "theme", "oauth", "operations"],
+        "note": "OAuth, Kakao/TinyMCE SDK, Cron 기반 Tasks가 애플리케이션과 연결됩니다."
+      }
+    ]
+  },
+  "components": [
+    { "id": "browser", "type": "external", "label": "사용자 브라우저", "sublabel": "공개 페이지 / 관리자", "pos": [40, 300], "size": [150, 64], "sources": [{ "path": "app/Views/pages/home.php", "label": "화면 템플릿" }] },
+    { "id": "caddy", "type": "cloud", "label": "Caddy reverse proxy", "sublabel": "creo.test → 127.0.0.1:8306", "pos": [250, 300], "size": [170, 64], "tag": "local runtime", "sources": [{ "path": "AGENTS.md", "label": "로컬 개발 주소" }] },
+    { "id": "routes", "type": "backend", "label": "CodeIgniter 4 Router", "sublabel": "app/Config/Routes.php", "pos": [470, 300], "size": [170, 64], "sources": [{ "path": "app/Config/Routes.php", "label": "라우팅" }] },
+    { "id": "base", "type": "backend", "label": "BaseController", "sublabel": "입력 · 공통 데이터 · 응답", "pos": [690, 300], "size": [175, 64], "tag": "request boundary", "sources": [{ "path": "app/Controllers/BaseController.php", "line": 15, "end_line": 90, "label": "공통 컨텍스트" }] },
+    { "id": "theme", "type": "backend", "label": "ThemeView", "sublabel": "활성 테마 → default fallback", "pos": [920, 300], "size": [175, 64], "sources": [{ "path": "app/Libraries/ThemeView.php", "label": "렌더러" }] },
+    { "id": "views", "type": "frontend", "label": "PHP Views / Assets", "sublabel": "themes/* · public/*", "pos": [1150, 300], "size": [175, 64], "sources": [{ "path": "app/Views/themes/default/layouts/main.php", "label": "테마 뷰" }] },
+    { "id": "auth", "type": "security", "label": "AuthFilter + CSRF", "sublabel": "auth:member / auth:admin", "pos": [470, 120], "size": [170, 64], "tag": "trust boundary", "sources": [{ "path": "app/Filters/AuthFilter.php", "label": "인증 필터" }, { "path": "app/Config/Filters.php", "label": "CSRF 정책" }] },
+    { "id": "admin", "type": "backend", "label": "Controllers / Services", "sublabel": "공개 기능 · 관리자 CMS", "pos": [690, 120], "size": [175, 64], "sources": [{ "path": "app/Controllers/Front/PageController.php", "label": "유스케이스" }, { "path": "app/Libraries/ThemeView.php", "label": "서비스" }] },
+    { "id": "models", "type": "backend", "label": "Models", "sublabel": "쿼리 · 콜백 · 캐시 무효화", "pos": [920, 120], "size": [175, 64], "sources": [{ "path": "app/Models/SettingModel.php", "label": "데이터 접근" }] },
+    { "id": "mysql", "type": "database", "label": "MySQL", "sublabel": "users · pages · boards · CMS", "pos": [1150, 120], "size": [175, 64], "sources": [{ "path": "app/Database/Migrations/2024-01-01-000001_CreateBoardTables.php", "label": "스키마 / 시딩" }] },
+    { "id": "oauth", "type": "external", "label": "OAuth Providers", "sublabel": "Google · Naver · Kakao", "pos": [250, 120], "size": [170, 64], "sources": [{ "path": "app/Libraries/OAuth/AbstractOAuthProvider.php", "label": "OAuth" }] },
+    { "id": "operations", "type": "external", "label": "운영 연동", "sublabel": "Cron Tasks · Kakao · TinyMCE", "pos": [690, 500], "size": [190, 64], "sources": [{ "path": "AGENTS.md", "label": "운영 / 외부 연동" }] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AiCreo application", "wraps": ["routes", "base", "theme", "views", "auth", "admin", "models", "operations"] },
+    { "kind": "security-group", "label": "인증·상태 변경 경계", "wraps": ["auth", "admin", "models", "mysql"] }
+  ],
+  "connections": [
+    { "id": "browser-caddy", "from": "browser", "to": "caddy", "label": "HTTP(S)", "variant": "emphasis" },
+    { "id": "caddy-routes", "from": "caddy", "to": "routes", "label": "forward" },
+    { "id": "routes-base", "from": "routes", "to": "base", "label": "dispatch" },
+    { "id": "base-theme", "from": "base", "to": "theme", "label": "render", "variant": "emphasis" },
+    { "id": "theme-views", "from": "theme", "to": "views" },
+    { "id": "browser-auth", "from": "browser", "to": "auth", "label": "session / CSRF", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "oauth-auth", "from": "oauth", "to": "auth", "variant": "security" },
+    { "id": "auth-admin", "from": "auth", "to": "admin", "label": "authorize", "variant": "security" },
+    { "id": "admin-models", "from": "admin", "to": "models", "label": "use case" },
+    { "id": "models-mysql", "from": "models", "to": "mysql" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Request path", "items": ["Caddy는 로컬 도메인을 IPv4 upstream으로 전달", "Routes → BaseController → ThemeView 순서로 공개 화면을 렌더링"] },
+    { "dot": "emerald", "title": "Data ownership", "items": ["Controller는 입력 검증과 유스케이스 호출을 담당", "Model이 MySQL 접근과 설정성 캐시 무효화를 소유", "업로드는 검증 후 public/uploads 또는 media 경로에 저장"] },
+    { "dot": "rose", "title": "Trust boundaries", "items": ["admin 경로는 auth:admin 필터가 보호", "상태 변경 POST에는 CSRF가 적용되고 명시된 업로드 경로만 예외", "OAuth와 브라우저 SDK는 외부 경계로 분리"] }
+  ]
+}

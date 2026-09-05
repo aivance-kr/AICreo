@@ -14,10 +14,10 @@ concurrency:
 jobs:
   quality:
     name: PHP ${{ matrix.php }} - 정적분석 · 스타일 · 테스트
-    # self-hosted(macOS) 러너는 `services:` 도커 컨테이너를 지원하지 않는다
-    # (GitHub Actions 서비스 컨테이너는 Linux 러너 전용). 대신 아래에서
-    # MySQL을 docker run으로 직접 띄우고 잡 종료 시 정리한다.
-    runs-on: [self-hosted, macOS, ARM64]
+    # self-hosted Linux 러너는 services: 도커 컨테이너도 지원하지만,
+    # 조직 러너 1개를 여러 워크플로우/잡이 공유하므로 포트 충돌을 피하기 위해
+    # 계속 docker run 으로 직접 띄우고 잡 종료 시 정리한다.
+    runs-on: [self-hosted, Linux, X64]
 
     strategy:
       fail-fast: false
@@ -48,10 +48,9 @@ jobs:
       - name: MySQL 컨테이너 기동
         run: |
           docker rm -f ci-mysql-${{ github.run_id }} 2>/dev/null || true
-          # 이 Mac은 여러 저장소의 self-hosted 러너를 동시에 호스팅한다.
-          # 시스템 MySQL(3306)·AIFid(13306)·AILicet/AITessera(23306) 등과
-          # 겹치지 않는 43306을 쓴다 — 새 포트를 고를 땐 다른 저장소
-          # .github/workflows/ci.yml 도 함께 grep 해서 겹치지 않는지 확인할 것.
+          # 조직 self-hosted 러너 1개를 여러 저장소가 공유할 수 있다.
+          # 다른 저장소 포트와 겹치지 않는 43306을 쓴다 — 새 포트를 고를 땐
+          # 다른 저장소 .github/workflows/ci.yml 도 함께 grep 해서 확인할 것.
           docker run -d --name ci-mysql-${{ github.run_id }} \
             -e MYSQL_ROOT_PASSWORD=root \
             -e MYSQL_DATABASE=ci4_agency_test \
@@ -82,13 +81,11 @@ jobs:
             exit 1
           fi
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: intl, mbstring, mysqli
-          coverage: none
-          tools: composer:v2
+      - name: PHP 환경 확인
+        run: |
+          php --version
+          composer --version
+          php -r '$required = ["intl", "mbstring", "mysqli"]; foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3
@@ -111,8 +108,8 @@ jobs:
 
   coverage:
     name: 커버리지 리포트
-    # self-hosted(macOS) 러너는 services: 를 지원하지 않아 MySQL을 직접 기동한다.
-    runs-on: [self-hosted, macOS, ARM64]
+    # quality 잡과 동일한 이유(포트 충돌 회피)로 MySQL을 직접 기동한다.
+    runs-on: [self-hosted, Linux, X64]
     # CI 자체가 dev → main 배포 PR 에서만 도므로 quality 잡과 함께 항상 실행된다.
     # 커버리지 결과는 job summary에서 확인한다.
 
@@ -167,13 +164,11 @@ jobs:
             exit 1
           fi
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: intl, mbstring, mysqli
-          coverage: pcov
-          tools: composer:v2
+      - name: PHP 및 커버리지 확장 확인
+        run: |
+          php --version
+          composer --version
+          php -r '$required = ["intl", "mbstring", "mysqli", "xdebug"]; foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3
@@ -181,7 +176,7 @@ jobs:
       - name: Tests with coverage
         run: |
           mkdir -p build
-          vendor/bin/phpunit \
+          XDEBUG_MODE=coverage vendor/bin/phpunit \
             --coverage-text=build/coverage.txt \
             --coverage-cobertura=build/cobertura.xml
 
@@ -191,7 +186,11 @@ jobs:
           {
             echo '### 📊 커버리지'
             echo '```'
-            cat build/coverage.txt
+            if [ -f build/coverage.txt ]; then
+              cat build/coverage.txt
+            else
+              echo '커버리지 리포트가 생성되지 않았습니다.'
+            fi
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -204,7 +203,7 @@ jobs:
 
   notify:
     name: Slack 알림
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     needs: [quality, coverage]
     if: always()
 

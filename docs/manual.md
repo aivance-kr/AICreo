@@ -40,11 +40,11 @@
 
 - **PHP 8.5+** — `composer.json`의 require/platform에 고정
 - **MySQL / MariaDB** — 운영 및 테스트용 DB
-- **Composer**, TinyMCE API 키(에디터용, https://www.tiny.cloud 발급)
+- **Composer** (TinyMCE는 API 키가 필요 없는 공개 CDN을 사용)
 
 ### 설치 절차
 
-1. **환경 파일 생성** — `cp env .env` 후 DB 접속 정보, `CI_ENVIRONMENT`, TinyMCE 키 편집
+1. **환경 파일 생성** — `cp env .env` 후 DB 접속 정보와 `CI_ENVIRONMENT` 편집
 2. **타임존 설정** — `app/Config/App.php`의 `appTimezone = 'Asia/Seoul'`
 3. **마이그레이션** — `php spark migrate` (테이블 생성 + 기본 데이터: 게시판 3개 · 관리자 계정)
 4. **업로드 권한** (Linux) — `chmod -R 755 public/uploads writable`
@@ -103,6 +103,8 @@
 | 메타 타이틀 / 설명 | SEO 검색 결과용 메타 정보 |
 | 순서 | 목록 정렬 숫자 |
 | 상태 | `published` 공개 · `draft` 초안 |
+
+> 홈페이지(`/`)를 관리자에서 편집하려면 페이지를 추가하고 슬러그를 `home`으로 입력합니다. 상태가 `공개`이면 홈페이지의 기본 샘플 섹션 대신 해당 페이지가 표시됩니다. 내용이 비어 있으면 제목만 표시되므로 TinyMCE에서 본문을 작성한 뒤 저장합니다. 페이지를 초안으로 바꾸거나 삭제하면 기존 기본 홈이 다시 표시됩니다. 상단·하단 배너와 최신 공지는 기존 관리 기능을 통해 별도로 관리합니다.
 
 ### 게시판 관리 — `/admin/boards`
 

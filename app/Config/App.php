@@ -19,10 +19,10 @@ class App extends BaseConfig
      * E.g., http://example.com/
      *
      * `.env` 의 app.baseURL 이 이 기본값을 덮어쓴다(env 예제·README 참고).
-     * 이 값은 그 설정을 깜빡 빠뜨렸을 때의 안전망일 뿐이라 실제 운영
-     * 도메인이 아니다 — 반드시 `.env` 에서 실제 값을 설정할 것.
+     * 이 값은 로컬 Caddy 주소를 기준으로 한 안전망이며, 운영 배포 시에는
+     * 반드시 `.env` 에서 실제 서비스 도메인으로 설정할 것.
      */
-    public string $baseURL = 'http://localhost:8306/';
+    public string $baseURL = 'http://creo.test/';
 
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.

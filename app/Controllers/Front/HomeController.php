@@ -7,6 +7,7 @@ namespace App\Controllers\Front;
 use App\Controllers\BaseController;
 use App\Models\BannerModel;
 use App\Models\BoardModel;
+use App\Models\PageModel;
 use App\Models\PostModel;
 
 class HomeController extends BaseController
@@ -26,16 +27,22 @@ class HomeController extends BaseController
                 ->findAll(3);
         }
 
-        $bannerModel = new BannerModel();
+        $bannerModel       = new BannerModel();
+        $homePage          = (new PageModel())->getBySlug('home');
+        $showLatestNotices = ($this->viewData['settings']['home_show_latest_notices'] ?? '1') === '1';
 
         return $this->render('pages/home', [
             'page' => [
-                'title'     => $this->viewData['settings']['site_name'] ?? '',
-                'meta_desc' => $this->viewData['settings']['site_desc'] ?? '',
+                'title'          => $homePage['title'] ?? $this->viewData['settings']['site_name'] ?? '',
+                'meta_title'     => ($homePage['meta_title'] ?? '') ?: ($homePage['title'] ?? $this->viewData['settings']['site_name'] ?? ''),
+                'meta_desc'      => ($homePage['meta_desc'] ?? '') ?: ($this->viewData['settings']['site_desc'] ?? ''),
+                'content'        => $homePage['content'] ?? '',
+                'is_custom_home' => $homePage !== null,
             ],
-            'latestPosts'    => $latestPosts,
-            'mainTopBanners' => $bannerModel->getActiveByPosition('main_top'),
-            'mainBotBanners' => $bannerModel->getActiveByPosition('main_bottom'),
+            'latestPosts'       => $latestPosts,
+            'showLatestNotices' => $showLatestNotices,
+            'mainTopBanners'    => $bannerModel->getActiveByPosition('main_top'),
+            'mainBotBanners'    => $bannerModel->getActiveByPosition('main_bottom'),
         ]);
     }
 }

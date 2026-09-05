@@ -15,7 +15,7 @@
                 <div class="col-md-6">
                     <label for="pages-form-slug" class="form-label small">슬러그 (영문, -, _) *</label>
                     <input id="pages-form-slug" type="text" name="slug" class="form-control form-control-sm"
-                           value="<?= old('slug') ?>" required placeholder="예: about, service">
+                           value="<?= old('slug') ?>" required placeholder="예: about, service (홈은 home)">
                 </div>
                 <?php endif; ?>
                 <div class="col-md-<?= $page ? '6' : '6' ?>">
@@ -65,12 +65,13 @@
 
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
-<!-- TinyMCE 에디터 (무료 CDN) -->
-<script src="https://cdn.tiny.cloud/1/<?= config('Editor')->tinymceApiKey ?>/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<!-- TinyMCE 에디터 (API 키가 필요 없는 공개 CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
 tinymce.init({
     selector: '#editor',
     language: 'ko_KR',
+    language_url: 'https://cdn.jsdelivr.net/npm/tinymce-i18n@latest/langs6/ko_KR.js',
     height: 400,
     plugins: 'lists link image table code',
     toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image | code',
