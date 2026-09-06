@@ -5,6 +5,7 @@ namespace App\Controllers\Front;
 use App\Controllers\BaseController;
 use App\Libraries\FileUploader;
 use App\Libraries\Seo\JsonLdBuilder;
+use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostCommentModel;
 use App\Models\PostFileModel;
@@ -18,15 +19,17 @@ class BoardController extends BaseController
     private readonly PostModel $postModel;
     private readonly PostFileModel $fileModel;
     private readonly PostCommentModel $commentModel;
+    private readonly BoardCategoryModel $categoryModel;
     private readonly FileUploader $uploader;
 
     public function __construct()
     {
-        $this->boardModel   = new BoardModel();
-        $this->postModel    = new PostModel();
-        $this->fileModel    = new PostFileModel();
-        $this->commentModel = new PostCommentModel();
-        $this->uploader     = new FileUploader();
+        $this->boardModel    = new BoardModel();
+        $this->postModel     = new PostModel();
+        $this->fileModel     = new PostFileModel();
+        $this->commentModel  = new PostCommentModel();
+        $this->categoryModel = new BoardCategoryModel();
+        $this->uploader      = new FileUploader();
     }
 
     // ─── 목록 ───────────────────────────────────────────────────────────────
@@ -42,40 +45,49 @@ class BoardController extends BaseController
             return redirect()->to('/auth/login')->with('error', '로그인이 필요합니다.');
         }
 
-        $page    = (int) ($this->request->getGet('page') ?? 1);
-        $keyword = $this->request->getGet('keyword');
-        $type    = $this->request->getGet('type') ?? 'title';
+        $page       = (int) ($this->request->getGet('page') ?? 1);
+        $keyword    = $this->request->getGet('keyword');
+        $type       = $this->request->getGet('type') ?? 'title';
+        $categories = $this->categoryModel->getByBoard($board['id']);
+        $categoryId = (int) ($this->request->getGet('category') ?? 0) ?: null;
+
+        if ($categoryId !== null && ! in_array($categoryId, array_map('intval', array_column($categories, 'id')), true)) {
+            $categoryId = null;
+        }
 
         if ($keyword) {
-            $result  = $this->postModel->search($board['id'], $keyword, $type, $page, $board['posts_per_page']);
+            $result  = $this->postModel->search($board['id'], $keyword, $type, $page, $board['posts_per_page'], $categoryId);
             $posts   = $result['posts'];
             $total   = $result['total'];
             $notices = [];
         } else {
-            $list    = $this->postModel->getList($board['id'], $page, $board['posts_per_page']);
+            $list    = $this->postModel->getList($board['id'], $page, $board['posts_per_page'], $categoryId);
             $posts   = $list['posts'];
             $notices = $list['notices'];
-            $total   = $this->postModel->getTotalCount($board['id']);
+            $total   = $this->postModel->getTotalCount($board['id'], $categoryId);
         }
 
         $totalPages = (int) ceil($total / $board['posts_per_page']);
 
-        // 검색결과·비공개 게시판은 색인 제외, canonical 은 자기 참조(페이지 파라미터 포함)
-        $canonical = base_url('board/' . $board['slug']);
-        if ($page > 1) {
-            $canonical .= '?page=' . $page;
+        // 검색결과·비공개 게시판은 색인 제외, canonical 은 자기 참조(페이지·카테고리 파라미터 포함)
+        $canonical   = base_url('board/' . $board['slug']);
+        $canonicalQs = array_filter(['category' => $categoryId, 'page' => $page > 1 ? $page : null]);
+        if ($canonicalQs !== []) {
+            $canonical .= '?' . http_build_query($canonicalQs);
         }
 
         return $this->render('board/list', [
-            'board'       => $board,
-            'posts'       => $posts,
-            'notices'     => $notices,
-            'currentPage' => $page,
-            'totalPages'  => $totalPages,
-            'total'       => $total,
-            'keyword'     => $keyword,
-            'searchType'  => $type,
-            'page'        => [
+            'board'           => $board,
+            'posts'           => $posts,
+            'notices'         => $notices,
+            'currentPage'     => $page,
+            'totalPages'      => $totalPages,
+            'total'           => $total,
+            'keyword'         => $keyword,
+            'searchType'      => $type,
+            'categories'      => $categories,
+            'currentCategory' => $categoryId,
+            'page'            => [
                 'title'     => $board['name'],
                 'canonical' => $canonical,
                 'noindex'   => (bool) $keyword || $board['read_permission'] !== 'guest',
@@ -158,7 +170,11 @@ class BoardController extends BaseController
             return redirect()->to('/auth/login')->with('error', '글쓰기 권한이 없습니다.');
         }
 
-        return $this->render('board/write', ['board' => $board, 'post' => null]);
+        return $this->render('board/write', [
+            'board'      => $board,
+            'post'       => null,
+            'categories' => $this->categoryModel->getByBoard($board['id']),
+        ]);
     }
 
     public function store(string $boardSlug): ResponseInterface|string
@@ -182,6 +198,7 @@ class BoardController extends BaseController
 
         $data = [
             'board_id'    => $board['id'],
+            'category_id' => $this->resolveCategoryId($board['id'], $this->request->getPost('category_id')),
             'user_id'     => session()->get('user_id'),
             'title'       => $this->request->getPost('title'),
             'content'     => $this->sanitizeContent($this->request->getPost('content')),
@@ -254,7 +271,12 @@ class BoardController extends BaseController
 
         $files = $this->fileModel->getByPost($postId);
 
-        return $this->render('board/write', ['board' => $board, 'post' => $post, 'files' => $files]);
+        return $this->render('board/write', [
+            'board'      => $board,
+            'post'       => $post,
+            'files'      => $files,
+            'categories' => $this->categoryModel->getByBoard($board['id']),
+        ]);
     }
 
     // ─── 비회원 비밀번호 인증 → 세션 토큰 발급 ─────────────────────────────────
@@ -295,10 +317,11 @@ class BoardController extends BaseController
         }
 
         $this->postModel->update($postId, [
-            'title'     => $this->request->getPost('title'),
-            'content'   => $this->sanitizeContent($this->request->getPost('content')),
-            'is_notice' => $this->getUserRole() === 'admin' ? (int) $this->request->getPost('is_notice') : $post['is_notice'],
-            'is_secret' => (int) $this->request->getPost('is_secret'),
+            'category_id' => $this->resolveCategoryId($board['id'], $this->request->getPost('category_id')),
+            'title'       => $this->request->getPost('title'),
+            'content'     => $this->sanitizeContent($this->request->getPost('content')),
+            'is_notice'   => $this->getUserRole() === 'admin' ? (int) $this->request->getPost('is_notice') : $post['is_notice'],
+            'is_secret'   => (int) $this->request->getPost('is_secret'),
         ]);
 
         // 파일 추가 업로드
@@ -453,6 +476,24 @@ class BoardController extends BaseController
     }
 
     // ─── 내부 헬퍼 ──────────────────────────────────────────────────────────
+
+    /**
+     * 게시글 저장용 category_id 정규화 — 해당 게시판 소속의 활성 카테고리가 아니면 null.
+     */
+    private function resolveCategoryId(int $boardId, ?string $rawCategoryId): ?int
+    {
+        $categoryId = (int) $rawCategoryId;
+        if ($categoryId <= 0) {
+            return null;
+        }
+
+        $category = $this->categoryModel
+            ->where('board_id', $boardId)
+            ->where('is_active', 1)
+            ->find($categoryId);
+
+        return $category ? $categoryId : null;
+    }
 
     /**
      * @param array<string, mixed> $post

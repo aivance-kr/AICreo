@@ -26,6 +26,7 @@
             <td data-label="" class="cell-actions">
                 <a href="/admin/boards/<?= $b['id'] ?>/edit" class="btn btn-xs btn-outline-secondary btn-sm">수정</a>
                 <a href="/admin/boards/<?= $b['id'] ?>/posts" class="btn btn-xs btn-outline-primary btn-sm">게시글</a>
+                <a href="/admin/boards/<?= $b['id'] ?>/categories" class="btn btn-xs btn-outline-info btn-sm">카테고리</a>
                 <a href="/board/<?= esc($b['slug']) ?>" target="_blank" rel="noopener" class="btn btn-xs btn-outline-dark btn-sm">미리보기</a>
             </td>
         </tr>

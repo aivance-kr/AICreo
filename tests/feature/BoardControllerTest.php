@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
@@ -108,5 +109,30 @@ final class BoardControllerTest extends FeatureTestCase
         $this->get("board/qna/{$postId}")->assertStatus(200);
 
         $this->assertSame(1, (int) $postModel->find($postId)['views']);
+    }
+
+    public function testListShowsCategorySidebarWhenBoardHasCategories(): void
+    {
+        $boardId    = $this->boardId('free');
+        $categoryId = (int) (new BoardCategoryModel())->insert(['board_id' => $boardId, 'slug' => 'daily', 'name' => '일상'], true);
+
+        $body = $this->get('board/free')->getBody();
+
+        $this->assertStringContainsString("board/free?category={$categoryId}", $body);
+    }
+
+    public function testCategoryFilterNarrowsPostList(): void
+    {
+        $boardId    = $this->boardId('free');
+        $categoryId = (int) (new BoardCategoryModel())->insert(['board_id' => $boardId, 'slug' => 'daily', 'name' => '일상'], true);
+
+        $postModel = new PostModel();
+        $matchId   = (int) $postModel->insert(['board_id' => $boardId, 'category_id' => $categoryId, 'title' => '일상 글', 'content' => '내용', 'author_name' => '작성자'], true);
+        $otherId   = (int) $postModel->insert(['board_id' => $boardId, 'category_id' => null, 'title' => '기타 글', 'content' => '내용', 'author_name' => '작성자'], true);
+
+        $body = $this->get("board/free?category={$categoryId}")->getBody();
+
+        $this->assertStringContainsString("/board/free/{$matchId}\"", $body);
+        $this->assertStringNotContainsString("/board/free/{$otherId}\"", $body);
     }
 }
