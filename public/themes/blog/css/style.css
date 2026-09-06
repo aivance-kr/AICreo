@@ -1,0 +1,143 @@
+body {
+    background: var(--surface-base);
+    color: var(--text-body);
+    font-family: var(--font-sans);
+}
+
+.blog-shell {
+    display: grid;
+    grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+    min-height: 100vh;
+}
+
+.blog-sidebar {
+    align-self: start;
+    background: var(--surface-raised);
+    border-right: 1px solid var(--border-hairline);
+    min-height: 100vh;
+    padding: 3rem 2rem 2rem;
+    position: sticky;
+    top: 0;
+}
+
+.blog-brand {
+    color: var(--text-strong);
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 3rem;
+    text-decoration: none;
+}
+
+.blog-brand img {
+    height: auto;
+    max-height: 3rem;
+    max-width: 100%;
+}
+
+.blog-navigation ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.blog-navigation > ul > li + li {
+    margin-top: .35rem;
+}
+
+.blog-navigation a,
+.blog-menu-label {
+    color: var(--text-body);
+    display: block;
+    font-size: 1rem;
+    padding: .5rem .65rem;
+    text-decoration: none;
+}
+
+.blog-navigation a:hover,
+.blog-navigation a:focus-visible,
+.blog-navigation a.is-active,
+.blog-menu-label.is-active {
+    background: color-mix(in srgb, var(--primary) 10%, var(--surface-raised));
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.blog-submenu {
+    border-left: 1px solid var(--border-hairline);
+    margin: .25rem 0 .5rem .65rem !important;
+}
+
+.blog-submenu a {
+    font-size: .7rem;
+    padding-left: 1rem;
+}
+
+.blog-sidebar-footer {
+    border-top: 1px solid var(--border-hairline);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem .8rem;
+    margin-top: 3rem;
+    padding-top: 1rem;
+}
+
+.blog-sidebar-footer,
+.blog-sidebar-footer a {
+    color: var(--text-muted);
+    font-size: .7rem;
+}
+
+.blog-main {
+    min-width: 0;
+}
+
+.blog-main footer {
+    margin-top: 0 !important;
+}
+
+.page-content img,
+.post-content img {
+    height: auto;
+    max-width: 100%;
+}
+
+.post-content {
+    line-height: 1.8;
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 767.98px) {
+    .blog-shell {
+        display: block;
+    }
+
+    .blog-sidebar {
+        min-height: auto;
+        padding: 1.25rem;
+        position: static;
+    }
+
+    .blog-brand {
+        margin-bottom: 1.25rem;
+    }
+
+    .blog-navigation > ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .25rem;
+    }
+
+    .blog-navigation > ul > li + li {
+        margin-top: 0;
+    }
+
+    .blog-submenu {
+        display: none;
+    }
+
+    .blog-sidebar-footer {
+        margin-top: 1.25rem;
+    }
+}
