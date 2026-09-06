@@ -60,4 +60,24 @@ final class BoardCategoryModelTest extends DatabaseTestCase
 
         $this->assertNull($this->model->getBySlug($this->boardId, 'hidden'));
     }
+
+    public function testReorderByBoardRewritesOnlyThatBoardsSortOrder(): void
+    {
+        $idA = (int) $this->model->insert(['board_id' => $this->boardId, 'slug' => 'a', 'name' => 'A', 'sort_order' => 1], true);
+        $idB = (int) $this->model->insert(['board_id' => $this->boardId, 'slug' => 'b', 'name' => 'B', 'sort_order' => 2], true);
+
+        $this->assertTrue($this->model->reorderByBoard($this->boardId, [$idB, $idA]));
+        $this->assertSame('0', $this->model->find($idB)['sort_order']);
+        $this->assertSame('1', $this->model->find($idA)['sort_order']);
+    }
+
+    public function testReorderByBoardRejectsForeignOrMissingCategoryIds(): void
+    {
+        $id           = (int) $this->model->insert(['board_id' => $this->boardId, 'slug' => 'local', 'name' => '로컬'], true);
+        $otherBoardId = (int) (new BoardModel())->getBySlug('qna')['id'];
+        $foreignId    = (int) $this->model->insert(['board_id' => $otherBoardId, 'slug' => 'foreign', 'name' => '외부'], true);
+
+        $this->assertFalse($this->model->reorderByBoard($this->boardId, [$id, $foreignId]));
+        $this->assertSame('0', $this->model->find($id)['sort_order']);
+    }
 }

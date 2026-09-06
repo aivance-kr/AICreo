@@ -13,6 +13,7 @@
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white">
                 <strong><?= esc($board['name'] ?? '') ?> 카테고리</strong>
+                <span class="text-muted small ms-2">드래그하여 순서를 변경하세요.</span>
             </div>
             <table class="table table-hover board-table table-stack mb-0">
                 <thead>
@@ -24,13 +25,13 @@
                         <th scope="col"><span class="visually-hidden">관리</span></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="categoryList">
                     <?php if (empty($categories)): ?>
                     <tr><td colspan="5" class="text-center py-4 text-muted">등록된 카테고리가 없습니다.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($categories as $c): ?>
-                    <tr>
-                        <td data-label="순서"><?= $c['sort_order'] ?></td>
+                    <tr data-id="<?= $c['id'] ?>">
+                        <td data-label="순서"><i class="bi bi-grip-vertical drag-handle" aria-hidden="true"></i><span class="visually-hidden">드래그하여 순서 변경</span></td>
                         <td data-label="이름"><?= esc($c['name']) ?></td>
                         <td data-label="슬러그"><code><?= esc($c['slug']) ?></code></td>
                         <td data-label="상태"><?= $c['is_active'] ? '<span class="badge bg-success">활성</span>' : '<span class="badge bg-secondary">비활성</span>' ?></td>
@@ -93,8 +94,50 @@
 
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"
+        integrity="sha384-BSxuMLxX+FCbTdYec3TbXlnMGEEM2QXTFdtDaveen71o+jswm2J36+xFqp8k4VHM"
+        crossorigin="anonymous"></script>
 <script>
 const BOARD_ID = <?= (int) $board['id'] ?>;
+const CSRF_FIELD_NAME = <?= json_encode(csrf_token()) ?>;
+let csrfHash = <?= json_encode(csrf_hash()) ?>;
+
+function syncCsrfHash(newHash) {
+    if (!newHash) return;
+    csrfHash = newHash;
+    document.querySelectorAll('input[name="' + CSRF_FIELD_NAME + '"]').forEach(input => {
+        input.value = newHash;
+    });
+}
+
+async function saveCategoryOrder() {
+    const body = new URLSearchParams();
+    body.set(CSRF_FIELD_NAME, csrfHash);
+    document.querySelectorAll('#categoryList > tr[data-id]').forEach(row => body.append('ids[]', row.dataset.id));
+
+    try {
+        const response = await fetch('/admin/boards/' + BOARD_ID + '/categories/reorder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'same-origin',
+            body: body.toString(),
+        });
+        const data = await response.json();
+
+        syncCsrfHash(data.csrf_hash);
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || '카테고리 순서 저장 실패');
+        }
+    } catch (error) {
+        console.error('카테고리 순서 저장 실패', error);
+        alert('순서 저장에 실패했습니다. 새로고침 후 다시 시도해주세요.');
+    }
+}
+
+const categoryList = document.getElementById('categoryList');
+if (categoryList) {
+    new Sortable(categoryList, { handle: '.drag-handle', animation: 150, onEnd: saveCategoryOrder });
+}
 
 function fillCategoryForm(c) {
     document.getElementById('categoryFormTitle').textContent = '카테고리 수정';
