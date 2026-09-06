@@ -12,9 +12,6 @@ use App\Models\PostModel;
 use App\Models\RedirectModel;
 use App\Models\UserModel;
 use CodeIgniter\Model;
-use Config\Services;
-use RuntimeException;
-use Throwable;
 
 /**
  * WxrParser 결과를 AiCreo 스키마에 upsert.
@@ -169,16 +166,19 @@ final class WordpressImporter
     }
 
     /**
-     * 첨부파일을 원본 사이트에서 다운로드해 public/uploads/imported/ 에 저장.
+     * 첨부파일을 워드프레스 uploads 디렉터리에서 직접 복사해 public/uploads/imported/ 에 저장.
+     * 같은 서버에서 이관하는 전제 — 네트워크 다운로드 없이 파일시스템 복사만 함.
      *
-     * @return array{downloaded: int, failed: int, pathMap: array<string, string>} pathMap: 옛 상대경로(예: 2001/08/x.jpg) => 새 상대경로
+     * @param string $wpUploadsDir 워드프레스 wp-content/uploads 절대경로
+     *
+     * @return array{copied: int, failed: int, pathMap: array<string, string>} pathMap: 옛 상대경로(예: 2001/08/x.jpg) => 새 상대경로
      */
-    public function importAttachments(WxrParser $parser): array
+    public function importAttachments(WxrParser $parser, string $wpUploadsDir): array
     {
-        $downloaded = 0;
-        $failed     = 0;
-        $pathMap    = [];
-        $client     = Services::curlrequest(['timeout' => 15]);
+        $copied       = 0;
+        $failed       = 0;
+        $pathMap      = [];
+        $wpUploadsDir = rtrim($wpUploadsDir, '/');
 
         foreach ($parser->attachments() as $attachment) {
             $ext = strtolower((string) pathinfo($attachment->attachmentUrl, PATHINFO_EXTENSION));
@@ -194,14 +194,29 @@ final class WordpressImporter
                 if ($attachment->attachedFile !== '') {
                     $pathMap[$attachment->attachedFile] = $existing['file_path'];
                 }
-                $downloaded++;
+                $copied++;
 
                 continue;
             }
 
             $relativeFile = $attachment->attachedFile !== ''
                 ? $attachment->attachedFile
-                : date('Y/m', strtotime($attachment->postDate)) . '/' . basename($attachment->attachmentUrl);
+                : $this->relativeFromAttachmentUrl($attachment->attachmentUrl);
+
+            if ($relativeFile === null) {
+                $this->warnings[] = "첨부파일 wp_post_id={$attachment->wpPostId} — 상대경로 파악 불가, 건너뜀";
+                $failed++;
+
+                continue;
+            }
+
+            $srcPath = $wpUploadsDir . '/' . $relativeFile;
+            if (! is_file($srcPath)) {
+                $this->warnings[] = "원본 파일 없음: {$srcPath}";
+                $failed++;
+
+                continue;
+            }
 
             $destPath = FCPATH . 'uploads/imported/' . $relativeFile;
             $destDir  = dirname($destPath);
@@ -212,14 +227,8 @@ final class WordpressImporter
                 continue;
             }
 
-            try {
-                $response = $client->get($attachment->attachmentUrl);
-                if ($response->getStatusCode() !== 200) {
-                    throw new RuntimeException("HTTP {$response->getStatusCode()}");
-                }
-                file_put_contents($destPath, $response->getBody());
-            } catch (Throwable $e) {
-                $this->warnings[] = "다운로드 실패({$attachment->attachmentUrl}): {$e->getMessage()}";
+            if (! copy($srcPath, $destPath)) {
+                $this->warnings[] = "파일 복사 실패: {$srcPath}";
                 $failed++;
 
                 continue;
@@ -240,10 +249,25 @@ final class WordpressImporter
             if ($attachment->attachedFile !== '') {
                 $pathMap[$attachment->attachedFile] = $relativePath;
             }
-            $downloaded++;
+            $copied++;
         }
 
-        return ['downloaded' => $downloaded, 'failed' => $failed, 'pathMap' => $pathMap];
+        return ['copied' => $copied, 'failed' => $failed, 'pathMap' => $pathMap];
+    }
+
+    /**
+     * wp:attachment_url 에 _wp_attached_file 메타가 없을 때, URL 자체에서
+     * "wp-content/uploads/" 뒤의 상대경로를 뽑아낸다.
+     */
+    private function relativeFromAttachmentUrl(string $url): ?string
+    {
+        $marker = 'wp-content/uploads/';
+        $pos    = strpos($url, $marker);
+        if ($pos === false) {
+            return null;
+        }
+
+        return substr($url, $pos + strlen($marker));
     }
 
     /**

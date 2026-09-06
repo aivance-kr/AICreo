@@ -20,12 +20,13 @@ class WpImportCommand extends BaseCommand
     protected $group       = 'Wordpress';
     protected $name        = 'wp:import';
     protected $description = '워드프레스 WXR export XML 파일을 AiCreo 게시판/페이지/미디어로 이관합니다.';
-    protected $usage       = 'wp:import <path-to-export.xml> [--dry-run]';
+    protected $usage       = 'wp:import <path-to-export.xml> --uploads-dir <wp-content/uploads 경로> [--dry-run]';
     protected $arguments   = [
         'path' => 'WXR(.xml) 파일 경로',
     ];
     protected $options = [
-        '--dry-run' => '파싱 결과 카운트만 출력, DB/파일 변경 없음',
+        '--uploads-dir' => '워드프레스 wp-content/uploads 절대경로 (dry-run 아니면 필수, 같은 서버에서 파일 복사)',
+        '--dry-run'     => '파싱 결과 카운트만 출력, DB/파일 변경 없음',
     ];
 
     public function run(array $params)
@@ -45,15 +46,22 @@ class WpImportCommand extends BaseCommand
             return;
         }
 
+        $uploadsDir = CLI::getOption('uploads-dir');
+        if (! $uploadsDir || ! is_dir($uploadsDir)) {
+            CLI::error('--uploads-dir 로 워드프레스 wp-content/uploads 절대경로를 지정해야 합니다.');
+
+            return;
+        }
+
         $importer = new WordpressImporter();
 
         CLI::write('카테고리 → 게시판 이관 중...', 'yellow');
         $boardMap = $importer->importCategories($parser);
         CLI::write('  게시판 ' . count($boardMap) . '건');
 
-        CLI::write('첨부파일 다운로드 중... (원본 사이트 접근 필요, 시간 걸릴 수 있음)', 'yellow');
-        $attachmentResult = $importer->importAttachments($parser);
-        CLI::write("  다운로드 {$attachmentResult['downloaded']}건, 실패 {$attachmentResult['failed']}건");
+        CLI::write('첨부파일 복사 중...', 'yellow');
+        $attachmentResult = $importer->importAttachments($parser, $uploadsDir);
+        CLI::write("  복사 {$attachmentResult['copied']}건, 실패 {$attachmentResult['failed']}건");
 
         CLI::write('글·페이지 이관 중...', 'yellow');
         $contentResult = $importer->importPagesAndPosts($parser, $boardMap);
