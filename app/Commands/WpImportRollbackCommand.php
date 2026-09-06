@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Commands;
 
-use App\Models\BoardModel;
+use App\Models\BoardCategoryModel;
 use App\Models\MediaModel;
 use App\Models\PageModel;
 use App\Models\PostCommentModel;
@@ -15,6 +15,8 @@ use CodeIgniter\CLI\CLI;
 /**
  * wp:import 로 이관된 데이터만 삭제 (wp_*_id 가 NOT NULL 인 행).
  * 관리자가 직접 만든 네이티브 콘텐츠는 이 컬럼이 항상 NULL이라 영향 없음.
+ * 대상 게시판(boards)은 이관 전에 관리자가 미리 만들어둔 것이라 삭제 대상이
+ * 아니고, 그 아래 board_categories 중 wp_term_id가 채워진 행만 삭제한다.
  * 리다이렉트(redirects)는 SEO 보존 목적이라 롤백 대상에서 제외 — 지울 땐 수동으로.
  */
 class WpImportRollbackCommand extends BaseCommand
@@ -30,7 +32,7 @@ class WpImportRollbackCommand extends BaseCommand
     public function run(array $params)
     {
         if (! CLI::getOption('force')) {
-            $confirmed = CLI::prompt('이관된 게시판·글·페이지·댓글·미디어를 전부 삭제합니다. 계속할까요?', ['y', 'n']);
+            $confirmed = CLI::prompt('이관된 카테고리·글·페이지·댓글·미디어를 전부 삭제합니다(대상 게시판 자체는 유지). 계속할까요?', ['y', 'n']);
             if ($confirmed !== 'y') {
                 CLI::write('취소했습니다.', 'yellow');
 
@@ -57,10 +59,10 @@ class WpImportRollbackCommand extends BaseCommand
         $pageModel->where('wp_post_id IS NOT NULL')->delete();
         CLI::write('페이지 삭제: ' . $pageModel->db->affectedRows() . '건');
 
-        $boardModel = new BoardModel();
-        $boardModel->where('wp_term_id IS NOT NULL')->delete();
-        CLI::write('게시판 삭제: ' . $boardModel->db->affectedRows() . '건');
+        $categoryModel = new BoardCategoryModel();
+        $categoryModel->where('wp_term_id IS NOT NULL')->delete();
+        CLI::write('카테고리 삭제: ' . $categoryModel->db->affectedRows() . '건');
 
-        CLI::write('롤백 완료. redirects 테이블은 SEO 보존 목적이라 그대로 둡니다.', 'green');
+        CLI::write('롤백 완료. 대상 게시판과 redirects 테이블(SEO 보존 목적)은 그대로 둡니다.', 'green');
     }
 }

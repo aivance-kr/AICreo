@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Libraries\WordpressImport;
 
+use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\MediaModel;
 use App\Models\PageModel;
@@ -42,6 +43,7 @@ final class WordpressImporter
 
     public function __construct(
         private readonly BoardModel $boardModel = new BoardModel(),
+        private readonly BoardCategoryModel $categoryModel = new BoardCategoryModel(),
         private readonly PageModel $pageModel = new PageModel(),
         private readonly PostModel $postModel = new PostModel(),
         private readonly PostCommentModel $commentModel = new PostCommentModel(),
@@ -60,14 +62,20 @@ final class WordpressImporter
     }
 
     /**
-     * @return array<string, int> wp_term_id => board_id
+     * 워드프레스 카테고리를 대상 게시판(사전에 관리자가 생성)의 board_categories로 매핑.
+     * (#282 이후 카테고리마다 별도 게시판을 만들지 않는다 — board_id + wp_term_id로 idempotent)
+     *
+     * @return array<string, int> wp 카테고리 nicename => category_id
      */
-    public function importCategories(WxrParser $parser): array
+    public function importCategories(WxrParser $parser, int $boardId): array
     {
         $map = [];
 
         foreach ($parser->categories() as $category) {
-            $existing = $this->boardModel->where('wp_term_id', $category->wpTermId)->first();
+            $existing = $this->categoryModel
+                ->where('board_id', $boardId)
+                ->where('wp_term_id', $category->wpTermId)
+                ->first();
 
             if ($existing) {
                 $map[$category->nicename] = (int) $existing['id'];
@@ -75,27 +83,26 @@ final class WordpressImporter
                 continue;
             }
 
-            $boardId = $this->boardModel->insert([
-                'wp_term_id'       => $category->wpTermId,
-                'slug'             => $category->nicename,
-                'name'             => $category->name,
-                'read_permission'  => 'guest',
-                'write_permission' => 'admin',
-                'is_active'        => 1,
+            $categoryId = $this->categoryModel->insert([
+                'board_id'   => $boardId,
+                'wp_term_id' => $category->wpTermId,
+                'slug'       => $category->nicename,
+                'name'       => $category->name,
+                'is_active'  => 1,
             ], true);
 
-            $map[$category->nicename] = (int) $boardId;
+            $map[$category->nicename] = (int) $categoryId;
         }
 
         return $map;
     }
 
     /**
-     * @param array<string, int> $boardIdByNicename
+     * @param array<string, int> $categoryIdByNicename wp 카테고리 nicename => category_id
      *
      * @return array{pages: int, posts: int, skipped: int}
      */
-    public function importPagesAndPosts(WxrParser $parser, array $boardIdByNicename): array
+    public function importPagesAndPosts(WxrParser $parser, int $boardId, array $categoryIdByNicename): array
     {
         $counts = ['pages' => 0, 'posts' => 0, 'skipped' => 0];
 
@@ -128,26 +135,26 @@ final class WordpressImporter
                 continue;
             }
 
-            $boardId = null;
+            // 워드프레스는 글 1개에 카테고리 여러 개(다대다) 허용, 이쪽은 단일 분류라
+            // 첫 번째로 매핑되는 카테고리 하나만 대표로 선택한다.
+            $categoryId = null;
 
             foreach ($post->categoryNicenames as $nicename) {
-                if (isset($boardIdByNicename[$nicename])) {
-                    $boardId = $boardIdByNicename[$nicename];
+                if (isset($categoryIdByNicename[$nicename])) {
+                    $categoryId = $categoryIdByNicename[$nicename];
 
                     break;
                 }
             }
 
-            if ($boardId === null) {
-                $this->warnings[] = "글 wp_post_id={$post->wpPostId} — 매핑된 게시판 없음, 건너뜀";
-                $counts['skipped']++;
-
-                continue;
+            if ($categoryId === null && $post->categoryNicenames !== []) {
+                $this->warnings[] = "글 wp_post_id={$post->wpPostId} — 매핑된 카테고리 없음, 카테고리 없이 이관";
             }
 
             $data = [
                 'wp_post_id'  => $post->wpPostId,
                 'board_id'    => $boardId,
+                'category_id' => $categoryId,
                 'user_id'     => $this->resolveAuthorId($post->authorLogin),
                 'title'       => $post->title,
                 'content'     => $post->content,
