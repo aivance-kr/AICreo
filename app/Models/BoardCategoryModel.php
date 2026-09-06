@@ -9,7 +9,7 @@ class BoardCategoryModel extends Model
     protected $table         = 'board_categories';
     protected $primaryKey    = 'id';
     protected $useTimestamps = true;
-    protected $allowedFields = ['board_id', 'slug', 'name', 'sort_order', 'is_active'];
+    protected $allowedFields = ['board_id', 'wp_term_id', 'slug', 'name', 'sort_order', 'is_active'];
 
     /**
      * 프론트 노출용: 활성 카테고리만 순서대로.
