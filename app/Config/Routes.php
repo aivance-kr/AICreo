@@ -76,6 +76,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     // 게시판 카테고리 관리 (게시판마다 별도 관리)
     $routes->get('boards/(:num)/categories', 'Admin\BoardManagerController::categories/$1');
     $routes->post('boards/(:num)/categories', 'Admin\BoardManagerController::storeCategory/$1');
+    $routes->post('boards/(:num)/categories/reorder', 'Admin\BoardManagerController::reorderCategories/$1');
     $routes->post('boards/(:num)/categories/(:num)/edit', 'Admin\BoardManagerController::updateCategory/$1/$2');
     $routes->post('boards/(:num)/categories/(:num)/delete', 'Admin\BoardManagerController::deleteCategory/$1/$2');
 

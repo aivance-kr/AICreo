@@ -35,6 +35,36 @@ class BoardCategoryModel extends Model
     }
 
     /**
+     * 게시판에 속한 모든 카테고리의 순서를 드래그앤드롭 결과대로 재기록한다.
+     *
+     * 다른 게시판의 ID가 섞이거나 누락된 요청은 거부해 게시판 간 순서가 변하지 않게 한다.
+     *
+     * @param list<int> $ids
+     */
+    public function reorderByBoard(int $boardId, array $ids): bool
+    {
+        $categoryIds = array_map('intval', array_column($this->getAllByBoard($boardId), 'id'));
+
+        sort($categoryIds);
+        $submittedIds = array_values(array_unique($ids));
+        sort($submittedIds);
+
+        if ($submittedIds !== $categoryIds || count($submittedIds) !== count($ids)) {
+            return false;
+        }
+
+        $this->db->transStart();
+
+        foreach ($ids as $index => $id) {
+            $this->update($id, ['sort_order' => $index]);
+        }
+
+        $this->db->transComplete();
+
+        return $this->db->transStatus();
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     public function getBySlug(int $boardId, string $slug): ?array

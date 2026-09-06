@@ -174,6 +174,25 @@ class BoardManagerController extends BaseController
         return redirect()->to("/admin/boards/{$boardId}/categories")->with('success', '수정되었습니다.');
     }
 
+    public function reorderCategories(int $boardId): ResponseInterface
+    {
+        $rawIds = $this->request->getPost('ids');
+        $ids    = is_array($rawIds) ? array_map('intval', $rawIds) : [];
+
+        if (! $this->categoryModel->reorderByBoard($boardId, $ids)) {
+            return $this->response->setStatusCode(422)->setJSON([
+                'success'   => false,
+                'message'   => '카테고리 순서 정보가 올바르지 않습니다.',
+                'csrf_hash' => csrf_hash(),
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success'   => true,
+            'csrf_hash' => csrf_hash(),
+        ]);
+    }
+
     public function deleteCategory(int $boardId, int $categoryId): ResponseInterface|string
     {
         $this->categoryModel->delete($categoryId);
