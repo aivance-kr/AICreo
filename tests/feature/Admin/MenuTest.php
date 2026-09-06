@@ -24,6 +24,31 @@ final class MenuTest extends AdminTestCase
         $this->assertSame(1, (new MenuModel())->where('url', '/location')->countAllResults());
     }
 
+    public function testAdminCreatesParentMenuWithoutUrl(): void
+    {
+        $result = $this->withSession($this->adminSession)->post('admin/menus', [
+            'title'      => '소개',
+            'url'        => '',
+            'sort_order' => 0,
+        ]);
+
+        $result->assertRedirectTo('/admin/menus');
+        $menu = (new MenuModel())->where('title', '소개')->first();
+        $this->assertNull($menu['url']);
+    }
+
+    public function testStoreRequiresTitle(): void
+    {
+        $result = $this->withSession($this->adminSession)->post('admin/menus', [
+            'title'      => '',
+            'url'        => '/x',
+            'sort_order' => 0,
+        ]);
+
+        $result->assertRedirect();
+        $this->assertSame(0, (new MenuModel())->where('url', '/x')->countAllResults());
+    }
+
     public function testAdminDeletesMenu(): void
     {
         $model = new MenuModel();

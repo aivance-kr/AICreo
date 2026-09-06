@@ -78,8 +78,8 @@
                         <input type="text" name="title" id="mTitle" class="form-control form-control-sm" required>
                     </div>
                     <div class="mb-2">
-                        <label for="mUrl" class="form-label small">URL *</label>
-                        <input type="text" name="url" id="mUrl" class="form-control form-control-sm" required placeholder="/about">
+                        <label for="mUrl" class="form-label small">URL</label>
+                        <input type="text" name="url" id="mUrl" class="form-control form-control-sm" placeholder="/about (하위 메뉴만 있는 상위 메뉴는 비워두세요)">
                     </div>
                     <div class="mb-2">
                         <label for="mParent" class="form-label small">상위 메뉴 ID (없으면 비워두세요)</label>
@@ -182,7 +182,7 @@ function fillEditForm(m) {
     document.getElementById('formTitle').textContent = '메뉴 수정';
     document.getElementById('menuForm').action = '/admin/menus/' + m.id + '/edit';
     document.getElementById('mTitle').value   = m.title;
-    document.getElementById('mUrl').value     = m.url;
+    document.getElementById('mUrl').value     = m.url || '';
     document.getElementById('mParent').value  = m.parent_id || '';
     document.getElementById('mSort').value    = m.sort_order;
     document.getElementById('mTarget').value  = m.target;

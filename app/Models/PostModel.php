@@ -11,7 +11,7 @@ class PostModel extends Model
     protected $useTimestamps  = true;
     protected $useSoftDeletes = true;
     protected $allowedFields  = [
-        'board_id', 'user_id', 'title', 'content',
+        'board_id', 'category_id', 'user_id', 'title', 'content',
         'author_name', 'author_password',
         'is_notice', 'is_secret', 'ip_address',
     ];
@@ -51,30 +51,36 @@ class PostModel extends Model
     /**
      * @return array{notices: list<array<string, mixed>>, posts: list<array<string, mixed>>}
      */
-    public function getList(int $boardId, int $page, int $perPage): array
+    public function getList(int $boardId, int $page, int $perPage, ?int $categoryId = null): array
     {
         $offset = ($page - 1) * $perPage;
 
-        $notices = $this->where('board_id', $boardId)
-            ->where('is_notice', 1)
-            ->orderBy('id', 'DESC')
-            ->findAll(5);
+        $noticeBuilder = $this->where('board_id', $boardId)->where('is_notice', 1);
+        if ($categoryId !== null) {
+            $noticeBuilder->where('category_id', $categoryId);
+        }
+        $notices = $noticeBuilder->orderBy('id', 'DESC')->findAll(5);
 
-        $posts = $this->select('posts.*, users.nickname as user_nickname')
+        $postBuilder = $this->select('posts.*, users.nickname as user_nickname')
             ->join('users', 'users.id = posts.user_id', 'left')
             ->where('posts.board_id', $boardId)
-            ->where('posts.is_notice', 0)
-            ->orderBy('posts.id', 'DESC')
-            ->findAll($perPage, $offset);
+            ->where('posts.is_notice', 0);
+        if ($categoryId !== null) {
+            $postBuilder->where('posts.category_id', $categoryId);
+        }
+        $posts = $postBuilder->orderBy('posts.id', 'DESC')->findAll($perPage, $offset);
 
         return ['notices' => $notices, 'posts' => $posts];
     }
 
-    public function getTotalCount(int $boardId): int
+    public function getTotalCount(int $boardId, ?int $categoryId = null): int
     {
-        return $this->where('board_id', $boardId)
-            ->where('is_notice', 0)
-            ->countAllResults();
+        $builder = $this->where('board_id', $boardId)->where('is_notice', 0);
+        if ($categoryId !== null) {
+            $builder->where('category_id', $categoryId);
+        }
+
+        return $builder->countAllResults();
     }
 
     /**
@@ -122,12 +128,16 @@ class PostModel extends Model
     /**
      * @return array{posts: list<array<string, mixed>>, total: int}
      */
-    public function search(int $boardId, string $keyword, string $type, int $page, int $perPage): array
+    public function search(int $boardId, string $keyword, string $type, int $page, int $perPage, ?int $categoryId = null): array
     {
         $offset  = ($page - 1) * $perPage;
         $builder = $this->select('posts.*, users.nickname as user_nickname')
             ->join('users', 'users.id = posts.user_id', 'left')
             ->where('posts.board_id', $boardId);
+
+        if ($categoryId !== null) {
+            $builder->where('posts.category_id', $categoryId);
+        }
 
         if ($type === 'title') {
             $builder->like('posts.title', $keyword);

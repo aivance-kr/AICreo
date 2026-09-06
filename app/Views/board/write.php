@@ -56,6 +56,18 @@
             </div>
             <?php endif; ?>
 
+            <?php if (! empty($categories)): ?>
+            <div class="mb-3">
+                <label class="form-label small" for="post-category">카테고리</label>
+                <select name="category_id" id="post-category" class="form-select form-select-sm">
+                    <option value="">선택 안 함</option>
+                    <?php foreach ($categories as $cat): ?>
+                    <option value="<?= $cat['id'] ?>" <?= (int) ($post['category_id'] ?? 0) === (int) $cat['id'] ? 'selected' : '' ?>><?= esc($cat['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+
             <div class="mb-3">
                 <div class="form-check mb-2">
                     <input type="checkbox" name="is_secret" value="1" id="is_secret" class="form-check-input"

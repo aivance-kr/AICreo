@@ -13,6 +13,20 @@
 <?= $this->section('content') ?>
 
 <div class="container py-4">
+<div class="row g-4">
+<?php if (! empty($categories)): ?>
+<div class="col-lg-3 order-lg-2">
+    <nav class="list-group mb-4" aria-label="카테고리">
+        <a href="/board/<?= esc($board['slug']) ?>"
+           class="list-group-item list-group-item-action <?= $currentCategory === null ? 'active' : '' ?>">전체</a>
+        <?php foreach ($categories as $cat): ?>
+        <a href="/board/<?= esc($board['slug']) ?>?category=<?= $cat['id'] ?>"
+           class="list-group-item list-group-item-action <?= $currentCategory === (int) $cat['id'] ? 'active' : '' ?>"><?= esc($cat['name']) ?></a>
+        <?php endforeach; ?>
+    </nav>
+</div>
+<?php endif; ?>
+<div class="<?= empty($categories) ? 'col-12' : 'col-lg-9 order-lg-1' ?>">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="h4 mb-0"><?= esc($board['name']) ?></h1>
@@ -27,6 +41,7 @@
 
 <!-- 검색 -->
 <form class="d-flex flex-wrap gap-2 mb-3" method="get" role="search">
+    <?php if ($currentCategory): ?><input type="hidden" name="category" value="<?= $currentCategory ?>"><?php endif; ?>
     <label class="visually-hidden" for="search-type">검색 범위</label>
     <select name="type" id="search-type" class="form-select form-select-sm" style="width:120px">
         <option value="title"   <?= $searchType === 'title'   ? 'selected' : '' ?>>제목</option>
@@ -97,12 +112,16 @@
 </div>
 
 <!-- 페이지네이션 -->
+<?php
+$extraQs = ($keyword ? '&keyword=' . urlencode($keyword) . '&type=' . $searchType : '')
+    . ($currentCategory ? '&category=' . $currentCategory : '');
+?>
 <?php if ($totalPages > 1): ?>
 <nav class="d-flex justify-content-center mt-3" aria-label="페이지 목록">
     <ul class="pagination pagination-sm">
         <?php for ($p = 1; $p <= $totalPages; $p++): ?>
             <li class="page-item <?= $p === $currentPage ? 'active' : '' ?>">
-                <a class="page-link" href="?page=<?= $p ?><?= $keyword ? '&keyword=' . urlencode($keyword) . '&type=' . $searchType : '' ?>"
+                <a class="page-link" href="?page=<?= $p ?><?= $extraQs ?>"
                    <?= $p === $currentPage ? 'aria-current="page"' : '' ?>><span class="visually-hidden">페이지 </span><?= $p ?></a>
             </li>
         <?php endfor; ?>
@@ -110,6 +129,8 @@
 </nav>
 <?php endif; ?>
 
+</div>
+</div>
 </div>
 
 <?= $this->endSection() ?>
