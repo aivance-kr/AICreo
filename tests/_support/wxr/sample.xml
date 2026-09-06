@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+    xmlns:excerpt="http://wordpress.org/export/1.1/excerpt/"
+    xmlns:content="http://purl.org/rss/1.0/modules/content/"
+    xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:wp="http://wordpress.org/export/1.2/">
+<channel>
+    <title>테스트 사이트</title>
+    <link>https://example.test</link>
+    <wp:wxr_version>1.2</wp:wxr_version>
+
+    <wp:category>
+        <wp:term_id>1</wp:term_id>
+        <wp:category_nicename><![CDATA[gallery]]></wp:category_nicename>
+        <wp:category_parent><![CDATA[]]></wp:category_parent>
+        <wp:cat_name><![CDATA[갤러리]]></wp:cat_name>
+    </wp:category>
+
+    <wp:term>
+        <wp:term_id>50</wp:term_id>
+        <wp:term_taxonomy><![CDATA[product_cat]]></wp:term_taxonomy>
+        <wp:term_slug><![CDATA[ignored-product-cat]]></wp:term_slug>
+        <wp:term_name><![CDATA[무시할 상품 카테고리]]></wp:term_name>
+    </wp:term>
+
+    <item>
+        <title><![CDATA[공개 글]]></title>
+        <link>https://example.test/?p=100</link>
+        <dc:creator><![CDATA[tester]]></dc:creator>
+        <content:encoded><![CDATA[<p>본문 <img src="/wp-content/uploads/2020/01/photo.jpg"></p>]]></content:encoded>
+        <wp:post_id>100</wp:post_id>
+        <wp:post_date><![CDATA[2020-01-15 10:00:00]]></wp:post_date>
+        <wp:post_name><![CDATA[public-post]]></wp:post_name>
+        <wp:status><![CDATA[publish]]></wp:status>
+        <wp:post_type><![CDATA[post]]></wp:post_type>
+        <category domain="category" nicename="gallery"><![CDATA[갤러리]]></category>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[post_views]]></wp:meta_key>
+            <wp:meta_value><![CDATA[42]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:comment>
+            <wp:comment_id>1</wp:comment_id>
+            <wp:comment_author><![CDATA[방문자]]></wp:comment_author>
+            <wp:comment_author_IP><![CDATA[127.0.0.1]]></wp:comment_author_IP>
+            <wp:comment_date><![CDATA[2020-01-16 09:00:00]]></wp:comment_date>
+            <wp:comment_content><![CDATA[좋은 글이네요]]></wp:comment_content>
+            <wp:comment_approved><![CDATA[1]]></wp:comment_approved>
+        </wp:comment>
+        <wp:comment>
+            <wp:comment_id>2</wp:comment_id>
+            <wp:comment_author><![CDATA[스팸]]></wp:comment_author>
+            <wp:comment_author_IP><![CDATA[127.0.0.2]]></wp:comment_author_IP>
+            <wp:comment_date><![CDATA[2020-01-16 09:05:00]]></wp:comment_date>
+            <wp:comment_content><![CDATA[스팸 댓글]]></wp:comment_content>
+            <wp:comment_approved><![CDATA[spam]]></wp:comment_approved>
+        </wp:comment>
+    </item>
+
+    <item>
+        <title><![CDATA[비공개 글]]></title>
+        <link>https://example.test/?p=101</link>
+        <dc:creator><![CDATA[tester]]></dc:creator>
+        <content:encoded><![CDATA[비공개 내용]]></content:encoded>
+        <wp:post_id>101</wp:post_id>
+        <wp:post_date><![CDATA[2020-02-01 10:00:00]]></wp:post_date>
+        <wp:post_name><![CDATA[private-post]]></wp:post_name>
+        <wp:status><![CDATA[private]]></wp:status>
+        <wp:post_type><![CDATA[post]]></wp:post_type>
+        <category domain="category" nicename="gallery"><![CDATA[갤러리]]></category>
+    </item>
+
+    <item>
+        <title><![CDATA[임시저장 글]]></title>
+        <link>https://example.test/?p=102</link>
+        <dc:creator><![CDATA[tester]]></dc:creator>
+        <content:encoded><![CDATA[초안]]></content:encoded>
+        <wp:post_id>102</wp:post_id>
+        <wp:post_date><![CDATA[2020-02-02 10:00:00]]></wp:post_date>
+        <wp:post_name><![CDATA[draft-post]]></wp:post_name>
+        <wp:status><![CDATA[draft]]></wp:status>
+        <wp:post_type><![CDATA[post]]></wp:post_type>
+        <category domain="category" nicename="gallery"><![CDATA[갤러리]]></category>
+    </item>
+
+    <item>
+        <title><![CDATA[소개 페이지]]></title>
+        <link>https://example.test/?page_id=9</link>
+        <dc:creator><![CDATA[tester]]></dc:creator>
+        <content:encoded><![CDATA[<p>소개합니다</p>]]></content:encoded>
+        <wp:post_id>9</wp:post_id>
+        <wp:post_date><![CDATA[2019-12-01 00:00:00]]></wp:post_date>
+        <wp:post_name><![CDATA[about]]></wp:post_name>
+        <wp:status><![CDATA[publish]]></wp:status>
+        <wp:post_type><![CDATA[page]]></wp:post_type>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_yoast_wpseo_metadesc]]></wp:meta_key>
+            <wp:meta_value><![CDATA[소개 페이지 설명]]></wp:meta_value>
+        </wp:postmeta>
+    </item>
+
+    <item>
+        <title><![CDATA[photo.jpg]]></title>
+        <link>https://example.test/?attachment_id=200</link>
+        <dc:creator><![CDATA[tester]]></dc:creator>
+        <wp:post_id>200</wp:post_id>
+        <wp:post_date><![CDATA[2020-01-14 09:00:00]]></wp:post_date>
+        <wp:post_name><![CDATA[photo]]></wp:post_name>
+        <wp:status><![CDATA[inherit]]></wp:status>
+        <wp:post_type><![CDATA[attachment]]></wp:post_type>
+        <wp:attachment_url><![CDATA[https://example.test/wp-content/uploads/2020/01/photo.jpg]]></wp:attachment_url>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_wp_attached_file]]></wp:meta_key>
+            <wp:meta_value><![CDATA[2020/01/photo.jpg]]></wp:meta_value>
+        </wp:postmeta>
+    </item>
+
+    <item>
+        <title><![CDATA[우커머스 상품]]></title>
+        <link>https://example.test/?product=ignored</link>
+        <wp:post_id>300</wp:post_id>
+        <wp:post_type><![CDATA[product]]></wp:post_type>
+        <wp:status><![CDATA[publish]]></wp:status>
+    </item>
+
+    <item>
+        <title><![CDATA[메뉴 아이템]]></title>
+        <wp:post_id>400</wp:post_id>
+        <wp:post_type><![CDATA[nav_menu_item]]></wp:post_type>
+        <wp:status><![CDATA[publish]]></wp:status>
+    </item>
+</channel>
+</rss>

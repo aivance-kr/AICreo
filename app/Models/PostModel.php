@@ -14,6 +14,7 @@ class PostModel extends Model
         'board_id', 'user_id', 'title', 'content',
         'author_name', 'author_password',
         'is_notice', 'is_secret', 'ip_address',
+        'views', 'wp_post_id', 'created_at', 'updated_at',
     ];
     protected $afterInsert = ['clearSitemapCache'];
     protected $afterUpdate = ['clearSitemapCache'];

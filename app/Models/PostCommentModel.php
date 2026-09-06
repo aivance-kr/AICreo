@@ -14,6 +14,7 @@ class PostCommentModel extends Model
     protected $allowedFields  = [
         'post_id', 'user_id', 'content',
         'author_name', 'author_password', 'ip_address',
+        'wp_comment_id', 'created_at',
     ];
 
     /**

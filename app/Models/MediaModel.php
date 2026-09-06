@@ -12,6 +12,7 @@ class MediaModel extends Model
     protected $updatedField  = '';
     protected $allowedFields = [
         'original_name', 'stored_name', 'file_path', 'file_size', 'mime_type', 'alt',
+        'wp_attachment_id', 'created_at',
     ];
 
     /**
