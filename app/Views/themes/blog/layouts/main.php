@@ -42,7 +42,9 @@ $currentPath = '/' . uri_string();
 $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' && $url === $currentPath;
 ?>
 
-<div class="blog-shell">
+<?= $this->include('components/navbar') ?>
+
+<div class="blog-content-shell">
     <aside class="blog-sidebar" aria-label="주 메뉴">
         <a class="blog-brand" href="/">
             <?php if (! empty($settings['site_logo'])): ?>
@@ -117,9 +119,10 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
         <?php endforeach; ?>
 
         <?= $this->renderSection('content') ?>
-        <?= $this->include('themes/default/components/footer') ?>
     </main>
 </div>
+
+<?= $this->include('components/footer') ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>

@@ -4,17 +4,17 @@ body {
     font-family: var(--font-sans);
 }
 
-.blog-shell {
+.blog-content-shell {
     display: grid;
     grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
-    min-height: 100vh;
+    min-height: calc(100vh - 4rem);
 }
 
 .blog-sidebar {
     align-self: start;
     background: var(--surface-raised);
     border-right: 1px solid var(--border-hairline);
-    min-height: 100vh;
+    min-height: calc(100vh - 4rem);
     padding: 3rem 2rem 2rem;
     position: sticky;
     top: 0;
@@ -109,7 +109,7 @@ body {
 }
 
 @media (max-width: 767.98px) {
-    .blog-shell {
+    .blog-content-shell {
         display: block;
     }
 

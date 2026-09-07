@@ -74,6 +74,9 @@
                     </div>
                     <?php /* 업로드 실패를 브라우저 alert 대신 필드 옆에 남긴다 */ ?>
                     <div class="form-text text-danger" id="err_<?= esc($s['key']) ?>" role="alert"></div>
+                <?php elseif ($s['type'] === 'number'): ?>
+                    <input type="number" name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-control form-control-sm"
+                           value="<?= esc($s['value']) ?>" min="1" max="100" step="1">
                 <?php else: ?>
                     <input type="text" name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-control form-control-sm" value="<?= esc($s['value']) ?>">
                 <?php endif; ?>

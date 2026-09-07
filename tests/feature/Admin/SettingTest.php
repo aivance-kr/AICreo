@@ -55,4 +55,14 @@ final class SettingTest extends AdminTestCase
         $result->assertRedirectTo('/admin/settings/general');
         $this->assertSame('0', (new SettingModel())->getAllAsMap()['home_show_latest_notices']);
     }
+
+    public function testAdminBlogHomePostLimitIsBounded(): void
+    {
+        $result = $this->withSession($this->adminSession)->post('admin/settings/general', [
+            'blog_home_post_limit' => '1000',
+        ]);
+
+        $result->assertRedirectTo('/admin/settings/general');
+        $this->assertSame('100', (new SettingModel())->getAllAsMap()['blog_home_post_limit']);
+    }
 }

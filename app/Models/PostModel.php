@@ -38,6 +38,22 @@ class PostModel extends Model
     }
 
     /**
+     * 블로그 메인에 표시할 공개 최신 글을 반환한다.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getLatestPublic(int $limit): array
+    {
+        return $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->where('posts.is_secret', 0)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest')
+            ->orderBy('posts.id', 'DESC')
+            ->findAll($limit);
+    }
+
+    /**
      * @param array<string, mixed> $data
      *
      * @return array<string, mixed>
