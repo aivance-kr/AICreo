@@ -46,14 +46,6 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
 
 <div class="blog-content-shell">
     <aside class="blog-sidebar" aria-label="주 메뉴">
-        <a class="blog-brand" href="/">
-            <?php if (! empty($settings['site_logo'])): ?>
-                <img src="/<?= esc($settings['site_logo']) ?>" alt="<?= esc($settings['site_name'] ?? '') ?>">
-            <?php else: ?>
-                <?= esc($settings['site_name'] ?? '') ?>
-            <?php endif; ?>
-        </a>
-
         <nav class="blog-navigation" aria-label="사이트 메뉴">
             <ul>
                 <?php foreach ($menus as $menu): ?>

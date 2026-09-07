@@ -20,6 +20,7 @@ $isCurrent = static fn (?string $url): bool => $url !== null && $url !== '' && $
         </button>
 
         <div class="collapse navbar-collapse" id="mainNav">
+            <?php if (($settings['active_theme'] ?? 'default') !== 'blog'): ?>
             <ul class="navbar-nav me-auto">
                 <?php foreach ($menus as $menu): ?>
                 <?php
@@ -60,6 +61,7 @@ $isCurrent = static fn (?string $url): bool => $url !== null && $url !== '' && $
                 </li>
                 <?php endforeach; ?>
             </ul>
+            <?php endif; ?>
 
             <!-- 우측 -->
             <div class="d-flex align-items-center gap-2">
