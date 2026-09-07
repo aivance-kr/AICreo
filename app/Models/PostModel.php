@@ -63,11 +63,12 @@ class PostModel extends Model
             return null;
         }
 
-        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $content, $m) !== 1) {
+        // 워드프레스 이관 게시글 일부는 img src 속성에 따옴표가 없다 — 따옴표 유무 모두 대응.
+        if (preg_match('/<img[^>]+src=(?:"([^"]*)"|\'([^\']*)\'|([^\s"\'>]+))/i', $content, $m) !== 1) {
             return null;
         }
 
-        return $m[1];
+        return $m[1] !== '' ? $m[1] : (($m[2] ?? '') !== '' ? $m[2] : ($m[3] ?? ''));
     }
 
     /**
