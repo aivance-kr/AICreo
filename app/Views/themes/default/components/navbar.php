@@ -64,7 +64,7 @@ $isCurrent = static fn (?string $url): bool => $url !== null && $url !== '' && $
             <?php endif; ?>
 
             <!-- 우측 -->
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2<?= ($settings['active_theme'] ?? 'default') === 'blog' ? ' ms-auto' : '' ?>">
                 <?php if (!empty($settings['phone'])): ?>
                     <a href="tel:<?= esc($settings['phone']) ?>" class="btn btn-outline-primary btn-sm d-inline-flex">
                         <i class="bi bi-telephone me-1" aria-hidden="true"></i><span class="visually-hidden">전화 </span><?= esc($settings['phone']) ?>
