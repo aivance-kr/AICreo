@@ -119,6 +119,8 @@ class BoardController extends BaseController
 
         $files    = $this->fileModel->getByPost($postId);
         $comments = $this->commentModel->getByPost($postId);
+        $prevPost = $this->postModel->getPrevious($board['id'], $postId);
+        $nextPost = $this->postModel->getNext($board['id'], $postId);
 
         // 비밀글·비공개 게시판 글은 색인 제외
         $noindex   = (bool) $post['is_secret'] || $board['read_permission'] !== 'guest';
@@ -145,6 +147,8 @@ class BoardController extends BaseController
             'post'     => $post,
             'files'    => $files,
             'comments' => $comments,
+            'prevPost' => $prevPost,
+            'nextPost' => $nextPost,
             'jsonLd'   => $jsonLd,
             'page'     => [
                 'title'     => $post['title'],

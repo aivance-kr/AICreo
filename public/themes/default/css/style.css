@@ -52,6 +52,13 @@ body {
     max-width: 100%;
     height: auto;
 }
+.board-post-content {
+    white-space: pre-line;
+}
+.board-post-content img {
+    display: block;
+    margin-block: 1rem;
+}
 
 /* ─── 게시판 ─────────────────────────────────────── */
 .board-table th {

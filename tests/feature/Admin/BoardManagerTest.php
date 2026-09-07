@@ -51,4 +51,47 @@ final class BoardManagerTest extends AdminTestCase
         $result->assertRedirectTo('/admin/boards');
         $this->assertSame('수정된 자유게시판', (new BoardModel())->find($boardId)['name']);
     }
+
+    public function testAdminCreatesBoardWithListSkin(): void
+    {
+        $this->withSession($this->adminSession)->post('admin/boards/create', [
+            'slug'             => 'blog-board',
+            'name'             => '블로그게시판',
+            'read_permission'  => 'guest',
+            'write_permission' => 'member',
+            'list_skin'        => 'blog',
+        ]);
+
+        $this->assertSame('blog', (new BoardModel())->getBySlug('blog-board')['list_skin']);
+    }
+
+    public function testAdminUpdateRejectsUnknownListSkinFallsBackToList(): void
+    {
+        $boardId = (int) (new BoardModel())->getBySlug('free')['id'];
+
+        $this->withSession($this->adminSession)->post("admin/boards/{$boardId}/edit", [
+            'name'             => '자유게시판',
+            'read_permission'  => 'guest',
+            'write_permission' => 'member',
+            'is_active'        => 1,
+            'list_skin'        => 'not-a-real-skin',
+        ]);
+
+        $this->assertSame('list', (new BoardModel())->find($boardId)['list_skin']);
+    }
+
+    public function testAdminUpdatesBoardListSkinToGallery(): void
+    {
+        $boardId = (int) (new BoardModel())->getBySlug('free')['id'];
+
+        $this->withSession($this->adminSession)->post("admin/boards/{$boardId}/edit", [
+            'name'             => '자유게시판',
+            'read_permission'  => 'guest',
+            'write_permission' => 'member',
+            'is_active'        => 1,
+            'list_skin'        => 'gallery',
+        ]);
+
+        $this->assertSame('gallery', (new BoardModel())->find($boardId)['list_skin']);
+    }
 }

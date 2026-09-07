@@ -31,6 +31,52 @@ final class BoardControllerTest extends FeatureTestCase
         $this->get('board/does-not-exist');
     }
 
+    public function testListSkinDefaultRendersTable(): void
+    {
+        $result = $this->get('board/free');
+
+        $result->assertStatus(200);
+        $result->assertSee('board-table');
+    }
+
+    public function testListSkinBlogRendersCardsWithThumbnail(): void
+    {
+        $boardId = $this->boardId('free');
+        (new BoardModel())->update($boardId, ['list_skin' => 'blog']);
+        (new PostModel())->insert([
+            'board_id'    => $boardId,
+            'title'       => '블로그 스킨 글',
+            'content'     => '<p>본문</p><img src="/uploads/board/images/2026/09/thumb.jpg">',
+            'author_name' => '테스터',
+            'ip_address'  => '127.0.0.1',
+        ]);
+
+        $result = $this->get('board/free');
+
+        $result->assertStatus(200);
+        $result->assertSee('board-list-blog');
+        $result->assertSee('/uploads/board/images/2026/09/thumb.jpg');
+    }
+
+    public function testListSkinGalleryRendersImageGrid(): void
+    {
+        $boardId = $this->boardId('free');
+        (new BoardModel())->update($boardId, ['list_skin' => 'gallery']);
+        (new PostModel())->insert([
+            'board_id'    => $boardId,
+            'title'       => '갤러리 스킨 글',
+            'content'     => '<img src="/uploads/board/images/2026/09/gallery.jpg">',
+            'author_name' => '테스터',
+            'ip_address'  => '127.0.0.1',
+        ]);
+
+        $result = $this->get('board/free');
+
+        $result->assertStatus(200);
+        $result->assertSee('board-list-gallery');
+        $result->assertSee('/uploads/board/images/2026/09/gallery.jpg');
+    }
+
     public function testGuestCannotOpenAdminOnlyWriteForm(): void
     {
         // notice 게시판은 write_permission = admin
@@ -109,6 +155,55 @@ final class BoardControllerTest extends FeatureTestCase
         $this->get("board/qna/{$postId}")->assertStatus(200);
 
         $this->assertSame(1, (int) $postModel->find($postId)['views']);
+    }
+
+    public function testViewUsesDedicatedContentLayoutClass(): void
+    {
+        $postModel = new PostModel();
+        $postId    = (int) $postModel->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '본문 표시 글',
+            'content'     => "첫 번째 줄\n<img src=\"/uploads/example.jpg\" alt=\"예시\">\n마지막 줄",
+            'author_name' => '작성자',
+            'is_notice'   => 0,
+        ]);
+
+        $body = $this->get("board/qna/{$postId}")->getBody();
+
+        $this->assertStringContainsString('class="post-content board-post-content"', $body);
+        $this->assertStringContainsString('<img src="/uploads/example.jpg"', $body);
+    }
+
+    public function testViewShowsPreviousAndNextPostLinks(): void
+    {
+        $postModel = new PostModel();
+        $boardId   = $this->boardId('qna');
+
+        $prevId = (int) $postModel->insert(['board_id' => $boardId, 'title' => '이전 글입니다', 'content' => '본문', 'is_notice' => 0]);
+        $postId = (int) $postModel->insert(['board_id' => $boardId, 'title' => '현재 글입니다', 'content' => '본문', 'is_notice' => 0]);
+        $nextId = (int) $postModel->insert(['board_id' => $boardId, 'title' => '다음 글입니다', 'content' => '본문', 'is_notice' => 0]);
+
+        $body = html_entity_decode((string) $this->get("board/qna/{$postId}")->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $this->assertStringContainsString("/board/qna/{$prevId}", $body);
+        $this->assertStringContainsString('이전 글입니다', $body);
+        $this->assertStringContainsString("/board/qna/{$nextId}", $body);
+        $this->assertStringContainsString('다음 글입니다', $body);
+    }
+
+    public function testViewHidesPrevNextBlockWhenNoAdjacentPosts(): void
+    {
+        $postModel = new PostModel();
+        $postId    = (int) $postModel->insert([
+            'board_id' => $this->boardId('qna'),
+            'title'    => '유일한 글',
+            'content'  => '본문',
+        ]);
+
+        $body = html_entity_decode((string) $this->get("board/qna/{$postId}")->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $this->assertStringNotContainsString('이전글', $body);
+        $this->assertStringNotContainsString('다음글', $body);
     }
 
     public function testListShowsCategorySidebarWhenBoardHasCategories(): void
