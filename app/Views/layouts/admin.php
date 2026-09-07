@@ -4,6 +4,7 @@ $uri = uri_string();
 // 사이드바 활성 항목 판정 — 설정 3종은 접두어가 겹치므로 먼저 갈라낸다.
 $isThemeSettings   = str_starts_with($uri, 'admin/settings/theme');
 $isOauthSettings   = str_starts_with($uri, 'admin/settings/oauth');
+$isBackup           = str_starts_with($uri, 'admin/backup');
 $isGeneralSettings = str_starts_with($uri, 'admin/settings') && ! $isThemeSettings && ! $isOauthSettings;
 $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
 ?>
@@ -163,6 +164,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             </a>
             <a href="/admin/settings/oauth" class="nav-link <?= $isOauthSettings ? 'active' : '' ?>" <?= $isOauthSettings ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-people me-2" aria-hidden="true"></i>소셜 로그인
+            </a>
+            <a href="/admin/backup" class="nav-link <?= $isBackup ? 'active' : '' ?>" <?= $isBackup ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-database-down me-2" aria-hidden="true"></i>백업 관리
             </a>
 
             <div class="nav-section mt-3">사이트</div>
