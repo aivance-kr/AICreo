@@ -196,6 +196,28 @@ final class WordpressImportTest extends FeatureTestCase
         $this->assertStringNotContainsString('2013/05', $post['content']);
     }
 
+    public function testRewriteContentImagesReplacesTheEntireLegacyDomainUrl(): void
+    {
+        $boardId = (int) (new BoardModel())->first()['id'];
+        $postId  = (new PostModel())->insert([
+            'wp_post_id'  => 995,
+            'board_id'    => $boardId,
+            'title'       => '이전 도메인 이미지 글',
+            'content'     => '<img src="https://jblove.net/uploads/imported/2025/02/photo.jpg">',
+            'author_name' => 'tester',
+            'created_at'  => '2025-02-01 00:00:00',
+        ], true);
+
+        $updated = $this->importer->rewriteContentImages([
+            '2025/02/photo.jpg' => 'uploads/imported/2025/02/photo.jpg',
+        ]);
+
+        $this->assertSame(1, $updated);
+        $post = (new PostModel())->find($postId);
+        $this->assertStringContainsString('src="/uploads/imported/2025/02/photo.jpg"', $post['content']);
+        $this->assertStringNotContainsString('jblove.net', $post['content']);
+    }
+
     public function testRewriteContentImagesSkipsAmbiguousBasenameAcrossMultipleAttachments(): void
     {
         $boardId = (int) (new BoardModel())->first()['id'];
