@@ -55,6 +55,22 @@ class PostModel extends Model
     }
 
     /**
+     * 게시글 본문 HTML에서 첫 번째 이미지 src 를 추출한다 (블로그형/갤러리형 목록 썸네일용).
+     */
+    public static function extractThumbnail(?string $content): ?string
+    {
+        if ($content === null || $content === '') {
+            return null;
+        }
+
+        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $content, $m) !== 1) {
+            return null;
+        }
+
+        return $m[1];
+    }
+
+    /**
      * @param array<string, mixed> $data
      *
      * @return array<string, mixed>
@@ -73,14 +89,18 @@ class PostModel extends Model
     {
         $offset = ($page - 1) * $perPage;
 
-        $noticeBuilder = $this->where('board_id', $boardId)->where('is_notice', 1);
+        $noticeBuilder = $this->select('posts.*, board_categories.name as category_name')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
+            ->where('posts.board_id', $boardId)
+            ->where('posts.is_notice', 1);
         if ($categoryId !== null) {
-            $noticeBuilder->where('category_id', $categoryId);
+            $noticeBuilder->where('posts.category_id', $categoryId);
         }
-        $notices = $noticeBuilder->orderBy('id', 'DESC')->findAll(5);
+        $notices = $noticeBuilder->orderBy('posts.id', 'DESC')->findAll(5);
 
-        $postBuilder = $this->select('posts.*, users.nickname as user_nickname')
+        $postBuilder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name')
             ->join('users', 'users.id = posts.user_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId)
             ->where('posts.is_notice', 0);
         if ($categoryId !== null) {
@@ -106,14 +126,47 @@ class PostModel extends Model
      */
     public function getDetail(int $id): ?array
     {
-        return $this->select('posts.*, users.nickname as user_nickname, users.email as user_email')
+        return $this->select('posts.*, users.nickname as user_nickname, users.email as user_email, board_categories.name as category_name')
             ->join('users', 'users.id = posts.user_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->find($id);
     }
 
     public function incrementView(int $id): void
     {
         $this->db->query('UPDATE posts SET views = views + 1 WHERE id = ?', [$id]);
+    }
+
+    /**
+     * 같은 게시판의 이전 글(더 오래된 글) — 공지·비밀글 제외.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getPrevious(int $boardId, int $postId): ?array
+    {
+        return $this->select('id, title')
+            ->where('board_id', $boardId)
+            ->where('is_notice', 0)
+            ->where('is_secret', 0)
+            ->where('id <', $postId)
+            ->orderBy('id', 'DESC')
+            ->first();
+    }
+
+    /**
+     * 같은 게시판의 다음 글(더 최근 글) — 공지·비밀글 제외.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getNext(int $boardId, int $postId): ?array
+    {
+        return $this->select('id, title')
+            ->where('board_id', $boardId)
+            ->where('is_notice', 0)
+            ->where('is_secret', 0)
+            ->where('id >', $postId)
+            ->orderBy('id', 'ASC')
+            ->first();
     }
 
     /**
@@ -149,8 +202,9 @@ class PostModel extends Model
     public function search(int $boardId, string $keyword, string $type, int $page, int $perPage, ?int $categoryId = null): array
     {
         $offset  = ($page - 1) * $perPage;
-        $builder = $this->select('posts.*, users.nickname as user_nickname')
+        $builder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name')
             ->join('users', 'users.id = posts.user_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId);
 
         if ($categoryId !== null) {

@@ -52,4 +52,20 @@ final class BoardModelTest extends DatabaseTestCase
         $this->assertContains('free', $slugs);
         $this->assertContains('qna', $slugs);
     }
+
+    public function testListSkinDefaultsToList(): void
+    {
+        $this->assertSame('list', $this->model->getBySlug('notice')['list_skin']);
+    }
+
+    public function testListSkinIsAllowedFieldAndPersists(): void
+    {
+        $id = $this->model->insert([
+            'slug'      => 'blog-skin-board',
+            'name'      => '블로그형게시판',
+            'list_skin' => 'blog',
+        ]);
+
+        $this->assertSame('blog', $this->model->find($id)['list_skin']);
+    }
 }
