@@ -13,20 +13,20 @@
 <?= $this->section('content') ?>
 
 <div class="container py-4">
+<?php if (($settings['active_theme'] ?? 'default') !== 'blog' && ! empty($categories)): ?>
 <div class="row g-4">
-<?php if (! empty($categories)): ?>
 <div class="col-lg-3 order-lg-2">
     <nav class="list-group mb-4" aria-label="카테고리">
-        <a href="/board/<?= esc($board['slug']) ?>"
-           class="list-group-item list-group-item-action <?= $currentCategory === null ? 'active' : '' ?>">전체</a>
+        <a href="/board/<?= esc($board['slug']) ?>" class="list-group-item list-group-item-action <?= $currentCategory === null ? 'active' : '' ?>">전체</a>
         <?php foreach ($categories as $cat): ?>
-        <a href="/board/<?= esc($board['slug']) ?>?category=<?= $cat['id'] ?>"
-           class="list-group-item list-group-item-action <?= $currentCategory === (int) $cat['id'] ? 'active' : '' ?>"><?= esc($cat['name']) ?></a>
+        <a href="/board/<?= esc($board['slug']) ?>?category=<?= esc($cat['id']) ?>" class="list-group-item list-group-item-action <?= $currentCategory === (int) $cat['id'] ? 'active' : '' ?>"><?= esc($cat['name']) ?></a>
         <?php endforeach; ?>
     </nav>
 </div>
+<div class="col-lg-9 order-lg-1">
+<?php else: ?>
+<div class="row g-4"><div>
 <?php endif; ?>
-<div class="<?= empty($categories) ? 'col-12' : 'col-lg-9 order-lg-1' ?>">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="h4 mb-0"><?= esc($board['name']) ?></h1>
