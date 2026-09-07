@@ -62,9 +62,8 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
                     $menuBoardSlug = str_starts_with((string) ($menu['url'] ?? ''), '/board/')
                         ? trim((string) substr((string) $menu['url'], 7), '/')
                         : '';
-                    $showBoardCategories = $menuBoardSlug !== ''
-                        && str_starts_with($currentPath, '/board/' . $menuBoardSlug)
-                        && ! empty($categories);
+                    $menuCategories = $boardCategories[$menuBoardSlug] ?? [];
+                    $showBoardCategories = $menuBoardSlug !== '' && $menuCategories !== [];
                     ?>
                     <li>
                         <?php if (! empty($children)): ?>
@@ -89,7 +88,7 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
                             <?php if ($showBoardCategories): ?>
                             <ul class="blog-submenu">
                                 <li><a href="/board/<?= esc($menuBoardSlug) ?>"<?= $currentPath === '/board/' . $menuBoardSlug ? ' aria-current="page"' : '' ?>>전체</a></li>
-                                <?php foreach ($categories as $category): ?>
+                                <?php foreach ($menuCategories as $category): ?>
                                 <li><a href="/board/<?= esc($menuBoardSlug) ?>?category=<?= esc($category['id']) ?>"><?= esc($category['name']) ?></a></li>
                                 <?php endforeach; ?>
                             </ul>
