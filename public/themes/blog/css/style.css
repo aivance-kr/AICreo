@@ -113,6 +113,17 @@ body {
     overflow-wrap: break-word;
 }
 
+.blog-post-excerpt {
+    line-height: 1.6;
+    max-width: 65ch;
+}
+
+.blog-post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+}
+
 @media (max-width: 767.98px) {
     .blog-content-shell {
         display: block;
