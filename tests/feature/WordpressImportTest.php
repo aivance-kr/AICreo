@@ -79,6 +79,36 @@ final class WordpressImportTest extends FeatureTestCase
         $this->assertSame($routing['gallery']['categoryId'], (int) $post['category_id']);
     }
 
+    public function testImportCategoryHierarchyAsBoardsCreatesBoardPerRootAndFlattensDescendants(): void
+    {
+        $routing = $this->importer->importCategoryHierarchyAsBoards($this->parser);
+
+        // gallery(루트) 아래 sub-gallery -> deep-gallery 2단 중첩도 같은 게시판의 형제 카테고리로 평탄화
+        $this->assertSame($routing['gallery']['boardId'], $routing['sub-gallery']['boardId']);
+        $this->assertSame($routing['gallery']['boardId'], $routing['deep-gallery']['boardId']);
+        $this->assertNull($routing['gallery']['categoryId']);
+        $this->assertNotNull($routing['sub-gallery']['categoryId']);
+        $this->assertNotNull($routing['deep-gallery']['categoryId']);
+
+        // notice는 자식 없는 루트 카테고리 — 게시판만 생기고 카테고리는 없다
+        $this->assertNotSame($routing['gallery']['boardId'], $routing['notice']['boardId']);
+        $this->assertNull($routing['notice']['categoryId']);
+
+        $board = (new BoardModel())->find($routing['gallery']['boardId']);
+        $this->assertNotNull($board);
+        $this->assertSame('gallery', $board['slug']);
+        $this->assertSame(1, (int) $board['wp_term_id']);
+    }
+
+    public function testImportCategoryHierarchyAsBoardsIsIdempotent(): void
+    {
+        $first  = $this->importer->importCategoryHierarchyAsBoards($this->parser);
+        $second = $this->importer->importCategoryHierarchyAsBoards($this->parser);
+
+        $this->assertSame($first, $second);
+        $this->assertSame(1, (new BoardModel())->where('wp_term_id', 1)->countAllResults());
+    }
+
     public function testImportPagesAndPostsSkipsPostsWithNoMatchingBoardAndWarns(): void
     {
         $result = $this->importer->importPagesAndPosts($this->parser, []);

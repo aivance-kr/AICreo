@@ -29,10 +29,25 @@ final class WxrParserTest extends CIUnitTestCase
     {
         $categories = $this->parser->categories();
 
-        $this->assertCount(2, $categories);
+        $this->assertCount(4, $categories);
         $this->assertSame('gallery', $categories[0]->nicename);
         $this->assertSame('갤러리', $categories[0]->name);
         $this->assertSame(1, $categories[0]->wpTermId);
+        $this->assertTrue($categories[0]->isRoot());
+    }
+
+    public function testCategoriesReadsParentNicenameForNestedCategories(): void
+    {
+        $categories = $this->parser->categories();
+
+        $subGallery = $categories[2];
+        $this->assertSame('sub-gallery', $subGallery->nicename);
+        $this->assertSame('gallery', $subGallery->parentNicename);
+        $this->assertFalse($subGallery->isRoot());
+
+        $deepGallery = $categories[3];
+        $this->assertSame('deep-gallery', $deepGallery->nicename);
+        $this->assertSame('sub-gallery', $deepGallery->parentNicename);
     }
 
     public function testNavMenusReadsOnlyNavMenuTaxonomyTerms(): void

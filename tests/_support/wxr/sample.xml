@@ -24,6 +24,20 @@
         <wp:cat_name><![CDATA[공지사항]]></wp:cat_name>
     </wp:category>
 
+    <wp:category>
+        <wp:term_id>3</wp:term_id>
+        <wp:category_nicename><![CDATA[sub-gallery]]></wp:category_nicename>
+        <wp:category_parent><![CDATA[gallery]]></wp:category_parent>
+        <wp:cat_name><![CDATA[갤러리 하위]]></wp:cat_name>
+    </wp:category>
+
+    <wp:category>
+        <wp:term_id>4</wp:term_id>
+        <wp:category_nicename><![CDATA[deep-gallery]]></wp:category_nicename>
+        <wp:category_parent><![CDATA[sub-gallery]]></wp:category_parent>
+        <wp:cat_name><![CDATA[갤러리 하위의 하위]]></wp:cat_name>
+    </wp:category>
+
     <wp:term>
         <wp:term_id>50</wp:term_id>
         <wp:term_taxonomy><![CDATA[product_cat]]></wp:term_taxonomy>

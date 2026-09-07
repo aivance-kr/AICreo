@@ -58,6 +58,7 @@ final class WxrParser
                 wpTermId: (int) $wp->term_id,
                 nicename: (string) $wp->category_nicename,
                 name: (string) $wp->cat_name,
+                parentNicename: (string) $wp->category_parent,
             );
         }
 
