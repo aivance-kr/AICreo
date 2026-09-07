@@ -170,6 +170,32 @@ final class WordpressImportTest extends FeatureTestCase
         $this->assertStringContainsString('uploads/imported/2016/11/동아리수업.jpg', $post['content']);
     }
 
+    public function testRewriteContentImagesResolvesThumbnailByFolderEvenWhenBasenameCollidesSitewide(): void
+    {
+        // "8.jpg"처럼 흔한 파일명은 사이트 전체 여러 글에 걸쳐 겹칠 수 있다 — 폴더까지
+        // 포함해 사이즈 접미사만 제거한 상대경로로 먼저 찾으면, 같은 파일명이 다른
+        // 폴더에도 있어도(모호한 basename 폴백까지 갈 필요 없이) 정확히 매칭된다.
+        $boardId = (int) (new BoardModel())->first()['id'];
+        $postId  = (new PostModel())->insert([
+            'wp_post_id'  => 996,
+            'board_id'    => $boardId,
+            'title'       => '흔한 파일명 글',
+            'content'     => '<img src="/wp-content/uploads/2016/11/8-225x300.jpg">',
+            'author_name' => 'tester',
+            'created_at'  => '2016-11-01 00:00:00',
+        ], true);
+
+        $updated = $this->importer->rewriteContentImages([
+            '2016/11/8.jpg' => 'uploads/imported/2016/11/8.jpg',
+            '2013/05/8.jpg' => 'uploads/imported/2013/05/8.jpg',
+        ]);
+
+        $this->assertSame(1, $updated);
+        $post = (new PostModel())->find($postId);
+        $this->assertStringContainsString('uploads/imported/2016/11/8.jpg', $post['content']);
+        $this->assertStringNotContainsString('2013/05', $post['content']);
+    }
+
     public function testRewriteContentImagesSkipsAmbiguousBasenameAcrossMultipleAttachments(): void
     {
         $boardId = (int) (new BoardModel())->first()['id'];
