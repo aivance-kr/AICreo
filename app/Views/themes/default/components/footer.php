@@ -7,7 +7,7 @@ $socialLinks = [
     ['key' => 'kakao',     'icon' => 'bi-chat-fill', 'label' => '카카오톡'],
 ];
 ?>
-<footer class="bg-dark text-white mt-5 py-4">
+<footer class="bg-dark text-white mt-5 py-4<?= ($settings['active_theme'] ?? 'default') === 'blog' ? ' blog-footer' : '' ?>">
     <div class="container">
         <div class="row g-4">
             <div class="col-md-4">

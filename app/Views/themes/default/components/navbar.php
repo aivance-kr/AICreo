@@ -5,7 +5,7 @@ $currentPath = '/' . uri_string();
 /** 메뉴 URL 이 현재 경로인지 (자식 메뉴 포함 여부는 호출부에서 판단) */
 $isCurrent = static fn (?string $url): bool => $url !== null && $url !== '' && $url === $currentPath;
 ?>
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm" aria-label="주 메뉴">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm<?= ($settings['active_theme'] ?? 'default') === 'blog' ? ' blog-navbar' : '' ?>" aria-label="주 메뉴">
     <div class="container">
         <!-- 로고 -->
         <?php if (!empty($settings['site_logo'])): ?>
