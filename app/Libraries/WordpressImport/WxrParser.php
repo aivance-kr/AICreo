@@ -9,14 +9,16 @@ use App\Libraries\WordpressImport\Dto\ImportedCategory;
 use App\Libraries\WordpressImport\Dto\ImportedComment;
 use App\Libraries\WordpressImport\Dto\ImportedContent;
 use App\Libraries\WordpressImport\Dto\ImportedContentType;
+use App\Libraries\WordpressImport\Dto\ImportedMenuItem;
 use RuntimeException;
 use SimpleXMLElement;
 
 /**
  * 워드프레스 WXR(export XML) 파서.
  *
- * 이관 대상 아닌 post_type(우커머스 상품·nav_menu_item·플러그인 잔재 등)은
- * 처음부터 결과에서 걸러낸다 — 호출부가 따로 필터링할 필요 없음.
+ * 이관 대상 아닌 post_type(우커머스 상품·플러그인 잔재 등)은 posts()/pages()/attachments()
+ * 에서 처음부터 걸러낸다 — 호출부가 따로 필터링할 필요 없음. nav_menu_item만 예외로
+ * navMenuItems()가 별도 취급 — 게시판/카테고리 구조를 결정하는 데 쓰인다.
  */
 final class WxrParser
 {
@@ -56,8 +58,84 @@ final class WxrParser
                 wpTermId: (int) $wp->term_id,
                 nicename: (string) $wp->category_nicename,
                 name: (string) $wp->cat_name,
+                parentNicename: (string) $wp->category_parent,
             );
         }
+
+        return $result;
+    }
+
+    /**
+     * wp:term(taxonomy=nav_menu)에 등록된 워드프레스 메뉴 목록 — 게시판 이관 대상 메뉴 선택용.
+     *
+     * @return list<array{nicename: string, name: string}>
+     */
+    public function navMenus(): array
+    {
+        $result = [];
+
+        foreach ($this->channel()->children(self::NS_WP)->term as $term) {
+            $wp = $term->children(self::NS_WP);
+            if ((string) $wp->term_taxonomy !== 'nav_menu') {
+                continue;
+            }
+
+            $result[] = [
+                'nicename' => (string) $wp->term_slug,
+                'name'     => (string) $wp->term_name,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * 지정한 메뉴(nicename)에 속한 항목 전부 — wp:menu_order 오름차순.
+     *
+     * @return list<ImportedMenuItem>
+     */
+    public function navMenuItems(string $menuNicename): array
+    {
+        $result = [];
+
+        foreach ($this->channel()->item as $item) {
+            $wp = $item->children(self::NS_WP);
+            if ((string) $wp->post_type !== 'nav_menu_item') {
+                continue;
+            }
+
+            $belongsToMenu = false;
+
+            foreach ($item->category as $category) {
+                $attrs = $category->attributes();
+                if ((string) $attrs['domain'] === 'nav_menu' && (string) $attrs['nicename'] === $menuNicename) {
+                    $belongsToMenu = true;
+
+                    break;
+                }
+            }
+
+            if (! $belongsToMenu) {
+                continue;
+            }
+
+            $meta = [];
+
+            foreach ($wp->postmeta as $postmeta) {
+                $meta[(string) $postmeta->meta_key] = (string) $postmeta->meta_value;
+            }
+
+            $result[] = new ImportedMenuItem(
+                wpItemId: (int) $wp->post_id,
+                parentWpItemId: (int) ($meta['_menu_item_menu_item_parent'] ?? 0),
+                menuOrder: (int) $wp->menu_order,
+                title: (string) $item->title,
+                objectType: $meta['_menu_item_object'] ?? '',
+                objectId: (int) ($meta['_menu_item_object_id'] ?? 0),
+            );
+        }
+
+        usort($result, static fn (ImportedMenuItem $a, ImportedMenuItem $b): int => $a->menuOrder <=> $b->menuOrder);
 
         return $result;
     }
