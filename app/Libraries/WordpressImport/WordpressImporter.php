@@ -456,10 +456,14 @@ final class WordpressImporter
     /**
      * 본문(content) 안의 옛 wp-content/uploads 경로를 새 경로로 치환.
      *
-     * 정확한 상대경로가 일치하지 않는 콘텐츠(예: 실제 첨부파일은 2011/06/x.jpg인데
-     * 본문엔 예전 플랫폼에서 이관하며 남은 /wp-content/uploads/1/x.jpg 처럼 다른
-     * 폴더로 적혀 있는 경우)는 파일명만으로 한 번 더 치환을 시도한다. 같은
-     * 파일명이 첨부파일 여러 개에 걸치면 어느 걸 가리키는지 알 수 없어 건너뛴다.
+     * 정확한 상대경로가 일치하지 않는 콘텐츠는 파일명만으로 한 번 더 치환을
+     * 시도한다. 두 가지 경우를 다룬다.
+     * - 실제 첨부파일은 2011/06/x.jpg인데 본문엔 예전 플랫폼에서 이관하며 남은
+     *   /wp-content/uploads/1/x.jpg 처럼 다른 폴더로 적혀 있는 경우.
+     * - 본문 <img>가 워드프레스가 자동 생성한 리사이즈 파생 파일(예: photo-300x225.jpg)을
+     *   가리키는 경우 — 이 파생 파일은 WXR에 별도 첨부파일로 없으므로(원본 첨부파일의
+     *   메타데이터에만 사이즈 정보로 기록됨) 원본 파일명(photo.jpg)으로 정규화해 찾는다.
+     * 같은 파일명이 첨부파일 여러 개에 걸치면 어느 걸 가리키는지 알 수 없어 건너뛴다.
      *
      * @param array<string, string> $pathMap 옛 상대경로 => 새 상대경로
      */
@@ -500,7 +504,15 @@ final class WordpressImporter
                 $content = preg_replace_callback(
                     '#wp-content/uploads/[\w./-]*?([^/"\'\s]+\.(?:' . $extPattern . '))#i',
                     static function (array $matches) use ($newPathByBasename): string {
-                        $candidates = $newPathByBasename[$matches[1]] ?? [];
+                        $basename   = $matches[1];
+                        $candidates = $newPathByBasename[$basename] ?? [];
+
+                        if ($candidates === []) {
+                            $original = preg_replace('/-\d+x\d+(\.\w+)$/i', '$1', $basename);
+                            if ($original !== null && $original !== $basename) {
+                                $candidates = $newPathByBasename[$original] ?? [];
+                            }
+                        }
 
                         return count($candidates) === 1 ? $candidates[0] : $matches[0];
                     },
