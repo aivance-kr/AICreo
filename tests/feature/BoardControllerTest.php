@@ -111,6 +111,23 @@ final class BoardControllerTest extends FeatureTestCase
         $this->assertSame(1, (int) $postModel->find($postId)['views']);
     }
 
+    public function testViewUsesDedicatedContentLayoutClass(): void
+    {
+        $postModel = new PostModel();
+        $postId    = (int) $postModel->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '본문 표시 글',
+            'content'     => "첫 번째 줄\n<img src=\"/uploads/example.jpg\" alt=\"예시\">\n마지막 줄",
+            'author_name' => '작성자',
+            'is_notice'   => 0,
+        ]);
+
+        $body = $this->get("board/qna/{$postId}")->getBody();
+
+        $this->assertStringContainsString('class="post-content board-post-content"', $body);
+        $this->assertStringContainsString('<img src="/uploads/example.jpg"', $body);
+    }
+
     public function testListShowsCategorySidebarWhenBoardHasCategories(): void
     {
         $boardId    = $this->boardId('free');
