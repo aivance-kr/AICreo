@@ -496,27 +496,30 @@ final class WordpressImporter
                 $content  = $original;
 
                 foreach ($pathMap as $oldRelative => $newRelative) {
-                    $content = str_replace(
-                        ['wp-content/uploads/' . $oldRelative],
-                        [$newRelative],
+                    // URL 일부만 바꾸면 https://old-domain/ 접두사가 남아 이미지가 깨진다.
+                    // 이미 한 번 잘못 이관된 uploads/imported URL도 같은 상대경로라면 복구한다.
+                    $content = preg_replace(
+                        '#(?:(?:https?:)?//[^/"\'\s]+)?/?(?:wp-content/uploads|uploads/imported)/'
+                        . preg_quote($oldRelative, '#') . '#i',
+                        '/' . $newRelative,
                         $content,
-                    );
+                    ) ?? $content;
                 }
 
                 $content = preg_replace_callback(
-                    '#wp-content/uploads/([\w./-]*?[^/"\'\s]+\.(?:' . $extPattern . '))#i',
+                    '#(?:(?:https?:)?//[^/"\'\s]+)?/?wp-content/uploads/([\w./-]*?[^/"\'\s]+\.(?:' . $extPattern . '))#i',
                     static function (array $matches) use ($pathMap, $newPathByBasename): string {
                         $relative = $matches[1];
 
                         $withoutSize = preg_replace('/-\d+x\d+(\.\w+)$/i', '$1', $relative);
                         if ($withoutSize !== null && $withoutSize !== $relative && isset($pathMap[$withoutSize])) {
-                            return $pathMap[$withoutSize];
+                            return '/' . $pathMap[$withoutSize];
                         }
 
                         $basename   = basename($withoutSize ?? $relative);
                         $candidates = $newPathByBasename[$basename] ?? [];
 
-                        return count($candidates) === 1 ? $candidates[0] : $matches[0];
+                        return count($candidates) === 1 ? '/' . $candidates[0] : $matches[0];
                     },
                     $content,
                 ) ?? $content;
