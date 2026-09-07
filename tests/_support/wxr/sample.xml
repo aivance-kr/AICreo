@@ -17,11 +17,25 @@
         <wp:cat_name><![CDATA[갤러리]]></wp:cat_name>
     </wp:category>
 
+    <wp:category>
+        <wp:term_id>2</wp:term_id>
+        <wp:category_nicename><![CDATA[notice]]></wp:category_nicename>
+        <wp:category_parent><![CDATA[]]></wp:category_parent>
+        <wp:cat_name><![CDATA[공지사항]]></wp:cat_name>
+    </wp:category>
+
     <wp:term>
         <wp:term_id>50</wp:term_id>
         <wp:term_taxonomy><![CDATA[product_cat]]></wp:term_taxonomy>
         <wp:term_slug><![CDATA[ignored-product-cat]]></wp:term_slug>
         <wp:term_name><![CDATA[무시할 상품 카테고리]]></wp:term_name>
+    </wp:term>
+
+    <wp:term>
+        <wp:term_id>60</wp:term_id>
+        <wp:term_taxonomy><![CDATA[nav_menu]]></wp:term_taxonomy>
+        <wp:term_slug><![CDATA[main-menu]]></wp:term_slug>
+        <wp:term_name><![CDATA[메인 메뉴]]></wp:term_name>
     </wp:term>
 
     <item>
@@ -124,10 +138,78 @@
     </item>
 
     <item>
-        <title><![CDATA[메뉴 아이템]]></title>
+        <title><![CDATA[커뮤니티]]></title>
         <wp:post_id>400</wp:post_id>
         <wp:post_type><![CDATA[nav_menu_item]]></wp:post_type>
         <wp:status><![CDATA[publish]]></wp:status>
+        <wp:menu_order>1</wp:menu_order>
+        <category domain="nav_menu" nicename="main-menu"><![CDATA[메인 메뉴]]></category>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_type]]></wp:meta_key>
+            <wp:meta_value><![CDATA[custom]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_object]]></wp:meta_key>
+            <wp:meta_value><![CDATA[custom]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_object_id]]></wp:meta_key>
+            <wp:meta_value><![CDATA[400]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_menu_item_parent]]></wp:meta_key>
+            <wp:meta_value><![CDATA[0]]></wp:meta_value>
+        </wp:postmeta>
+    </item>
+
+    <item>
+        <title><![CDATA[갤러리]]></title>
+        <wp:post_id>401</wp:post_id>
+        <wp:post_type><![CDATA[nav_menu_item]]></wp:post_type>
+        <wp:status><![CDATA[publish]]></wp:status>
+        <wp:menu_order>1</wp:menu_order>
+        <category domain="nav_menu" nicename="main-menu"><![CDATA[메인 메뉴]]></category>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_type]]></wp:meta_key>
+            <wp:meta_value><![CDATA[taxonomy]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_object]]></wp:meta_key>
+            <wp:meta_value><![CDATA[category]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_object_id]]></wp:meta_key>
+            <wp:meta_value><![CDATA[1]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_menu_item_parent]]></wp:meta_key>
+            <wp:meta_value><![CDATA[400]]></wp:meta_value>
+        </wp:postmeta>
+    </item>
+
+    <item>
+        <title><![CDATA[공지사항]]></title>
+        <wp:post_id>402</wp:post_id>
+        <wp:post_type><![CDATA[nav_menu_item]]></wp:post_type>
+        <wp:status><![CDATA[publish]]></wp:status>
+        <wp:menu_order>2</wp:menu_order>
+        <category domain="nav_menu" nicename="main-menu"><![CDATA[메인 메뉴]]></category>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_type]]></wp:meta_key>
+            <wp:meta_value><![CDATA[taxonomy]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_object]]></wp:meta_key>
+            <wp:meta_value><![CDATA[category]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_object_id]]></wp:meta_key>
+            <wp:meta_value><![CDATA[2]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_menu_item_menu_item_parent]]></wp:meta_key>
+            <wp:meta_value><![CDATA[400]]></wp:meta_value>
+        </wp:postmeta>
     </item>
 </channel>
 </rss>
