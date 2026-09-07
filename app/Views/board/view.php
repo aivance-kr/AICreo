@@ -84,6 +84,26 @@
     </div>
 </div>
 
+<?php if ($prevPost || $nextPost): ?>
+<!-- 이전글 / 다음글 -->
+<div class="card mb-4">
+    <div class="list-group list-group-flush">
+        <?php if ($nextPost): ?>
+        <a href="/board/<?= esc($board['slug']) ?>/<?= $nextPost['id'] ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
+            <span class="text-muted small flex-shrink-0" style="width:4.5rem;"><i class="bi bi-arrow-up" aria-hidden="true"></i> 다음글</span>
+            <span class="text-truncate"><?= esc($nextPost['title']) ?></span>
+        </a>
+        <?php endif; ?>
+        <?php if ($prevPost): ?>
+        <a href="/board/<?= esc($board['slug']) ?>/<?= $prevPost['id'] ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
+            <span class="text-muted small flex-shrink-0" style="width:4.5rem;"><i class="bi bi-arrow-down" aria-hidden="true"></i> 이전글</span>
+            <span class="text-truncate"><?= esc($prevPost['title']) ?></span>
+        </a>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- 댓글 -->
 <div id="comments" class="card mb-4">
     <div class="card-header bg-white">
