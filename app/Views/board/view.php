@@ -10,7 +10,10 @@
 
 <div class="card mb-4">
     <div class="card-header bg-white">
-        <h1 class="h5 mb-1"><?= esc($post['title']) ?></h1>
+        <h1 class="h5 mb-1">
+            <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
+            <?= esc($post['title']) ?>
+        </h1>
         <div class="d-flex gap-3 text-muted small">
             <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span> <?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
             <span><i class="bi bi-clock" aria-hidden="true"></i><span class="visually-hidden">작성일 </span> <?= $post['created_at'] ?></span>

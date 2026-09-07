@@ -77,6 +77,7 @@
             <td class="text-center" data-label=""><span class="badge text-bg-warning">공지</span></td>
             <td data-label="제목">
                 <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>" class="text-decoration-none text-dark fw-semibold">
+                    <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
                     <?= esc($post['title']) ?>
                     <?php if ($post['is_secret']): ?> <i class="bi bi-lock-fill text-muted small" aria-hidden="true"></i><span class="visually-hidden">비밀글</span><?php endif; ?>
                 </a>
@@ -98,6 +99,7 @@
             </td>
             <td data-label="제목">
                 <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>" class="text-decoration-none text-dark">
+                    <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
                     <?= esc($post['title']) ?>
                     <?php if ($post['is_secret']): ?> <i class="bi bi-lock-fill text-muted small" aria-hidden="true"></i><span class="visually-hidden">비밀글</span><?php endif; ?>
                 </a>
