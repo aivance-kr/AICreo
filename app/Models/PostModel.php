@@ -73,14 +73,18 @@ class PostModel extends Model
     {
         $offset = ($page - 1) * $perPage;
 
-        $noticeBuilder = $this->where('board_id', $boardId)->where('is_notice', 1);
+        $noticeBuilder = $this->select('posts.*, board_categories.name as category_name')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
+            ->where('posts.board_id', $boardId)
+            ->where('posts.is_notice', 1);
         if ($categoryId !== null) {
-            $noticeBuilder->where('category_id', $categoryId);
+            $noticeBuilder->where('posts.category_id', $categoryId);
         }
-        $notices = $noticeBuilder->orderBy('id', 'DESC')->findAll(5);
+        $notices = $noticeBuilder->orderBy('posts.id', 'DESC')->findAll(5);
 
-        $postBuilder = $this->select('posts.*, users.nickname as user_nickname')
+        $postBuilder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name')
             ->join('users', 'users.id = posts.user_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId)
             ->where('posts.is_notice', 0);
         if ($categoryId !== null) {
@@ -106,8 +110,9 @@ class PostModel extends Model
      */
     public function getDetail(int $id): ?array
     {
-        return $this->select('posts.*, users.nickname as user_nickname, users.email as user_email')
+        return $this->select('posts.*, users.nickname as user_nickname, users.email as user_email, board_categories.name as category_name')
             ->join('users', 'users.id = posts.user_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->find($id);
     }
 
@@ -149,8 +154,9 @@ class PostModel extends Model
     public function search(int $boardId, string $keyword, string $type, int $page, int $perPage, ?int $categoryId = null): array
     {
         $offset  = ($page - 1) * $perPage;
-        $builder = $this->select('posts.*, users.nickname as user_nickname')
+        $builder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name')
             ->join('users', 'users.id = posts.user_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId);
 
         if ($categoryId !== null) {
