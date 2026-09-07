@@ -56,6 +56,14 @@
                            value="<?= $board['sort_order'] ?? 0 ?>">
                 </div>
             </div>
+            <div class="mb-3">
+                <label for="board-form-list_skin" class="form-label small">목록 스킨</label>
+                <select id="board-form-list_skin" name="list_skin" class="form-select form-select-sm">
+                    <?php foreach (['list' => '일반 리스트형', 'blog' => '블로그형', 'gallery' => '갤러리형'] as $v => $l): ?>
+                        <option value="<?= $v ?>" <?= ($board['list_skin'] ?? 'list') === $v ? 'selected' : '' ?>><?= $l ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
             <div class="d-flex gap-3 mb-3">
                 <div class="form-check">
                     <input type="checkbox" name="allow_file" value="1" id="allow_file" class="form-check-input"

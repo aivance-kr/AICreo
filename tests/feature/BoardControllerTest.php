@@ -31,6 +31,52 @@ final class BoardControllerTest extends FeatureTestCase
         $this->get('board/does-not-exist');
     }
 
+    public function testListSkinDefaultRendersTable(): void
+    {
+        $result = $this->get('board/free');
+
+        $result->assertStatus(200);
+        $result->assertSee('board-table');
+    }
+
+    public function testListSkinBlogRendersCardsWithThumbnail(): void
+    {
+        $boardId = $this->boardId('free');
+        (new BoardModel())->update($boardId, ['list_skin' => 'blog']);
+        (new PostModel())->insert([
+            'board_id'    => $boardId,
+            'title'       => '블로그 스킨 글',
+            'content'     => '<p>본문</p><img src="/uploads/board/images/2026/09/thumb.jpg">',
+            'author_name' => '테스터',
+            'ip_address'  => '127.0.0.1',
+        ]);
+
+        $result = $this->get('board/free');
+
+        $result->assertStatus(200);
+        $result->assertSee('board-list-blog');
+        $result->assertSee('/uploads/board/images/2026/09/thumb.jpg');
+    }
+
+    public function testListSkinGalleryRendersImageGrid(): void
+    {
+        $boardId = $this->boardId('free');
+        (new BoardModel())->update($boardId, ['list_skin' => 'gallery']);
+        (new PostModel())->insert([
+            'board_id'    => $boardId,
+            'title'       => '갤러리 스킨 글',
+            'content'     => '<img src="/uploads/board/images/2026/09/gallery.jpg">',
+            'author_name' => '테스터',
+            'ip_address'  => '127.0.0.1',
+        ]);
+
+        $result = $this->get('board/free');
+
+        $result->assertStatus(200);
+        $result->assertSee('board-list-gallery');
+        $result->assertSee('/uploads/board/images/2026/09/gallery.jpg');
+    }
+
     public function testGuestCannotOpenAdminOnlyWriteForm(): void
     {
         // notice 게시판은 write_permission = admin
