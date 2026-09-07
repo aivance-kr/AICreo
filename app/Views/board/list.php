@@ -58,6 +58,62 @@
     <?php endif; ?>
 </form>
 
+<?php $listSkin = $board['list_skin'] ?? 'list'; ?>
+
+<?php if ($listSkin === 'blog'): ?>
+<!-- 블로그형 -->
+<div class="board-list-blog list-group list-group-flush border-top">
+    <?php foreach (array_merge($notices, $posts) as $post): ?>
+    <?php $thumb = \App\Models\PostModel::extractThumbnail($post['content'] ?? null); ?>
+    <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>" class="list-group-item list-group-item-action py-4">
+        <div class="d-flex gap-3">
+            <?php if ($thumb): ?>
+            <img src="<?= esc($thumb, 'attr') ?>" alt="" class="rounded flex-shrink-0" style="width:120px;height:90px;object-fit:cover">
+            <?php endif; ?>
+            <div class="flex-grow-1">
+                <?php if ($post['is_notice']): ?><span class="badge text-bg-warning mb-1">공지</span><?php endif; ?>
+                <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary mb-1"><?= esc($post['category_name']) ?></span><?php endif; ?>
+                <h2 class="h6 mb-1 text-dark"><?= esc($post['title']) ?><?php if ($post['is_secret']): ?> <i class="bi bi-lock-fill text-muted small" aria-hidden="true"></i><?php endif; ?></h2>
+                <p class="text-muted small mb-1"><?= esc(mb_substr(trim(strip_tags((string) $post['content'])), 0, 100)) ?></p>
+                <div class="text-muted small">
+                    <span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
+                    · <span><?= substr($post['created_at'], 0, 10) ?></span>
+                    · <span>조회 <?= number_format($post['views']) ?></span>
+                </div>
+            </div>
+        </div>
+    </a>
+    <?php endforeach; ?>
+    <?php if (empty($notices) && empty($posts)): ?>
+    <p class="text-muted text-center py-5 mb-0">게시글이 없습니다.</p>
+    <?php endif; ?>
+</div>
+
+<?php elseif ($listSkin === 'gallery'): ?>
+<!-- 갤러리형 -->
+<div class="board-list-gallery row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+    <?php foreach (array_merge($notices, $posts) as $post): ?>
+    <?php $thumb = \App\Models\PostModel::extractThumbnail($post['content'] ?? null); ?>
+    <div class="col">
+        <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>" class="text-decoration-none text-dark">
+            <div class="ratio ratio-1x1 bg-light rounded mb-2 overflow-hidden">
+                <?php if ($thumb): ?>
+                <img src="<?= esc($thumb, 'attr') ?>" alt="" style="object-fit:cover">
+                <?php else: ?>
+                <div class="d-flex align-items-center justify-content-center text-muted"><i class="bi bi-image" style="font-size:2rem" aria-hidden="true"></i></div>
+                <?php endif; ?>
+            </div>
+            <div class="small text-truncate"><?php if ($post['is_notice']): ?><span class="badge text-bg-warning">공지</span> <?php endif; ?><?= esc($post['title']) ?></div>
+        </a>
+    </div>
+    <?php endforeach; ?>
+    <?php if (empty($notices) && empty($posts)): ?>
+    <p class="text-muted text-center py-5 mb-0">게시글이 없습니다.</p>
+    <?php endif; ?>
+</div>
+
+<?php else: ?>
+<!-- 일반 리스트형 -->
 <div class="table-responsive">
 <table class="table table-hover board-table table-stack">
     <caption class="visually-hidden"><?= esc($board['name']) ?> 게시글 목록</caption>
@@ -112,6 +168,7 @@
     </tbody>
 </table>
 </div>
+<?php endif; ?>
 
 <!-- 페이지네이션 -->
 <?php

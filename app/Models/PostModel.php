@@ -55,6 +55,22 @@ class PostModel extends Model
     }
 
     /**
+     * 게시글 본문 HTML에서 첫 번째 이미지 src 를 추출한다 (블로그형/갤러리형 목록 썸네일용).
+     */
+    public static function extractThumbnail(?string $content): ?string
+    {
+        if ($content === null || $content === '') {
+            return null;
+        }
+
+        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $content, $m) !== 1) {
+            return null;
+        }
+
+        return $m[1];
+    }
+
+    /**
      * @param array<string, mixed> $data
      *
      * @return array<string, mixed>
