@@ -44,8 +44,9 @@ class PostModel extends Model
      */
     public function getLatestPublic(int $limit): array
     {
-        return $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug')
+        return $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname')
             ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->join('users', 'users.id = posts.user_id', 'left')
             ->where('posts.is_secret', 0)
             ->where('boards.is_active', 1)
             ->where('boards.read_permission', 'guest')

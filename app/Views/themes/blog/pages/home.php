@@ -13,11 +13,19 @@
         <?php if ($latestBlogPosts !== []): ?>
             <div class="list-group list-group-flush border-top">
                 <?php foreach ($latestBlogPosts as $post): ?>
+                    <?php $excerpt = trim(strip_tags((string) ($post['content'] ?? ''))); ?>
                     <a class="list-group-item list-group-item-action py-3" href="/board/<?= esc($post['board_slug']) ?>/<?= esc($post['id']) ?>">
                         <div class="d-flex justify-content-between gap-3">
                             <div>
                                 <span class="badge text-bg-light mb-2"><?= esc($post['board_name']) ?></span>
                                 <h2 class="h5 mb-0"><?= esc($post['title']) ?></h2>
+                                <?php if ($excerpt !== ''): ?>
+                                    <p class="blog-post-excerpt text-muted mb-2 mt-2"><?= esc(mb_strimwidth($excerpt, 0, 240, '…', 'UTF-8')) ?></p>
+                                <?php endif; ?>
+                                <div class="blog-post-meta text-muted small">
+                                    <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'] ?? '')) ?></span>
+                                    <span><i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">조회수 </span><?= number_format((int) ($post['views'] ?? 0)) ?></span>
+                                </div>
                             </div>
                             <time class="text-muted small text-nowrap" datetime="<?= esc($post['created_at']) ?>">
                                 <?= esc(substr((string) $post['created_at'], 0, 10)) ?>
