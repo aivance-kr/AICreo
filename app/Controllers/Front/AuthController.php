@@ -159,4 +159,30 @@ class AuthController extends BaseController
 
         return redirect()->to('/auth/profile');
     }
+
+    public function withdraw(): ResponseInterface|string
+    {
+        $userId = (int) session()->get('user_id');
+        if ($userId === 0) {
+            return redirect()->to('/auth/login')->with('error', '로그인이 필요합니다.');
+        }
+
+        $user = $this->userModel->find($userId);
+        if (! $user || $user['role'] === 'admin') {
+            return redirect()->to('/auth/profile')->with('error', '관리자 계정은 탈퇴할 수 없습니다.');
+        }
+
+        if ($this->request->getPost('confirmation') !== '탈퇴') {
+            return redirect()->to('/auth/profile?tab=withdraw')->withInput()->with('error', '탈퇴 확인 문구를 정확히 입력해주세요.');
+        }
+
+        if (! $user['social_provider'] && ! password_verify((string) $this->request->getPost('password'), (string) $user['password'])) {
+            return redirect()->to('/auth/profile?tab=withdraw')->withInput()->with('error', '비밀번호가 올바르지 않습니다.');
+        }
+
+        $this->userModel->withdraw($userId);
+        session()->destroy();
+
+        return redirect()->to('/')->with('success', '회원 탈퇴가 완료되었습니다.');
+    }
 }

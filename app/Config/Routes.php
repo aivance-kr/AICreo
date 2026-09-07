@@ -23,6 +23,7 @@ $routes->get('auth/register', 'Front\AuthController::register');
 $routes->post('auth/register', 'Front\AuthController::registerProcess');
 $routes->get('auth/profile', 'Front\AuthController::profile');
 $routes->post('auth/profile', 'Front\AuthController::profileUpdate');
+$routes->post('auth/withdraw', 'Front\AuthController::withdraw');
 
 // ─── 소셜 로그인 ──────────────────────────────────────────────────────────────
 $routes->get('auth/social/(:segment)', 'Front\SocialAuthController::redirect/$1');

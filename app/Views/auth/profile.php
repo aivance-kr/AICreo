@@ -17,8 +17,8 @@ $providerLabel = match($user['social_provider'] ?? null) {
 
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
-            <a class="nav-link <?= $activeTab !== 'password' ? 'active' : '' ?>" href="/auth/profile"
-               <?= $activeTab !== 'password' ? 'aria-current="page"' : '' ?>>기본 정보</a>
+            <a class="nav-link <?= $activeTab === 'info' ? 'active' : '' ?>" href="/auth/profile"
+               <?= $activeTab === 'info' ? 'aria-current="page"' : '' ?>>기본 정보</a>
         </li>
         <?php if (! $user['social_provider']): ?>
         <li class="nav-item">
@@ -26,9 +26,13 @@ $providerLabel = match($user['social_provider'] ?? null) {
                <?= $activeTab === 'password' ? 'aria-current="page"' : '' ?>>비밀번호 변경</a>
         </li>
         <?php endif; ?>
+        <li class="nav-item">
+            <a class="nav-link text-danger <?= $activeTab === 'withdraw' ? 'active' : '' ?>" href="/auth/profile?tab=withdraw"
+               <?= $activeTab === 'withdraw' ? 'aria-current="page"' : '' ?>>회원 탈퇴</a>
+        </li>
     </ul>
 
-    <?php if ($activeTab !== 'password'): ?>
+    <?php if ($activeTab === 'info'): ?>
     <!-- ── 기본 정보 탭 ── -->
     <div class="card">
         <div class="card-body">
@@ -70,7 +74,7 @@ $providerLabel = match($user['social_provider'] ?? null) {
         </div>
     </div>
 
-    <?php else: ?>
+    <?php elseif ($activeTab === 'password' && ! $user['social_provider']): ?>
     <!-- ── 비밀번호 변경 탭 ── -->
     <div class="card">
         <div class="card-body">
@@ -106,6 +110,29 @@ $providerLabel = match($user['social_provider'] ?? null) {
 
                 <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary btn-sm px-4">변경</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php else: ?>
+    <div class="card border-danger">
+        <div class="card-body">
+            <h2 class="h6 text-danger">회원 탈퇴</h2>
+            <p class="text-muted small">탈퇴하면 계정 정보는 비식별화되며, 작성한 게시글과 댓글은 유지됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+            <form method="post" action="/auth/withdraw">
+                <?= csrf_field() ?>
+                <?php if (! $user['social_provider']): ?>
+                <div class="mb-3">
+                    <label class="form-label" for="withdraw-password">현재 비밀번호</label>
+                    <input type="password" id="withdraw-password" name="password" class="form-control" required autocomplete="current-password">
+                </div>
+                <?php endif; ?>
+                <div class="mb-4">
+                    <label class="form-label" for="withdraw-confirmation">확인을 위해 <strong>탈퇴</strong>를 입력해주세요</label>
+                    <input type="text" id="withdraw-confirmation" name="confirmation" class="form-control" required autocomplete="off">
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-danger btn-sm px-4">회원 탈퇴</button>
                 </div>
             </form>
         </div>

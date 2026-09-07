@@ -144,4 +144,44 @@ final class AuthControllerTest extends FeatureTestCase
         $result->assertRedirect();
         $this->assertNull(session()->get('user_id'));
     }
+
+    public function testMemberCanWithdrawAfterPasswordAndConfirmation(): void
+    {
+        $userModel = new UserModel();
+        $userId    = $userModel->insert([
+            'username' => 'withdraw-member',
+            'email'    => 'withdraw@example.com',
+            'password' => password_hash('password123', PASSWORD_DEFAULT),
+            'nickname' => '탈퇴대상',
+            'role'     => 'member',
+        ]);
+        $result = $this->withSession(['user_id' => $userId, 'user_role' => 'member'])->post('auth/withdraw', [
+            'password'     => 'password123',
+            'confirmation' => '탈퇴',
+        ]);
+
+        $result->assertRedirectTo('/');
+        $withdrawn = $userModel->find($userId);
+        $this->assertSame(0, (int) $withdrawn['is_active']);
+        $this->assertStringEndsWith('@deleted.invalid', $withdrawn['email']);
+    }
+
+    public function testWithdrawRejectsIncorrectPassword(): void
+    {
+        $userModel = new UserModel();
+        $userId    = $userModel->insert([
+            'username' => 'withdraw-reject',
+            'email'    => 'withdraw-reject@example.com',
+            'password' => password_hash('password123', PASSWORD_DEFAULT),
+            'nickname' => '탈퇴거부',
+            'role'     => 'member',
+        ]);
+        $result = $this->withSession(['user_id' => $userId, 'user_role' => 'member'])->post('auth/withdraw', [
+            'password'     => 'incorrect',
+            'confirmation' => '탈퇴',
+        ]);
+
+        $result->assertRedirectTo('/auth/profile?tab=withdraw');
+        $this->assertSame(1, (int) $userModel->find($userId)['is_active']);
+    }
 }
