@@ -59,6 +59,12 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
                         }
                     }
                     $active = $isCurrent($menu['url'] ?? null) || $childHit;
+                    $menuBoardSlug = str_starts_with((string) ($menu['url'] ?? ''), '/board/')
+                        ? trim((string) substr((string) $menu['url'], 7), '/')
+                        : '';
+                    $showBoardCategories = $menuBoardSlug !== ''
+                        && str_starts_with($currentPath, '/board/' . $menuBoardSlug)
+                        && ! empty($categories);
                     ?>
                     <li>
                         <?php if (! empty($children)): ?>
@@ -80,6 +86,14 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
                                <?= $active ? 'aria-current="page"' : '' ?>>
                                 <?= esc($menu['title']) ?><?php if ($menu['target'] === '_blank'): ?><span class="visually-hidden"> (새 창 열림)</span><?php endif; ?>
                             </a>
+                            <?php if ($showBoardCategories): ?>
+                            <ul class="blog-submenu">
+                                <li><a href="/board/<?= esc($menuBoardSlug) ?>"<?= $currentPath === '/board/' . $menuBoardSlug ? ' aria-current="page"' : '' ?>>전체</a></li>
+                                <?php foreach ($categories as $category): ?>
+                                <li><a href="/board/<?= esc($menuBoardSlug) ?>?category=<?= esc($category['id']) ?>"><?= esc($category['name']) ?></a></li>
+                                <?php endforeach; ?>
+                            </ul>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </li>
                 <?php endforeach; ?>

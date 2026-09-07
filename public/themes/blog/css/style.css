@@ -113,9 +113,14 @@ body {
     overflow-wrap: break-word;
 }
 
-.blog-post-excerpt {
-    line-height: 1.6;
+.blog-post-body {
+    line-height: 1.8;
     max-width: 65ch;
+}
+
+.blog-post-body img {
+    height: auto;
+    max-width: 100%;
 }
 
 .blog-post-meta {
