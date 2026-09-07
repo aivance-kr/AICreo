@@ -49,7 +49,7 @@
         <option value="all"     <?= $searchType === 'all'     ? 'selected' : '' ?>>제목+내용</option>
     </select>
     <label class="visually-hidden" for="search-keyword">검색어</label>
-    <input type="text" name="keyword" id="search-keyword" class="form-control form-control-sm" value="<?= esc($keyword ?? '') ?>" placeholder="검색어">
+    <input type="text" name="keyword" id="search-keyword" class="form-control form-control-sm flex-grow-1 w-auto" value="<?= esc($keyword ?? '') ?>" placeholder="검색어">
     <button class="btn btn-outline-secondary btn-sm" type="submit">
         <i class="bi bi-search" aria-hidden="true"></i><span class="visually-hidden">검색</span>
     </button>
