@@ -6,7 +6,7 @@ body {
 
 .blog-content-shell {
     display: grid;
-    grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+    grid-template-columns: 15rem minmax(0, 1fr);
     min-height: calc(100vh - 4rem);
 }
 
@@ -90,7 +90,12 @@ body {
 }
 
 .blog-main {
+    padding: 2.5rem clamp(1.5rem, 4vw, 4rem);
     min-width: 0;
+}
+
+.blog-main .container {
+    max-width: 70rem;
 }
 
 .blog-main footer {
@@ -117,6 +122,10 @@ body {
         min-height: auto;
         padding: 1.25rem;
         position: static;
+    }
+
+    .blog-main {
+        padding: 0;
     }
 
     .blog-brand {
