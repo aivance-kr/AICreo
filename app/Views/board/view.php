@@ -18,7 +18,7 @@
         </div>
     </div>
     <div class="card-body">
-        <div class="post-content">
+        <div class="post-content board-post-content">
             <?= $post['content'] ?>
         </div>
 
