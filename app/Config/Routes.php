@@ -23,6 +23,7 @@ $routes->get('auth/register', 'Front\AuthController::register');
 $routes->post('auth/register', 'Front\AuthController::registerProcess');
 $routes->get('auth/profile', 'Front\AuthController::profile');
 $routes->post('auth/profile', 'Front\AuthController::profileUpdate');
+$routes->post('auth/withdraw', 'Front\AuthController::withdraw');
 
 // ─── 소셜 로그인 ──────────────────────────────────────────────────────────────
 $routes->get('auth/social/(:segment)', 'Front\SocialAuthController::redirect/$1');
@@ -72,6 +73,13 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->post('boards/(:num)/edit', 'Admin\BoardManagerController::update/$1');
     $routes->get('boards/(:num)/posts', 'Admin\BoardManagerController::posts/$1');
     $routes->post('posts/(:num)/delete', 'Admin\BoardManagerController::deletePost/$1');
+
+    // 게시판 카테고리 관리 (게시판마다 별도 관리)
+    $routes->get('boards/(:num)/categories', 'Admin\BoardManagerController::categories/$1');
+    $routes->post('boards/(:num)/categories', 'Admin\BoardManagerController::storeCategory/$1');
+    $routes->post('boards/(:num)/categories/reorder', 'Admin\BoardManagerController::reorderCategories/$1');
+    $routes->post('boards/(:num)/categories/(:num)/edit', 'Admin\BoardManagerController::updateCategory/$1/$2');
+    $routes->post('boards/(:num)/categories/(:num)/delete', 'Admin\BoardManagerController::deleteCategory/$1/$2');
 
     // 메뉴 관리
     $routes->get('menus', 'Admin\MenuController::index');

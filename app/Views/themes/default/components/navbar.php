@@ -5,7 +5,7 @@ $currentPath = '/' . uri_string();
 /** 메뉴 URL 이 현재 경로인지 (자식 메뉴 포함 여부는 호출부에서 판단) */
 $isCurrent = static fn (?string $url): bool => $url !== null && $url !== '' && $url === $currentPath;
 ?>
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm" aria-label="주 메뉴">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm<?= ($settings['active_theme'] ?? 'default') === 'blog' ? ' blog-navbar' : '' ?>" aria-label="주 메뉴">
     <div class="container">
         <!-- 로고 -->
         <?php if (!empty($settings['site_logo'])): ?>
@@ -20,6 +20,7 @@ $isCurrent = static fn (?string $url): bool => $url !== null && $url !== '' && $
         </button>
 
         <div class="collapse navbar-collapse" id="mainNav">
+            <?php if (($settings['active_theme'] ?? 'default') !== 'blog'): ?>
             <ul class="navbar-nav me-auto">
                 <?php foreach ($menus as $menu): ?>
                 <?php
@@ -60,9 +61,10 @@ $isCurrent = static fn (?string $url): bool => $url !== null && $url !== '' && $
                 </li>
                 <?php endforeach; ?>
             </ul>
+            <?php endif; ?>
 
             <!-- 우측 -->
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2<?= ($settings['active_theme'] ?? 'default') === 'blog' ? ' ms-auto' : '' ?>">
                 <?php if (!empty($settings['phone'])): ?>
                     <a href="tel:<?= esc($settings['phone']) ?>" class="btn btn-outline-primary btn-sm d-inline-flex">
                         <i class="bi bi-telephone me-1" aria-hidden="true"></i><span class="visually-hidden">전화 </span><?= esc($settings['phone']) ?>

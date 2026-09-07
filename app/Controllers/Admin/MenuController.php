@@ -37,10 +37,14 @@ class MenuController extends BaseController
 
     public function store(): ResponseInterface|string
     {
+        if (! $this->validate(['title' => 'required'])) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
         $this->menuModel->insert([
             'parent_id'  => $this->request->getPost('parent_id') ?: null,
             'title'      => $this->request->getPost('title'),
-            'url'        => $this->request->getPost('url'),
+            'url'        => $this->request->getPost('url') ?: null,
             'target'     => $this->request->getPost('target') ?: '_self',
             'sort_order' => (int) $this->request->getPost('sort_order'),
             'is_active'  => 1,
@@ -52,9 +56,13 @@ class MenuController extends BaseController
 
     public function update(int $id): ResponseInterface|string
     {
+        if (! $this->validate(['title' => 'required'])) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
         $this->menuModel->update($id, [
             'title'      => $this->request->getPost('title'),
-            'url'        => $this->request->getPost('url'),
+            'url'        => $this->request->getPost('url') ?: null,
             'target'     => $this->request->getPost('target') ?: '_self',
             'sort_order' => (int) $this->request->getPost('sort_order'),
             'is_active'  => (int) $this->request->getPost('is_active'),

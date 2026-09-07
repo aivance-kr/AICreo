@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Models\BannerModel;
+use App\Models\BoardCategoryModel;
+use App\Models\BoardModel;
 use App\Models\InquiryModel;
 use App\Models\MenuModel;
 use App\Models\PopupModel;
@@ -32,6 +34,15 @@ class BaseController extends Controller
         // 전역 네비게이션 메뉴 (캐시됨)
         $menus = (new MenuModel())->getTree();
 
+        $boardCategories = [];
+        if (($settings['active_theme'] ?? 'default') === 'blog') {
+            $categoryModel = new BoardCategoryModel();
+
+            foreach ((new BoardModel())->getActiveBoards() as $board) {
+                $boardCategories[$board['slug']] = $categoryModel->getByBoard((int) $board['id']);
+            }
+        }
+
         // 로그인 정보
         $authUser = [
             'id'       => session()->get('user_id'),
@@ -57,7 +68,7 @@ class BaseController extends Controller
             : (new PopupModel())->getActiveForPage(uri_string());
 
         // jsonLd 기본값을 항상 [] 로 명시 (Config\View::$saveData=true 공유 렌더러 누출 방지)
-        $this->viewData = ['settings' => $settings, 'menus' => $menus, 'authUser' => $authUser, 'unreadInquiries' => $unreadInquiries, 'subLeftBanners' => $subLeftBanners, 'activePopups' => $activePopups, 'jsonLd' => []];
+        $this->viewData = ['settings' => $settings, 'menus' => $menus, 'boardCategories' => $boardCategories, 'authUser' => $authUser, 'unreadInquiries' => $unreadInquiries, 'subLeftBanners' => $subLeftBanners, 'activePopups' => $activePopups, 'jsonLd' => []];
     }
 
     protected function getUserRole(): string

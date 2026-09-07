@@ -14,6 +14,7 @@ class BoardModel extends Model
         'read_permission', 'write_permission',
         'allow_file', 'allow_image',
         'posts_per_page', 'sort_order', 'is_active',
+        'wp_term_id',
     ];
     protected $afterInsert = ['clearSitemapCache'];
     protected $afterUpdate = ['clearSitemapCache'];

@@ -12,6 +12,7 @@ class PageModel extends Model
     protected $allowedFields = [
         'slug', 'title', 'content', 'layout',
         'meta_title', 'meta_desc', 'og_image', 'sort_order', 'status',
+        'wp_post_id', 'created_at', 'updated_at',
     ];
     protected $afterInsert = ['clearSitemapCache'];
     protected $afterUpdate = ['clearSitemapCache'];

@@ -82,4 +82,15 @@ final class PostModelTest extends DatabaseTestCase
         $this->assertNull($this->model->find($id));
         $this->assertNotNull($this->model->withDeleted()->find($id));
     }
+
+    public function testGetLatestPublicExcludesSecretPosts(): void
+    {
+        $this->makePost(['title' => '공개 글']);
+        $this->makePost(['title' => '비밀 글', 'is_secret' => 1]);
+
+        $posts = $this->model->getLatestPublic(10);
+
+        $this->assertSame(['공개 글'], array_column($posts, 'title'));
+        $this->assertSame('notice', $posts[0]['board_slug']);
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostFileModel;
 use App\Models\PostModel;
@@ -12,11 +13,13 @@ class BoardManagerController extends BaseController
 {
     private readonly BoardModel $boardModel;
     private readonly PostModel $postModel;
+    private readonly BoardCategoryModel $categoryModel;
 
     public function __construct()
     {
-        $this->boardModel = new BoardModel();
-        $this->postModel  = new PostModel();
+        $this->boardModel    = new BoardModel();
+        $this->postModel     = new PostModel();
+        $this->categoryModel = new BoardCategoryModel();
     }
 
     // 게시판 목록
@@ -113,5 +116,87 @@ class BoardManagerController extends BaseController
         $this->postModel->delete($postId);
 
         return redirect()->back()->with('success', '삭제되었습니다.');
+    }
+
+    // 게시판별 카테고리 관리 (게시판마다 별도로 관리)
+    public function categories(int $boardId): string
+    {
+        $board = $this->boardModel->find($boardId);
+
+        return $this->render('admin/board/categories', [
+            'board'      => $board,
+            'categories' => $this->categoryModel->getAllByBoard($boardId),
+        ]);
+    }
+
+    public function storeCategory(int $boardId): ResponseInterface|string
+    {
+        $rules = ['slug' => 'required|alpha_dash', 'name' => 'required'];
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $slug = $this->request->getPost('slug');
+        if ($this->categoryModel->where('board_id', $boardId)->where('slug', $slug)->countAllResults() > 0) {
+            return redirect()->back()->withInput()->with('errors', ['slug' => '이미 사용 중인 슬러그입니다.']);
+        }
+
+        $this->categoryModel->insert([
+            'board_id'   => $boardId,
+            'slug'       => $slug,
+            'name'       => $this->request->getPost('name'),
+            'sort_order' => (int) $this->request->getPost('sort_order'),
+        ]);
+
+        return redirect()->to("/admin/boards/{$boardId}/categories")->with('success', '카테고리가 추가되었습니다.');
+    }
+
+    public function updateCategory(int $boardId, int $categoryId): ResponseInterface|string
+    {
+        $rules = ['slug' => 'required|alpha_dash', 'name' => 'required'];
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $slug = $this->request->getPost('slug');
+        $dup  = $this->categoryModel->where('board_id', $boardId)->where('slug', $slug)->where('id !=', $categoryId)->countAllResults();
+        if ($dup > 0) {
+            return redirect()->back()->withInput()->with('errors', ['slug' => '이미 사용 중인 슬러그입니다.']);
+        }
+
+        $this->categoryModel->update($categoryId, [
+            'slug'       => $slug,
+            'name'       => $this->request->getPost('name'),
+            'sort_order' => (int) $this->request->getPost('sort_order'),
+            'is_active'  => (int) $this->request->getPost('is_active'),
+        ]);
+
+        return redirect()->to("/admin/boards/{$boardId}/categories")->with('success', '수정되었습니다.');
+    }
+
+    public function reorderCategories(int $boardId): ResponseInterface
+    {
+        $rawIds = $this->request->getPost('ids');
+        $ids    = is_array($rawIds) ? array_map('intval', $rawIds) : [];
+
+        if (! $this->categoryModel->reorderByBoard($boardId, $ids)) {
+            return $this->response->setStatusCode(422)->setJSON([
+                'success'   => false,
+                'message'   => '카테고리 순서 정보가 올바르지 않습니다.',
+                'csrf_hash' => csrf_hash(),
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success'   => true,
+            'csrf_hash' => csrf_hash(),
+        ]);
+    }
+
+    public function deleteCategory(int $boardId, int $categoryId): ResponseInterface|string
+    {
+        $this->categoryModel->delete($categoryId);
+
+        return redirect()->to("/admin/boards/{$boardId}/categories")->with('success', '삭제되었습니다.');
     }
 }

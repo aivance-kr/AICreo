@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Config;
 
 use App\Filters\AuthFilter;
+use App\Filters\RedirectFilter;
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Filters\CSRF;
 use CodeIgniter\Filters\DebugToolbar;
@@ -20,6 +21,7 @@ class Filters extends BaseConfig
         'toolbar'  => DebugToolbar::class,
         'honeypot' => Honeypot::class,
         'auth'     => AuthFilter::class,   // ← 추가
+        'redirect' => RedirectFilter::class,
     ];
 
     /**
@@ -27,6 +29,7 @@ class Filters extends BaseConfig
      */
     public array $globals = [
         'before' => [
+            'redirect',
             'csrf' => ['except' => ['api/*', 'board/image-upload', 'admin/media/upload']],
         ],
         'after' => ['toolbar'],
