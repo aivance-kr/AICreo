@@ -48,9 +48,10 @@ body {
 
 .blog-sidebar {
     align-self: start;
-    background: #fff;
-    border-right: 1px solid var(--blog-green-100);
-    min-height: calc(100vh - 4rem);
+    background: var(--surface-raised);
+    border-right: 1px solid var(--border-hairline);
+    height: calc(100vh - 4rem);
+    overflow-y: auto;
     padding: 3rem 2rem 2rem;
     position: sticky;
     top: 0;
@@ -223,7 +224,8 @@ body {
     }
 
     .blog-sidebar {
-        min-height: auto;
+        height: auto;
+        overflow-y: visible;
         padding: 1.25rem;
         position: static;
     }
