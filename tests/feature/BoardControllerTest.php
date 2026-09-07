@@ -128,6 +128,38 @@ final class BoardControllerTest extends FeatureTestCase
         $this->assertStringContainsString('<img src="/uploads/example.jpg"', $body);
     }
 
+    public function testViewShowsPreviousAndNextPostLinks(): void
+    {
+        $postModel = new PostModel();
+        $boardId   = $this->boardId('qna');
+
+        $prevId = (int) $postModel->insert(['board_id' => $boardId, 'title' => '이전 글입니다', 'content' => '본문', 'is_notice' => 0]);
+        $postId = (int) $postModel->insert(['board_id' => $boardId, 'title' => '현재 글입니다', 'content' => '본문', 'is_notice' => 0]);
+        $nextId = (int) $postModel->insert(['board_id' => $boardId, 'title' => '다음 글입니다', 'content' => '본문', 'is_notice' => 0]);
+
+        $body = html_entity_decode((string) $this->get("board/qna/{$postId}")->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $this->assertStringContainsString("/board/qna/{$prevId}", $body);
+        $this->assertStringContainsString('이전 글입니다', $body);
+        $this->assertStringContainsString("/board/qna/{$nextId}", $body);
+        $this->assertStringContainsString('다음 글입니다', $body);
+    }
+
+    public function testViewHidesPrevNextBlockWhenNoAdjacentPosts(): void
+    {
+        $postModel = new PostModel();
+        $postId    = (int) $postModel->insert([
+            'board_id' => $this->boardId('qna'),
+            'title'    => '유일한 글',
+            'content'  => '본문',
+        ]);
+
+        $body = html_entity_decode((string) $this->get("board/qna/{$postId}")->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $this->assertStringNotContainsString('이전글', $body);
+        $this->assertStringNotContainsString('다음글', $body);
+    }
+
     public function testListShowsCategorySidebarWhenBoardHasCategories(): void
     {
         $boardId    = $this->boardId('free');

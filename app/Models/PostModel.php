@@ -122,6 +122,38 @@ class PostModel extends Model
     }
 
     /**
+     * 같은 게시판의 이전 글(더 오래된 글) — 공지·비밀글 제외.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getPrevious(int $boardId, int $postId): ?array
+    {
+        return $this->select('id, title')
+            ->where('board_id', $boardId)
+            ->where('is_notice', 0)
+            ->where('is_secret', 0)
+            ->where('id <', $postId)
+            ->orderBy('id', 'DESC')
+            ->first();
+    }
+
+    /**
+     * 같은 게시판의 다음 글(더 최근 글) — 공지·비밀글 제외.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getNext(int $boardId, int $postId): ?array
+    {
+        return $this->select('id, title')
+            ->where('board_id', $boardId)
+            ->where('is_notice', 0)
+            ->where('is_secret', 0)
+            ->where('id >', $postId)
+            ->orderBy('id', 'ASC')
+            ->first();
+    }
+
+    /**
      * @return array{posts: list<array<string, mixed>>, total: int}
      */
     public function getAdminList(int $page, int $perPage, string $keyword = '', int $boardId = 0): array
