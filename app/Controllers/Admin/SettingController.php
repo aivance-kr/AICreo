@@ -199,6 +199,10 @@ class SettingController extends BaseController
             return redirect()->to('/admin/settings/theme')->with('success', "테마가 '{$theme}'으로 변경되었습니다.");
         }
 
+        if (array_key_exists('blog_home_post_limit', $postData)) {
+            $postData['blog_home_post_limit'] = (string) min(100, max(1, (int) $postData['blog_home_post_limit']));
+        }
+
         $this->settingModel->saveSettings($postData);
 
         return redirect()->to("/admin/settings/{$group}")->with('success', '설정이 저장되었습니다.');

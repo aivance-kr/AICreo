@@ -18,14 +18,17 @@ class HomeController extends BaseController
         $boardModel = new BoardModel();
         $postModel  = new PostModel();
 
-        $noticeBoard = $boardModel->getBySlug('notice');
+        $isBlogTheme = ($this->viewData['settings']['active_theme'] ?? 'default') === 'blog';
         $latestPosts = [];
-        if ($noticeBoard) {
+        if (! $isBlogTheme && ($noticeBoard = $boardModel->getBySlug('notice'))) {
             $latestPosts = $postModel
                 ->where('board_id', $noticeBoard['id'])
                 ->orderBy('id', 'DESC')
                 ->findAll(3);
         }
+
+        $blogPostLimit   = min(100, max(1, (int) ($this->viewData['settings']['blog_home_post_limit'] ?? 10)));
+        $latestBlogPosts = $isBlogTheme ? $postModel->getLatestPublic($blogPostLimit) : [];
 
         $bannerModel       = new BannerModel();
         $homePage          = (new PageModel())->getBySlug('home');
@@ -40,6 +43,7 @@ class HomeController extends BaseController
                 'is_custom_home' => $homePage !== null,
             ],
             'latestPosts'       => $latestPosts,
+            'latestBlogPosts'   => $latestBlogPosts,
             'showLatestNotices' => $showLatestNotices,
             'mainTopBanners'    => $bannerModel->getActiveByPosition('main_top'),
             'mainBotBanners'    => $bannerModel->getActiveByPosition('main_bottom'),
