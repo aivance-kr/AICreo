@@ -146,6 +146,30 @@ final class WordpressImportTest extends FeatureTestCase
         $this->assertStringContainsString('uploads/imported/2011/06/1388310556.jpg', $post['content']);
     }
 
+    public function testRewriteContentImagesFallsBackToOriginalFilenameForWordpressThumbnailSizes(): void
+    {
+        // 본문 <img>가 워드프레스 자동 생성 리사이즈본(photo-300x225.jpg)을 가리키는데
+        // 이 파일은 WXR에 별도 첨부파일로 없다(원본 첨부파일 메타데이터의 사이즈
+        // 정보로만 존재) — 원본 파일명으로 정규화해서 찾아야 한다.
+        $boardId = (int) (new BoardModel())->first()['id'];
+        $postId  = (new PostModel())->insert([
+            'wp_post_id'  => 997,
+            'board_id'    => $boardId,
+            'title'       => '썸네일 크기 글',
+            'content'     => '<img src="/wp-content/uploads/2016/11/동아리수업-300x225.jpg">',
+            'author_name' => 'tester',
+            'created_at'  => '2016-11-01 00:00:00',
+        ], true);
+
+        $updated = $this->importer->rewriteContentImages([
+            '2016/11/동아리수업.jpg' => 'uploads/imported/2016/11/동아리수업.jpg',
+        ]);
+
+        $this->assertSame(1, $updated);
+        $post = (new PostModel())->find($postId);
+        $this->assertStringContainsString('uploads/imported/2016/11/동아리수업.jpg', $post['content']);
+    }
+
     public function testRewriteContentImagesSkipsAmbiguousBasenameAcrossMultipleAttachments(): void
     {
         $boardId = (int) (new BoardModel())->first()['id'];
