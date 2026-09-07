@@ -456,6 +456,11 @@ final class WordpressImporter
     /**
      * 본문(content) 안의 옛 wp-content/uploads 경로를 새 경로로 치환.
      *
+     * 정확한 상대경로가 일치하지 않는 콘텐츠(예: 실제 첨부파일은 2011/06/x.jpg인데
+     * 본문엔 예전 플랫폼에서 이관하며 남은 /wp-content/uploads/1/x.jpg 처럼 다른
+     * 폴더로 적혀 있는 경우)는 파일명만으로 한 번 더 치환을 시도한다. 같은
+     * 파일명이 첨부파일 여러 개에 걸치면 어느 걸 가리키는지 알 수 없어 건너뛴다.
+     *
      * @param array<string, string> $pathMap 옛 상대경로 => 새 상대경로
      */
     public function rewriteContentImages(array $pathMap): int
@@ -463,6 +468,17 @@ final class WordpressImporter
         if ($pathMap === []) {
             return 0;
         }
+
+        $newPathByBasename = [];
+
+        foreach ($pathMap as $oldRelative => $newRelative) {
+            $newPathByBasename[basename($oldRelative)][] = $newRelative;
+        }
+
+        $extPattern = implode('|', array_map(
+            static fn (string $ext): string => preg_quote($ext, '#'),
+            self::ALLOWED_EXTS,
+        ));
 
         $updated = 0;
 
@@ -480,6 +496,16 @@ final class WordpressImporter
                         $content,
                     );
                 }
+
+                $content = preg_replace_callback(
+                    '#wp-content/uploads/[\w./-]*?([^/"\'\s]+\.(?:' . $extPattern . '))#i',
+                    static function (array $matches) use ($newPathByBasename): string {
+                        $candidates = $newPathByBasename[$matches[1]] ?? [];
+
+                        return count($candidates) === 1 ? $candidates[0] : $matches[0];
+                    },
+                    $content,
+                ) ?? $content;
 
                 if ($content !== $original) {
                     $model->update($row['id'], ['content' => $content]);

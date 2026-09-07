@@ -121,4 +121,50 @@ final class WordpressImportTest extends FeatureTestCase
         // 페이지는 게시판과 무관하므로 매핑 없이도 이관된다.
         $this->assertSame(1, $result['pages']);
     }
+
+    public function testRewriteContentImagesFallsBackToBasenameWhenFolderPathDiffers(): void
+    {
+        // 실제 첨부파일은 2011/06/x.jpg인데 본문엔 예전 플랫폼에서 이관하며 남은
+        // /wp-content/uploads/1/x.jpg처럼 다른 폴더로 적혀 있는 경우 — 정확한
+        // 상대경로 매칭은 실패하지만 파일명 기준 폴백으로 잡아낸다.
+        $boardId = (int) (new BoardModel())->first()['id'];
+        $postId  = (new PostModel())->insert([
+            'wp_post_id'  => 999,
+            'board_id'    => $boardId,
+            'title'       => '옛 경로 글',
+            'content'     => '<img src="/wp-content/uploads/1/1388310556.jpg">',
+            'author_name' => 'tester',
+            'created_at'  => '2011-06-01 00:00:00',
+        ], true);
+
+        $updated = $this->importer->rewriteContentImages([
+            '2011/06/1388310556.jpg' => 'uploads/imported/2011/06/1388310556.jpg',
+        ]);
+
+        $this->assertSame(1, $updated);
+        $post = (new PostModel())->find($postId);
+        $this->assertStringContainsString('uploads/imported/2011/06/1388310556.jpg', $post['content']);
+    }
+
+    public function testRewriteContentImagesSkipsAmbiguousBasenameAcrossMultipleAttachments(): void
+    {
+        $boardId = (int) (new BoardModel())->first()['id'];
+        $postId  = (new PostModel())->insert([
+            'wp_post_id'  => 998,
+            'board_id'    => $boardId,
+            'title'       => '중복 파일명 글',
+            'content'     => '<img src="/wp-content/uploads/1/dup.jpg">',
+            'author_name' => 'tester',
+            'created_at'  => '2011-06-01 00:00:00',
+        ], true);
+
+        $updated = $this->importer->rewriteContentImages([
+            '2011/dup.jpg' => 'uploads/imported/2011/dup.jpg',
+            '2012/dup.jpg' => 'uploads/imported/2012/dup.jpg',
+        ]);
+
+        $this->assertSame(0, $updated);
+        $post = (new PostModel())->find($postId);
+        $this->assertStringContainsString('/wp-content/uploads/1/dup.jpg', $post['content']);
+    }
 }
