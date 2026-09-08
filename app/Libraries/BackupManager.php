@@ -21,6 +21,8 @@ final class BackupManager
     private const int MAX_ARCHIVE_SIZE   = 1073741824;
     private const int MAX_EXTRACTED_SIZE = 5368709120;
     private const int MAX_ENTRIES        = 10000;
+    private const string JOB_LOCK_FILE   = '.backup-create.lock';
+    private const string JOB_STATUS_FILE = 'backup-create-status.json';
 
     public function __construct(
         /**
@@ -33,7 +35,7 @@ final class BackupManager
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{filename: string, size: int, created_at: string}
      */
     public function create(): array
     {
@@ -65,6 +67,71 @@ final class BackupManager
         } finally {
             $this->deleteDirectory($temporary);
         }
+    }
+
+    /**
+     * 백업 생성 작업을 하나만 예약한다.
+     *
+     * @throws RuntimeException
+     */
+    public function queue(): void
+    {
+        $this->ensureDirectory($this->backupDirectory);
+        $lock = @fopen($this->jobLockPath(), 'xb');
+        if ($lock === false) {
+            throw new RuntimeException('백업 생성 작업이 이미 진행 중입니다.');
+        }
+        fclose($lock);
+        $this->writeJobStatus(['status' => 'queued', 'updated_at' => date(DATE_ATOM)]);
+    }
+
+    /**
+     * @return array{status: string, updated_at: string, backup?: array{filename: string, size: int, created_at: string}}|null
+     */
+    public function jobStatus(): ?array
+    {
+        $path = $this->jobStatusPath();
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $status = json_decode((string) file_get_contents($path), true);
+        if (! is_array($status) || ! isset($status['status'], $status['updated_at']) || ! is_string($status['status']) || ! is_string($status['updated_at'])) {
+            return null;
+        }
+
+        return $status;
+    }
+
+    /**
+     * @return array{filename: string, size: int, created_at: string}
+     */
+    public function runQueuedJob(): array
+    {
+        if (! is_file($this->jobLockPath())) {
+            throw new RuntimeException('예약된 백업 생성 작업이 없습니다.');
+        }
+
+        try {
+            $this->writeJobStatus(['status' => 'running', 'updated_at' => date(DATE_ATOM)]);
+            $backup = $this->create();
+            $this->writeJobStatus(['status' => 'completed', 'updated_at' => date(DATE_ATOM), 'backup' => $backup]);
+
+            return $backup;
+        } catch (Throwable $exception) {
+            log_message('error', '비동기 백업 생성 실패: {message}', ['message' => $exception->getMessage()]);
+            $this->writeJobStatus(['status' => 'failed', 'updated_at' => date(DATE_ATOM)]);
+
+            throw $exception;
+        } finally {
+            @unlink($this->jobLockPath());
+        }
+    }
+
+    public function failQueuedJob(): void
+    {
+        $this->writeJobStatus(['status' => 'failed', 'updated_at' => date(DATE_ATOM)]);
+        @unlink($this->jobLockPath());
     }
 
     /**
@@ -256,6 +323,27 @@ final class BackupManager
         $this->ensureDirectory($directory);
 
         return $directory;
+    }
+
+    private function jobLockPath(): string
+    {
+        return $this->backupDirectory . '/' . self::JOB_LOCK_FILE;
+    }
+
+    private function jobStatusPath(): string
+    {
+        return $this->backupDirectory . '/' . self::JOB_STATUS_FILE;
+    }
+
+    /**
+     * @param array<string, mixed> $status
+     */
+    private function writeJobStatus(array $status): void
+    {
+        $this->ensureDirectory($this->backupDirectory);
+        $temporary = $this->jobStatusPath() . '.' . bin2hex(random_bytes(4));
+        file_put_contents($temporary, json_encode($status, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), LOCK_EX);
+        rename($temporary, $this->jobStatusPath());
     }
 
     private function ensureDirectory(string $directory): void

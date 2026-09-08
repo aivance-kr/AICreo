@@ -13,15 +13,26 @@ final class BackupController extends BaseController
 {
     public function index(): string
     {
-        return $this->render('admin/backup/index', ['backups' => $this->manager()->list()]);
+        $manager = $this->manager();
+
+        return $this->render('admin/backup/index', ['backups' => $manager->list(), 'jobStatus' => $manager->jobStatus()]);
     }
 
     public function create(): ResponseInterface
     {
         try {
-            $backup = $this->manager()->create();
+            $manager = $this->manager();
+            $manager->queue();
 
-            return redirect()->to('/admin/backup')->with('success', "백업 파일 {$backup['filename']}을 만들었습니다.");
+            try {
+                $this->launchWorker();
+            } catch (RuntimeException $exception) {
+                $manager->failQueuedJob();
+
+                throw $exception;
+            }
+
+            return redirect()->to('/admin/backup')->with('success', '백업 생성을 시작했습니다. 완료될 때까지 이 페이지에서 상태를 확인하세요.');
         } catch (RuntimeException $exception) {
             return redirect()->to('/admin/backup')->with('error', $exception->getMessage());
         }
@@ -65,5 +76,23 @@ final class BackupController extends BaseController
         $databaseConfig = $config->{$group};
 
         return new BackupManager($databaseConfig);
+    }
+
+    private function launchWorker(): void
+    {
+        $logPath = WRITEPATH . 'logs/backup-create.log';
+        $command = implode(' ', [
+            escapeshellarg(PHP_BINARY),
+            escapeshellarg(ROOTPATH . 'spark'),
+            'backup:create',
+            '>',
+            escapeshellarg($logPath),
+            '2>&1',
+            '&',
+        ]);
+        exec($command, $output, $exitCode);
+        if ($exitCode !== 0) {
+            throw new RuntimeException('백업 작업을 시작할 수 없습니다. 서버 PHP CLI 설정을 확인하세요.');
+        }
     }
 }
