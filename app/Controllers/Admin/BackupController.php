@@ -82,7 +82,7 @@ final class BackupController extends BaseController
     {
         $logPath = WRITEPATH . 'logs/backup-create.log';
         $command = implode(' ', [
-            escapeshellarg(PHP_BINARY),
+            escapeshellarg($this->resolvePhpBinary()),
             escapeshellarg(ROOTPATH . 'spark'),
             'backup:create',
             '>',
@@ -94,5 +94,32 @@ final class BackupController extends BaseController
         if ($exitCode !== 0) {
             throw new RuntimeException('백업 작업을 시작할 수 없습니다. 서버 PHP CLI 설정을 확인하세요.');
         }
+    }
+
+    /**
+     * 웹 요청 SAPI에 따라 PHP_BINARY가 비어 있거나 실행 불가한 값일 수 있다(SAPI가
+     * executable_location을 채우지 않는 경우). .env 설정값 → PHP_BINARY → PATH상의
+     * php 순으로 검증해 실행 가능한 CLI 경로를 찾고, 없으면 백그라운드 실행을
+     * 시도하기 전에 실패시킨다.
+     */
+    private function resolvePhpBinary(): string
+    {
+        $configured = trim((string) env('backup.phpBinary', ''));
+        if ($configured !== '' && is_executable($configured)) {
+            return $configured;
+        }
+
+        if (is_executable(PHP_BINARY) && ! str_contains(PHP_BINARY, 'fpm')) {
+            return PHP_BINARY;
+        }
+
+        foreach (['php', 'php8.5', 'php8.4', 'php8.3'] as $candidate) {
+            $resolved = trim((string) shell_exec('command -v ' . escapeshellarg($candidate) . ' 2>/dev/null'));
+            if ($resolved !== '' && is_executable($resolved)) {
+                return $resolved;
+            }
+        }
+
+        throw new RuntimeException('실행 가능한 PHP CLI 바이너리를 찾을 수 없습니다. .env에 backup.phpBinary를 설정하세요.');
     }
 }
