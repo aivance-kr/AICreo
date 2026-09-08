@@ -68,6 +68,23 @@ final class BackupController extends BaseController
         }
     }
 
+    public function restoreFromServer(): ResponseInterface
+    {
+        if ($this->request->getPost('confirmation') !== '복원') {
+            return redirect()->to('/admin/backup')->with('error', '복원 확인 문구가 일치하지 않습니다.');
+        }
+
+        try {
+            $manager = $this->manager();
+            $path    = $manager->path((string) $this->request->getPost('filename'));
+            $manager->restore($path);
+
+            return redirect()->to('/admin/backup')->with('success', '복원이 완료되었습니다. 복원 직전 백업도 서버에 보관했습니다.');
+        } catch (RuntimeException $exception) {
+            return redirect()->to('/admin/backup')->with('error', $exception->getMessage());
+        }
+    }
+
     private function manager(): BackupManager
     {
         $config = config('Database');

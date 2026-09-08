@@ -100,6 +100,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->post('backup/create', 'Admin\BackupController::create');
     $routes->get('backup/(:segment)', 'Admin\BackupController::download/$1');
     $routes->post('backup/restore', 'Admin\BackupController::restore');
+    $routes->post('backup/restore-server', 'Admin\BackupController::restoreFromServer');
 
     // 사이트 설정
     $routes->get('settings', 'Admin\SettingController::index');
