@@ -1,43 +1,43 @@
 body {
-    --blog-green-50: #f0f8f2;
-    --blog-green-100: #dcefe0;
-    --blog-green-700: #24613b;
-    --blog-green-800: #19482c;
-    background: #f7faf8;
+    /* 블로그 테마 브랜드 강조색 — 코어 --primary(작업 파랑)를 이 값으로 덮어써
+       버튼·아웃라인 버튼·활성 내비게이션·포커스 링까지 한 번에 물들인다
+       (tokens.css 의 Theme Override Rule). 흰 배경 대비 5.5:1 — AA 본문 기준 통과. */
+    --primary: #b34700;
+    --bs-primary: var(--primary);
+    --bs-primary-rgb: 179, 71, 0;
+    --focus-ring-color: var(--primary);
+    background: var(--surface-raised);
     color: var(--text-body);
     font-family: var(--font-sans);
 }
 
 .blog-navbar {
-    background: var(--blog-green-50) !important;
-    border-bottom: 1px solid var(--blog-green-100);
-    box-shadow: 0 2px 12px rgb(25 72 44 / 8%) !important;
+    background: color-mix(in srgb, var(--primary) 6%, var(--surface-raised)) !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border-hairline));
+    box-shadow: 0 2px 12px rgb(179 71 0 / 8%) !important;
 }
 
 .blog-navbar .navbar-brand,
 .blog-navbar .navbar-brand:hover {
-    color: var(--blog-green-800);
-}
-
-.blog-navbar .btn-outline-primary {
-    border-color: var(--blog-green-700);
-    color: var(--blog-green-700);
-}
-
-.blog-navbar .btn-outline-primary:hover,
-.blog-navbar .btn-outline-primary:focus-visible {
-    background: var(--blog-green-700);
-    color: #fff;
+    color: var(--primary);
 }
 
 .blog-footer {
-    background: var(--blog-green-800) !important;
-    color: #edf7ef !important;
+    background: #2b1a10 !important;
+    color: #f5e9dd !important;
 }
 
 .blog-footer .text-white-50,
 .blog-footer .text-secondary {
-    color: #c5dfcc !important;
+    color: #d9b8a0 !important;
+}
+
+/* 네비바를 아래 blog-content-shell(사이드바+본문) 과 같은 폭·좌우 여백으로 맞춘다 —
+   기본 Bootstrap .container 는 가운데 정렬된 고정 최대폭이라 전폭 그리드와 어긋난다. */
+.blog-navbar > .container {
+    max-width: 100%;
+    padding-left: 2rem;
+    padding-right: clamp(1.5rem, 4vw, 4rem);
 }
 
 .blog-content-shell {
@@ -49,7 +49,7 @@ body {
 .blog-sidebar {
     align-self: start;
     background: var(--surface-raised);
-    border-right: 1px solid var(--border-hairline);
+    border-right: 1px solid color-mix(in srgb, var(--primary) 10%, var(--border-hairline));
     height: calc(100vh - 4rem);
     overflow-y: auto;
     padding: 3rem 2rem 2rem;
@@ -96,8 +96,8 @@ body {
 .blog-navigation a:focus-visible,
 .blog-navigation a.is-active,
 .blog-menu-label.is-active {
-    background: var(--blog-green-50);
-    color: var(--blog-green-700);
+    background: color-mix(in srgb, var(--primary) 10%, var(--surface-raised));
+    color: var(--primary);
     font-weight: 700;
 }
 
@@ -127,13 +127,16 @@ body {
 }
 
 .blog-main {
-    background: #f7faf8;
     padding: 2.5rem clamp(1.5rem, 4vw, 4rem);
     min-width: 0;
 }
 
 .blog-main .container {
     max-width: 70rem;
+}
+
+.blog-main section > .container {
+    max-width: 74rem;
 }
 
 .blog-main footer {
@@ -170,57 +173,52 @@ body {
     max-width: 100%;
 }
 
+.blog-post-body p:last-child {
+    margin-bottom: 0;
+}
+
 .blog-post-meta {
     display: flex;
     flex-wrap: wrap;
     gap: .75rem;
 }
 
-.blog-main section > .container {
-    max-width: 74rem;
-}
-
 .blog-main h1,
 .blog-main h2 {
-    color: var(--blog-green-800);
     letter-spacing: -0.025em;
 }
 
+.blog-main .badge.text-bg-light {
+    background-color: color-mix(in srgb, var(--primary) 12%, white) !important;
+    color: var(--primary) !important;
+}
+
 .blog-main .list-group {
-    border-color: var(--blog-green-100) !important;
+    border-color: color-mix(in srgb, var(--primary) 10%, var(--border-hairline)) !important;
 }
 
 .blog-main article.list-group-item {
-    background: #fff;
-    border-bottom: 1px solid var(--blog-green-100);
+    background: var(--surface-raised);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 10%, var(--border-hairline));
     padding: 2.25rem 1.5rem !important;
 }
 
 .blog-main article.list-group-item h2 a {
-    color: var(--blog-green-800);
+    color: var(--primary);
 }
 
 .blog-main article.list-group-item h2 a:hover {
-    color: var(--blog-green-700);
+    color: color-mix(in srgb, var(--primary) 80%, black);
     text-decoration: underline !important;
     text-underline-offset: 0.2em;
 }
 
-.blog-post-body {
-    color: #324b3a;
-    font-size: 1.02rem;
-}
-
-.blog-post-body p:last-child {
-    margin-bottom: 0;
-}
-
-.blog-post-meta {
-    color: #587363 !important;
-    font-size: .82rem;
-}
-
 @media (max-width: 767.98px) {
+    .blog-navbar > .container {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
     .blog-content-shell {
         display: block;
     }
