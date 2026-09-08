@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Libraries\BackupManager;
+use App\Libraries\BackupWorkerLauncher;
 use CodeIgniter\HTTP\ResponseInterface;
 use RuntimeException;
 
@@ -80,19 +81,6 @@ final class BackupController extends BaseController
 
     private function launchWorker(): void
     {
-        $logPath = WRITEPATH . 'logs/backup-create.log';
-        $command = implode(' ', [
-            escapeshellarg(PHP_BINARY),
-            escapeshellarg(ROOTPATH . 'spark'),
-            'backup:create',
-            '>',
-            escapeshellarg($logPath),
-            '2>&1',
-            '&',
-        ]);
-        exec($command, $output, $exitCode);
-        if ($exitCode !== 0) {
-            throw new RuntimeException('백업 작업을 시작할 수 없습니다. 서버 PHP CLI 설정을 확인하세요.');
-        }
+        (new BackupWorkerLauncher(config('Backup')->phpBinary))->launch();
     }
 }

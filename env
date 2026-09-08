@@ -60,6 +60,9 @@ app.baseURL = 'http://creo.test/'
 # database.tests.DBCollat = utf8mb4_general_ci
 # database.tests.port = 3306
 
+# 백업 worker를 실행할 PHP CLI 절대 경로
+# backup.phpBinary = /usr/bin/php
+
 #--------------------------------------------------------------------
 # ENCRYPTION
 #--------------------------------------------------------------------
