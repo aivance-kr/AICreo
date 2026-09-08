@@ -131,6 +131,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             <a href="/admin/posts" class="nav-link <?= str_starts_with($uri, 'admin/posts') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/posts') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>전체 게시물
             </a>
+            <a href="/admin/comments" class="nav-link <?= str_starts_with($uri, 'admin/comments') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/comments') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-chat-left-text me-2" aria-hidden="true"></i>전체 댓글
+            </a>
             <a href="/admin/media" class="nav-link <?= str_starts_with($uri, 'admin/media') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/media') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-images me-2" aria-hidden="true"></i>미디어
             </a>
