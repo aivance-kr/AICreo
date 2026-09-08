@@ -106,6 +106,10 @@ class BoardController extends BaseController
             throw PageNotFoundException::forPageNotFound();
         }
 
+        if (! $post['is_active'] && $this->getUserRole() !== 'admin') {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
         if (! $this->checkPermission($board['read_permission'])) {
             return redirect()->to('/auth/login')->with('error', '로그인이 필요합니다.');
         }

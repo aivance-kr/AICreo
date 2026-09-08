@@ -13,7 +13,7 @@ class PostModel extends Model
     protected $allowedFields  = [
         'board_id', 'category_id', 'user_id', 'title', 'content',
         'author_name', 'author_password',
-        'is_notice', 'is_secret', 'ip_address',
+        'is_notice', 'is_secret', 'is_active', 'ip_address',
         'views', 'wp_post_id', 'created_at', 'updated_at',
     ];
     protected $afterInsert = ['clearSitemapCache'];
@@ -31,6 +31,7 @@ class PostModel extends Model
         return $this->select('posts.id, posts.updated_at, boards.slug AS board_slug')
             ->join('boards', 'boards.id = posts.board_id', 'inner')
             ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
             ->where('boards.is_active', 1)
             ->where('boards.read_permission', 'guest')
             ->orderBy('posts.id', 'DESC')
@@ -48,6 +49,7 @@ class PostModel extends Model
             ->join('boards', 'boards.id = posts.board_id', 'inner')
             ->join('users', 'users.id = posts.user_id', 'left')
             ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
             ->where('boards.is_active', 1)
             ->where('boards.read_permission', 'guest')
             ->orderBy('posts.id', 'DESC')
@@ -93,7 +95,8 @@ class PostModel extends Model
         $noticeBuilder = $this->select('posts.*, board_categories.name as category_name')
             ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId)
-            ->where('posts.is_notice', 1);
+            ->where('posts.is_notice', 1)
+            ->where('posts.is_active', 1);
         if ($categoryId !== null) {
             $noticeBuilder->where('posts.category_id', $categoryId);
         }
@@ -103,7 +106,8 @@ class PostModel extends Model
             ->join('users', 'users.id = posts.user_id', 'left')
             ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId)
-            ->where('posts.is_notice', 0);
+            ->where('posts.is_notice', 0)
+            ->where('posts.is_active', 1);
         if ($categoryId !== null) {
             $postBuilder->where('posts.category_id', $categoryId);
         }
@@ -114,7 +118,7 @@ class PostModel extends Model
 
     public function getTotalCount(int $boardId, ?int $categoryId = null): int
     {
-        $builder = $this->where('board_id', $boardId)->where('is_notice', 0);
+        $builder = $this->where('board_id', $boardId)->where('is_notice', 0)->where('is_active', 1);
         if ($categoryId !== null) {
             $builder->where('category_id', $categoryId);
         }
@@ -139,7 +143,7 @@ class PostModel extends Model
     }
 
     /**
-     * 같은 게시판의 이전 글(더 오래된 글) — 공지·비밀글 제외.
+     * 같은 게시판의 이전 글(더 오래된 글) — 공지·비밀글·숨김글 제외.
      *
      * @return array<string, mixed>|null
      */
@@ -149,13 +153,14 @@ class PostModel extends Model
             ->where('board_id', $boardId)
             ->where('is_notice', 0)
             ->where('is_secret', 0)
+            ->where('is_active', 1)
             ->where('id <', $postId)
             ->orderBy('id', 'DESC')
             ->first();
     }
 
     /**
-     * 같은 게시판의 다음 글(더 최근 글) — 공지·비밀글 제외.
+     * 같은 게시판의 다음 글(더 최근 글) — 공지·비밀글·숨김글 제외.
      *
      * @return array<string, mixed>|null
      */
@@ -165,9 +170,24 @@ class PostModel extends Model
             ->where('board_id', $boardId)
             ->where('is_notice', 0)
             ->where('is_secret', 0)
+            ->where('is_active', 1)
             ->where('id >', $postId)
             ->orderBy('id', 'ASC')
             ->first();
+    }
+
+    /**
+     * 노출 상태를 반전한다(관리자 숨기기/노출 토글). update() 경유로
+     * afterUpdate 훅(clearSitemapCache)이 정상 실행되게 한다.
+     */
+    public function toggleActive(int $id): void
+    {
+        $post = $this->find($id);
+        if ($post === null) {
+            return;
+        }
+
+        $this->update($id, ['is_active' => $post['is_active'] ? 0 : 1]);
     }
 
     /**
@@ -206,7 +226,8 @@ class PostModel extends Model
         $builder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name')
             ->join('users', 'users.id = posts.user_id', 'left')
             ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
-            ->where('posts.board_id', $boardId);
+            ->where('posts.board_id', $boardId)
+            ->where('posts.is_active', 1);
 
         if ($categoryId !== null) {
             $builder->where('posts.category_id', $categoryId);
