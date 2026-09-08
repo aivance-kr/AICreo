@@ -1,0 +1,280 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Libraries;
+
+use FilesystemIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use RuntimeException;
+use Throwable;
+use ZipArchive;
+
+/**
+ * DB와 public/uploads를 하나의 이식 가능한 ZIP 백업으로 관리한다.
+ */
+final class BackupManager
+{
+    private const string DATABASE_FILE   = 'database.sql';
+    private const string MANIFEST_FILE   = 'manifest.json';
+    private const int MAX_ARCHIVE_SIZE   = 1073741824;
+    private const int MAX_EXTRACTED_SIZE = 5368709120;
+    private const int MAX_ENTRIES        = 10000;
+
+    public function __construct(
+        /**
+         * @var array<string, mixed>
+         */
+        private readonly array $databaseConfig,
+        private readonly string $backupDirectory = WRITEPATH . 'backups',
+        private readonly string $uploadsDirectory = FCPATH . 'uploads',
+    ) {
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function create(): array
+    {
+        $this->ensureDirectory($this->backupDirectory);
+        $temporary   = $this->temporaryDirectory();
+        $sqlPath     = $temporary . '/' . self::DATABASE_FILE;
+        $filename    = 'aicreo-backup-' . date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . '.zip';
+        $archivePath = $this->backupDirectory . '/' . $filename;
+
+        try {
+            $this->dumpDatabase($sqlPath);
+
+            $zip = new ZipArchive();
+            if ($zip->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+                throw new RuntimeException('백업 ZIP 파일을 만들 수 없습니다.');
+            }
+
+            $zip->addFile($sqlPath, self::DATABASE_FILE);
+            $this->addDirectory($zip, $this->uploadsDirectory, 'uploads');
+            $manifest = ['format' => 'aicreo-backup', 'version' => 1, 'created_at' => date(DATE_ATOM)];
+            $zip->addFromString(self::MANIFEST_FILE, json_encode($manifest, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
+            $zip->close();
+
+            return ['filename' => $filename, 'size' => filesize($archivePath) ?: 0, 'created_at' => $manifest['created_at']];
+        } catch (Throwable $exception) {
+            @unlink($archivePath);
+
+            throw $exception;
+        } finally {
+            $this->deleteDirectory($temporary);
+        }
+    }
+
+    /**
+     * @return list<array{filename: string, size: int, modified_at: int}>
+     */
+    public function list(): array
+    {
+        $this->ensureDirectory($this->backupDirectory);
+        $backups = [];
+
+        foreach (glob($this->backupDirectory . '/*.zip') ?: [] as $path) {
+            $backups[] = ['filename' => basename($path), 'size' => filesize($path) ?: 0, 'modified_at' => filemtime($path) ?: 0];
+        }
+        usort($backups, static fn (array $left, array $right): int => $right['modified_at'] <=> $left['modified_at']);
+
+        return $backups;
+    }
+
+    public function path(string $filename): string
+    {
+        if (! preg_match('/\Aaicreo-backup-[a-zA-Z0-9-]+\.zip\z/', $filename)) {
+            throw new RuntimeException('잘못된 백업 파일명입니다.');
+        }
+        $path = $this->backupDirectory . '/' . $filename;
+        if (! is_file($path)) {
+            throw new RuntimeException('백업 파일을 찾을 수 없습니다.');
+        }
+
+        return $path;
+    }
+
+    public function restore(string $archivePath): void
+    {
+        $this->validateArchive($archivePath);
+        // 실패 시 되돌릴 기준점을 먼저 남긴다. DB와 파일을 한 트랜잭션으로 묶을 수 없기 때문이다.
+        $this->create();
+        $temporary = $this->temporaryDirectory();
+
+        try {
+            $zip = new ZipArchive();
+            $zip->open($archivePath);
+            $zip->extractTo($temporary);
+            $zip->close();
+
+            $this->importDatabase($temporary . '/' . self::DATABASE_FILE);
+            $stagedUploads = $temporary . '/uploads';
+            if (! is_dir($stagedUploads)) {
+                mkdir($stagedUploads, 0755, true);
+            }
+            $previousUploads = $this->uploadsDirectory . '.restore-' . bin2hex(random_bytes(4));
+            if (is_dir($this->uploadsDirectory) && ! rename($this->uploadsDirectory, $previousUploads)) {
+                throw new RuntimeException('기존 업로드 파일을 교체 준비할 수 없습니다.');
+            }
+            if (! rename($stagedUploads, $this->uploadsDirectory)) {
+                if (is_dir($previousUploads)) {
+                    rename($previousUploads, $this->uploadsDirectory);
+                }
+
+                throw new RuntimeException('복원한 업로드 파일을 적용할 수 없습니다.');
+            }
+            $this->deleteDirectory($previousUploads);
+        } finally {
+            $this->deleteDirectory($temporary);
+        }
+    }
+
+    private function dumpDatabase(string $destination): void
+    {
+        $this->run(['mysqldump', '--single-transaction', '--routines', '--triggers', '--add-drop-table', ...$this->databaseArguments()], $destination, null);
+    }
+
+    private function importDatabase(string $source): void
+    {
+        $this->run(['mysql', ...$this->databaseArguments()], null, $source);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function databaseArguments(): array
+    {
+        $config = $this->databaseConfig;
+        if (($config['DBDriver'] ?? '') !== 'MySQLi') {
+            throw new RuntimeException('MySQLi 데이터베이스에서만 백업 복원을 지원합니다.');
+        }
+
+        return ['--host=' . (string) $config['hostname'], '--port=' . (string) $config['port'], '--user=' . (string) $config['username'], (string) $config['database']];
+    }
+
+    /**
+     * @param list<string> $command
+     */
+    private function run(array $command, ?string $outputPath, ?string $inputPath): void
+    {
+        $config  = $this->databaseConfig;
+        $pipes   = [];
+        $process = proc_open($command, [['pipe', 'r'], ['pipe', 'w'], ['pipe', 'w']], $pipes, null, ['MYSQL_PWD' => (string) $config['password']]);
+        if (! is_resource($process)) {
+            throw new RuntimeException('MySQL 백업 도구를 실행할 수 없습니다.');
+        }
+        if ($inputPath !== null) {
+            stream_copy_to_stream(fopen($inputPath, 'rb'), $pipes[0]);
+        }
+        fclose($pipes[0]);
+        if ($outputPath !== null) {
+            stream_copy_to_stream($pipes[1], fopen($outputPath, 'wb'));
+        }
+        fclose($pipes[1]);
+        $error = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+        if (proc_close($process) !== 0) {
+            throw new RuntimeException('MySQL 작업에 실패했습니다: ' . trim($error));
+        }
+    }
+
+    private function validateArchive(string $archivePath): void
+    {
+        if (! is_file($archivePath) || (filesize($archivePath) ?: 0) > self::MAX_ARCHIVE_SIZE) {
+            throw new RuntimeException('허용되지 않는 백업 파일 크기입니다.');
+        }
+        $zip = new ZipArchive();
+        if ($zip->open($archivePath) !== true || $zip->numFiles > self::MAX_ENTRIES) {
+            throw new RuntimeException('유효하지 않은 백업 ZIP 파일입니다.');
+        }
+        $total       = 0;
+        $hasDatabase = false;
+        $hasManifest = false;
+
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            $stat = $zip->statIndex($index);
+            $name = (string) ($stat['name'] ?? '');
+            $mode = ((int) ($stat['external_attributes'] ?? 0) >> 16) & 0170000;
+            if ($mode === 0120000) {
+                $zip->close();
+
+                throw new RuntimeException('심볼릭 링크가 포함된 백업 파일은 복원할 수 없습니다.');
+            }
+            if ($name === self::DATABASE_FILE) {
+                $hasDatabase = true;
+            } elseif ($name === self::MANIFEST_FILE) {
+                $hasManifest = true;
+            } elseif (! str_starts_with($name, 'uploads/')) {
+                $zip->close();
+
+                throw new RuntimeException('허용되지 않는 백업 파일 구성이 포함되어 있습니다.');
+            }
+            if (str_contains($name, '..') || str_starts_with($name, '/') || str_contains($name, '\\')) {
+                $zip->close();
+
+                throw new RuntimeException('위험한 경로가 포함된 백업 파일입니다.');
+            }
+            $total += (int) ($stat['size'] ?? 0);
+            if ($total > self::MAX_EXTRACTED_SIZE) {
+                $zip->close();
+
+                throw new RuntimeException('압축 해제 크기 제한을 초과했습니다.');
+            }
+        }
+        $zip->close();
+        if (! $hasDatabase || ! $hasManifest) {
+            throw new RuntimeException('AICreo 백업 형식이 아닙니다.');
+        }
+        $zip = new ZipArchive();
+        $zip->open($archivePath);
+        $manifest = json_decode((string) $zip->getFromName(self::MANIFEST_FILE), true);
+        $zip->close();
+        if (! is_array($manifest) || ($manifest['format'] ?? null) !== 'aicreo-backup' || ($manifest['version'] ?? null) !== 1) {
+            throw new RuntimeException('AICreo 백업 형식이 아닙니다.');
+        }
+    }
+
+    private function addDirectory(ZipArchive $zip, string $directory, string $prefix): void
+    {
+        if (! is_dir($directory)) {
+            return;
+        }
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
+
+        foreach ($iterator as $file) {
+            if ($file->isFile()) {
+                $zip->addFile($file->getPathname(), $prefix . '/' . substr($file->getPathname(), strlen($directory) + 1));
+            }
+        }
+    }
+
+    private function temporaryDirectory(): string
+    {
+        $directory = WRITEPATH . 'backups-tmp/' . bin2hex(random_bytes(12));
+        $this->ensureDirectory($directory);
+
+        return $directory;
+    }
+
+    private function ensureDirectory(string $directory): void
+    {
+        if (! is_dir($directory) && ! mkdir($directory, 0750, true) && ! is_dir($directory)) {
+            throw new RuntimeException('백업 저장소를 만들 수 없습니다.');
+        }
+    }
+
+    private function deleteDirectory(string $directory): void
+    {
+        if (! is_dir($directory)) {
+            return;
+        }
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+
+        foreach ($iterator as $item) {
+            $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
+        }
+        rmdir($directory);
+    }
+}
