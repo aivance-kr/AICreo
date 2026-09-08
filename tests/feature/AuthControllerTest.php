@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\SettingModel;
 use App\Models\UserModel;
 use Tests\Support\FeatureTestCase;
 
@@ -12,6 +13,13 @@ use Tests\Support\FeatureTestCase;
  */
 final class AuthControllerTest extends FeatureTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // 회원가입 기본값은 OFF(#signup toggle) — 이 스위트는 가입 로직 자체를 검증하므로 켜둔다.
+        (new SettingModel())->saveSettings(['signup_enabled' => '1']);
+    }
+
     public function testLoginPageLoads(): void
     {
         $result = $this->get('auth/login');
