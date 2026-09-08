@@ -21,6 +21,7 @@ final class BackupManager
     private const int MAX_ARCHIVE_SIZE   = 1073741824;
     private const int MAX_EXTRACTED_SIZE = 5368709120;
     private const int MAX_ENTRIES        = 10000;
+    private const int QUEUED_JOB_TIMEOUT = 300;
     private const string JOB_LOCK_FILE   = '.backup-create.lock';
     private const string JOB_STATUS_FILE = 'backup-create-status.json';
 
@@ -77,12 +78,15 @@ final class BackupManager
     public function queue(): void
     {
         $this->ensureDirectory($this->backupDirectory);
+        $this->recoverInterruptedJob();
         $lock = @fopen($this->jobLockPath(), 'xb');
         if ($lock === false) {
             throw new RuntimeException('백업 생성 작업이 이미 진행 중입니다.');
         }
+        $queuedAt = date(DATE_ATOM);
+        fwrite($lock, json_encode(['queued_at' => $queuedAt], JSON_THROW_ON_ERROR));
         fclose($lock);
-        $this->writeJobStatus(['status' => 'queued', 'updated_at' => date(DATE_ATOM)]);
+        $this->writeJobStatus(['status' => 'queued', 'updated_at' => $queuedAt]);
     }
 
     /**
@@ -90,17 +94,9 @@ final class BackupManager
      */
     public function jobStatus(): ?array
     {
-        $path = $this->jobStatusPath();
-        if (! is_file($path)) {
-            return null;
-        }
+        $this->recoverInterruptedJob();
 
-        $status = json_decode((string) file_get_contents($path), true);
-        if (! is_array($status) || ! isset($status['status'], $status['updated_at']) || ! is_string($status['status']) || ! is_string($status['updated_at'])) {
-            return null;
-        }
-
-        return $status;
+        return $this->readJobStatus();
     }
 
     /**
@@ -108,12 +104,13 @@ final class BackupManager
      */
     public function runQueuedJob(): array
     {
+        $this->recoverInterruptedJob();
         if (! is_file($this->jobLockPath())) {
             throw new RuntimeException('예약된 백업 생성 작업이 없습니다.');
         }
 
         try {
-            $this->writeJobStatus(['status' => 'running', 'updated_at' => date(DATE_ATOM)]);
+            $this->writeJobStatus(['status' => 'running', 'updated_at' => date(DATE_ATOM), 'pid' => getmypid()]);
             $backup = $this->create();
             $this->writeJobStatus(['status' => 'completed', 'updated_at' => date(DATE_ATOM), 'backup' => $backup]);
 
@@ -333,6 +330,98 @@ final class BackupManager
     private function jobStatusPath(): string
     {
         return $this->backupDirectory . '/' . self::JOB_STATUS_FILE;
+    }
+
+    /**
+     * 서버 또는 worker가 중단된 뒤 남은 작업 잠금을 해제한다.
+     */
+    private function recoverInterruptedJob(): void
+    {
+        if (! is_file($this->jobLockPath())) {
+            return;
+        }
+
+        $status = $this->readJobStatus();
+        $state  = $status['status'] ?? null;
+
+        if (in_array($state, ['completed', 'failed'], true)) {
+            @unlink($this->jobLockPath());
+
+            return;
+        }
+
+        if ($state === 'running' && isset($status['pid']) && is_int($status['pid'])) {
+            $alive = $this->isProcessAlive($status['pid']);
+            if ($alive === false) {
+                $this->failInterruptedJob();
+            }
+
+            return;
+        }
+
+        if ($this->isJobOverdue($status)) {
+            $this->failInterruptedJob();
+        }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function readJobStatus(): ?array
+    {
+        $path = $this->jobStatusPath();
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $status = json_decode((string) file_get_contents($path), true);
+        if (! is_array($status) || ! isset($status['status'], $status['updated_at']) || ! is_string($status['status']) || ! is_string($status['updated_at'])) {
+            return null;
+        }
+
+        return $status;
+    }
+
+    /**
+     * @param array<string, mixed>|null $status
+     */
+    private function isJobOverdue(?array $status): bool
+    {
+        $updatedAt = is_array($status) ? ($status['updated_at'] ?? null) : null;
+        $timestamp = is_string($updatedAt) ? strtotime($updatedAt) : false;
+        if ($timestamp === false) {
+            $timestamp = $this->lockQueuedAt();
+        }
+        if ($timestamp === false) {
+            $timestamp = filemtime($this->jobLockPath());
+        }
+
+        return $timestamp !== false && $timestamp <= time() - self::QUEUED_JOB_TIMEOUT;
+    }
+
+    private function lockQueuedAt(): false|int
+    {
+        $lock = json_decode((string) file_get_contents($this->jobLockPath()), true);
+        if (! is_array($lock) || ! isset($lock['queued_at']) || ! is_string($lock['queued_at'])) {
+            return false;
+        }
+
+        return strtotime($lock['queued_at']);
+    }
+
+    private function isProcessAlive(int $pid): ?bool
+    {
+        if ($pid <= 0 || ! function_exists('posix_kill')) {
+            return null;
+        }
+
+        return posix_kill($pid, 0);
+    }
+
+    private function failInterruptedJob(): void
+    {
+        $this->writeJobStatus(['status' => 'failed', 'updated_at' => date(DATE_ATOM)]);
+        @unlink($this->jobLockPath());
     }
 
     /**
