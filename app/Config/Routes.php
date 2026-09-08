@@ -112,6 +112,10 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('posts', 'Admin\PostController::index');
     $routes->post('posts/(:num)/delete', 'Admin\PostController::delete/$1');
 
+    // 전체 댓글 관리
+    $routes->get('comments', 'Admin\CommentController::index');
+    $routes->post('comments/(:num)/toggle', 'Admin\CommentController::toggle/$1');
+
     // 회원 관리
     $routes->get('users', 'Admin\UserController::index');
     $routes->get('users/(:num)/edit', 'Admin\UserController::edit/$1');
