@@ -153,6 +153,20 @@
                            placeholder="비밀번호" required autocomplete="new-password">
                 </div>
             </div>
+            <div class="row g-2 mb-2">
+                <div class="col-sm-3">
+                    <label class="visually-hidden" for="comment-captcha-answer">스팸 방지 계산</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" aria-hidden="true"><?= esc($guestCommentCaptcha['question']) ?></span>
+                        <input type="text" inputmode="numeric" name="captcha_answer" id="comment-captcha-answer" class="form-control"
+                               placeholder="답" required autocomplete="off" aria-label="스팸 방지 계산 답">
+                    </div>
+                </div>
+                <div class="visually-hidden" aria-hidden="true">
+                    <label for="comment-website">웹사이트</label>
+                    <input type="text" name="website" id="comment-website" tabindex="-1" autocomplete="off">
+                </div>
+            </div>
             <?php endif; ?>
             <div class="d-flex gap-2">
                 <label class="visually-hidden" for="comment-content">댓글 내용</label>

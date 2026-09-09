@@ -35,6 +35,7 @@ class ExampleSeeder extends Seeder
         ];
 
         $builder = $this->db->table('factories');
+        $builder->truncate();
 
         foreach ($factories as $factory) {
             $builder->insert($factory);

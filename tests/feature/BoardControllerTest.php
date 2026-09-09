@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
+use App\Models\PostCommentModel;
 use App\Models\PostModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use Tests\Support\FeatureTestCase;
@@ -18,6 +19,24 @@ final class BoardControllerTest extends FeatureTestCase
     private function boardId(string $slug): int
     {
         return (int) (new BoardModel())->getBySlug($slug)['id'];
+    }
+
+    private function guestCommentPostId(): int
+    {
+        return (int) (new PostModel())->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '댓글 테스트 글',
+            'content'     => '댓글 테스트 본문',
+            'author_name' => '작성자',
+        ], true);
+    }
+
+    /**
+     * @return array{question: string, answer: int, issued_at: int}
+     */
+    private function guestCommentCaptcha(int $answer): array
+    {
+        return ['question' => '2 + 3 = ?', 'answer' => $answer, 'issued_at' => time()];
     }
 
     public function testListPageLoads(): void
@@ -172,6 +191,68 @@ final class BoardControllerTest extends FeatureTestCase
 
         $this->assertStringContainsString('class="post-content board-post-content"', $body);
         $this->assertStringContainsString('<img src="/uploads/example.jpg"', $body);
+    }
+
+    public function testGuestCommentFormShowsSpamPreventionFields(): void
+    {
+        $postId = $this->guestCommentPostId();
+
+        $body = $this->get("board/qna/{$postId}")->getBody();
+
+        $this->assertStringContainsString('comment-captcha-answer', $body);
+        $this->assertStringContainsString('name="website"', $body);
+    }
+
+    public function testGuestCommentRequiresCorrectCaptcha(): void
+    {
+        $postId = $this->guestCommentPostId();
+
+        $result = $this->withSession([
+            'guest_comment_captcha_' . $postId => $this->guestCommentCaptcha(5),
+        ])->post("board/qna/{$postId}/comment", [
+            'author_name'     => '비회원',
+            'author_password' => '1234',
+            'content'         => '캡차가 틀린 댓글',
+            'captcha_answer'  => '4',
+        ]);
+
+        $result->assertRedirect();
+        $this->assertSame(0, (new PostCommentModel())->where('post_id', $postId)->countAllResults());
+    }
+
+    public function testGuestCommentRejectsHoneypotSubmission(): void
+    {
+        $postId = $this->guestCommentPostId();
+
+        $result = $this->withSession([
+            'guest_comment_captcha_' . $postId => $this->guestCommentCaptcha(5),
+        ])->post("board/qna/{$postId}/comment", [
+            'author_name'     => '비회원',
+            'author_password' => '1234',
+            'content'         => '봇이 쓴 댓글',
+            'captcha_answer'  => '5',
+            'website'         => 'https://spam.example',
+        ]);
+
+        $result->assertRedirect();
+        $this->assertSame(0, (new PostCommentModel())->where('post_id', $postId)->countAllResults());
+    }
+
+    public function testGuestCommentStoresWithCorrectCaptcha(): void
+    {
+        $postId = $this->guestCommentPostId();
+
+        $result = $this->withSession([
+            'guest_comment_captcha_' . $postId => $this->guestCommentCaptcha(5),
+        ])->post("board/qna/{$postId}/comment", [
+            'author_name'     => '비회원',
+            'author_password' => '1234',
+            'content'         => '캡차를 통과한 댓글',
+            'captcha_answer'  => '5',
+        ]);
+
+        $result->assertRedirect();
+        $this->assertSame(1, (new PostCommentModel())->where('post_id', $postId)->countAllResults());
     }
 
     public function testViewShowsPreviousAndNextPostLinks(): void
