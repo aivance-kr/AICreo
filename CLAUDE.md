@@ -3,6 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working in this repository.
 
 > **Common rules are automatically inherited from the global [`~/.claude/CLAUDE.md`](~/.claude/CLAUDE.md)** (language, Git workflow, security, code style, testing, API, LSP). This document defines only rules **specific to the AiCreo repository**.
+>
+> **Exception:** mid-task progress messages are written in **English**; only the final result summary is written in **Korean**.
 
 ## Repository Overview
 
