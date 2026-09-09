@@ -145,6 +145,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             </a>
 
             <div class="nav-section">운영</div>
+            <a href="/admin/stats" class="nav-link <?= str_starts_with($uri, 'admin/stats') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/stats') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-bar-chart me-2" aria-hidden="true"></i>접속 통계
+            </a>
             <a href="/admin/users" class="nav-link <?= str_starts_with($uri, 'admin/users') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/users') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-person-lines-fill me-2" aria-hidden="true"></i>회원 관리
             </a>
