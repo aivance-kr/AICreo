@@ -1,104 +1,104 @@
 # CLAUDE.md
 
-이 파일은 이 저장소에서 작업할 때 Claude Code(claude.ai/code)에 대한 가이드를 제공합니다.
+This file provides guidance to Claude Code (claude.ai/code) when working in this repository.
 
-> **공통 규칙은 전역 [`~/.claude/CLAUDE.md`](~/.claude/CLAUDE.md) 에서 자동 상속**된다(언어·Git 워크플로우·보안·코드 스타일·테스트·API·LSP). 이 문서는 **AICreo 저장소 전용** 규칙만 정의한다.
+> **Common rules are inherited automatically from the global [`~/.claude/CLAUDE.md`](~/.claude/CLAUDE.md)** (language, Git workflow, security, code style, testing, API, LSP). This document defines **AICreo repo-specific** rules only.
 
-## 저장소 개요
+## Repository overview
 
-1인 웹 에이전시를 위한 CodeIgniter 4 기업 홈페이지 템플릿(게시판 CMS / 사이트 빌더)입니다 — 동적 페이지, 게시판 시스템, 문의 폼, 관리자 패널을 제공합니다.
+A CodeIgniter 4 corporate website template (board CMS / site builder) for a solo web agency — provides dynamic pages, a board system, inquiry forms, and an admin panel.
 
-저장소 루트가 하나의 CI4 프로젝트입니다. 모든 `php spark`, `composer`, `git` 명령은 루트에서 실행합니다.
+The repo root is a single CI4 project. Run all `php spark`, `composer`, and `git` commands from the root.
 
-> **PHP 8.5+ 필수** (`composer.json` `require`/`platform` 고정). PHPStan 레벨 6.
+> **PHP 8.5+ required** (pinned in `composer.json` `require`/`platform`). PHPStan level 6.
 
-## 명령어
+## Commands
 
 ```bash
-php spark serve --host 127.0.0.1 --port 8306  # 개발 서버 실행 (http://creo.test, Caddy 리버스 프록시 경유)
-php spark migrate            # 대기 중인 마이그레이션 전체 실행 (테이블 생성 + 시딩)
-php spark migrate:rollback   # 마지막 마이그레이션 배치 롤백
+php spark serve --host 127.0.0.1 --port 8306  # run dev server (http://creo.test, via Caddy reverse proxy)
+php spark migrate            # run all pending migrations (create tables + seed)
+php spark migrate:rollback   # roll back the last migration batch
 ```
 
-> ⚠️ **`--host` 를 빼면 `creo.test` 접속이 `502 Bad Gateway` 로 실패한다.** `--host` 없이 기본값 `localhost` 로 바인딩하면 이 macOS 환경에서는 IPv6(`::1`)로만 리슨되는데, `creo.test` 를 프록시하는 공용 Caddy(`~/claude-works/dev-proxy/Caddyfile`)는 `127.0.0.1:8306`(IPv4)로 연결을 시도해 거부당한다. 반드시 `--host 127.0.0.1` 을 명시할 것.
+> ⚠️ **Omitting `--host` causes `creo.test` access to fail with `502 Bad Gateway`.** Without `--host`, binding to the default `localhost` on this macOS environment listens only on IPv6 (`::1`), while the shared Caddy proxying `creo.test` (`~/claude-works/dev-proxy/Caddyfile`) tries to connect via `127.0.0.1:8306` (IPv4) and gets refused. Always specify `--host 127.0.0.1`.
 
-**검증 게이트 — 어디서 무엇을 돌리는가.** 검증은 로컬에서 끝낸다. `feature → dev` PR 에는 CI 를 걸지 않고(코드 리뷰만), CI 는 `dev → main` 배포 PR 에서만 돈다.
+**Verification gate — where what runs.** Verification finishes locally. `feature → dev` PRs don't run CI (code review only); CI runs only on `dev → main` deploy PRs.
 
 ```
-feature/*  ──[로컬 검증: composer ci]──▶  dev  ──[PR + 코드 리뷰]──▶  dev → main PR ──[CI]──▶  main
+feature/*  ──[local verification: composer ci]──▶  dev  ──[PR + code review]──▶  dev → main PR ──[CI]──▶  main
                     ↑
-              여기가 실질적 게이트 (feature → dev 는 Squash merge 라 CI 가 없다)
+              this is the actual gate (feature → dev is a Squash merge, so no CI runs there)
 ```
 
 ```bash
-composer cs          # PHP-CS-Fixer 스타일 점검 (dry-run)
-composer cs:fix      # 스타일 자동 정규화
-composer analyse     # PHPStan 정적 분석 (레벨 6)
-composer test        # PHPUnit (테스트 DB는 MySQL)
-composer ci          # cs + analyse + test 한 번에 — push 전 이걸로 CI 미리 통과
-composer rector:dry  # 코드 현대화 미리보기 (선택), composer rector 로 적용
+composer cs          # PHP-CS-Fixer style check (dry-run)
+composer cs:fix      # auto-normalize style
+composer analyse     # PHPStan static analysis (level 6)
+composer test        # PHPUnit (test DB is MySQL)
+composer ci          # cs + analyse + test in one go — pre-clear CI before push
+composer rector:dry  # preview code modernization (optional), apply with composer rector
 ```
 
-| 시점 | 무엇을 |
+| When | What |
 |------|--------|
-| 개발 중 | `composer analyse` + `composer test` 수시 실행 |
-| push 전 (`main` 제외 모든 브랜치) | `composer ci` 필수 — 실패하면 push 하지 않는다. `pre-push` 훅이 강제한다 |
-| `feature → dev` PR | CI 없음. 코드 리뷰만 — 직전 push 의 `composer ci` 가 유일한 방어선 |
-| `dev → main` PR | GitHub Actions 전체(`quality` 잡: cs·analyse·test, PHP 8.5/MySQL 8.0 + `coverage` 잡: job summary 에 리포트) |
+| During development | Run `composer analyse` + `composer test` as needed |
+| Before push (every branch except `main`) | `composer ci` is required — don't push if it fails. Enforced by the `pre-push` hook |
+| `feature → dev` PR | No CI. Code review only — the `composer ci` from the last push is the only safeguard |
+| `dev → main` PR | Full GitHub Actions (`quality` job: cs, analyse, test on PHP 8.5/MySQL 8.0 + `coverage` job: report in the job summary) |
 
-#### 배포는 `main` push 로 자동 실행된다
+#### Deployment runs automatically on a `main` push
 
-`deploy.yml` 이 `push: branches: [main]` 에서 돌아 SSH 로 운영 서버에 `git reset --hard origin/main` → `composer install --no-dev` → `php spark migrate --all` → `cache:clear` 를 수행한다. **마이그레이션은 배포가 알아서 돌리므로 따로 실행할 필요가 없다.**
+`deploy.yml` runs on `push: branches: [main]`, SSHing into the production server to do `git reset --hard origin/main` → `composer install --no-dev` → `php spark migrate --all` → `cache:clear`. **Migrations run automatically as part of deployment, so there's no need to run them separately.**
 
-> ⚠️ 예전에는 `workflow_run: workflows:[CI], branches:[main]` 으로 CI 성공 뒤에 배포하도록 걸려 있었다. 그런데 CI 트리거가 `pull_request: [main]` 로 바뀌면서(#244) **이 연결이 조용히 끊겼다** — `pull_request` 로 도는 CI 실행은 소속 브랜치가 head(`dev`)라 `branches: [main]` 필터에 걸리지 않는다. 그 결과 2026-07-16 이후 배포가 한 번도 돌지 않았고, 머지는 정상인데 운영 서버만 옛 코드로 남아 있었다(#255 배포 후 발견). **CI 트리거를 건드릴 때는 `deploy.yml` 이 그것에 의존하고 있지 않은지 반드시 함께 확인할 것.**
+> ⚠️ It used to trigger deployment after CI succeeded via `workflow_run: workflows:[CI], branches:[main]`. But when the CI trigger changed to `pull_request: [main]` (#244), **this link quietly broke** — a CI run triggered by `pull_request` has its branch set to the head (`dev`), so it doesn't match the `branches: [main]` filter. As a result, deployment hadn't run even once since 2026-07-16 — merges succeeded normally, but the production server was left on old code (discovered after the #255 deploy). **Whenever you touch CI triggers, always check whether `deploy.yml` depends on them.**
 
-`feature → dev` 는 GitHub Squash merge 로 처리되어 로컬 훅도 CI 도 그 순간엔 동작하지 않는다 — 그래서 `feature/*` push 도 `dev` push 와 동일하게 `composer ci` 를 강제한다(건너뛰지 않는다). 이 단계를 생략하면 검증되지 않은 코드가 `dev` 에 쌓이고, 배포 PR 에서야 CI 가 처음 돌아 원인 추적 비용이 커진다 — 생략은 규칙 위반이다.
+Since `feature → dev` goes through a GitHub Squash merge, neither the local hook nor CI runs at that moment — so `feature/*` pushes enforce `composer ci` the same as `dev` pushes (never skipped). Skipping this step lets unverified code pile up on `dev`, with CI only catching it at the deploy PR stage where root-causing costs much more — skipping it is a rule violation.
 
-#### self-hosted 러너에서 돈다
+#### Runs on a self-hosted runner
 
-GitHub 호스팅 러너(`ubuntu-latest`)가 아니라 **`aivance-kr` 조직의 self-hosted Linux(X64) 러너 1개**에서 돈다(2026-09 조직 이전 · macOS 개인 러너 → 조직 Linux 러너로 전환). `quality`·`coverage`·`notify`·`deploy` 잡 모두 `runs-on: [self-hosted, Linux, X64]`.
+Runs not on GitHub-hosted runners (`ubuntu-latest`) but on **a single self-hosted Linux (X64) runner belonging to the `aivance-kr` organization** (migrated to the org in 2026-09 · from a personal macOS runner to an org Linux runner). `quality`, `coverage`, `notify`, and `deploy` jobs all use `runs-on: [self-hosted, Linux, X64]`.
 
-> ⚠️ 러너 등록 위치·서비스명 등 실제 인프라 값은 이 문서에 아직 반영되지 않았다 — 조직 러너를 세팅한 사람이 실제 값(등록 경로, 서비스 관리 방식 등)으로 이 절을 채워 넣을 것.
+> ⚠️ Actual infra details like the runner's registration location and service name aren't reflected in this doc yet — whoever set up the org runner should fill in this section with the real values (registration path, service management approach, etc.).
 
-- **저장소가 Public** — self-hosted 러너에 `pull_request` 트리거가 걸려 있으면 외부 fork PR 코드가 러너에서 실행될 위험이 있어(공식적으로 알려진 위험), 저장소 설정에서 `fork-pr-contributor-approval` 을 `all_external_contributors` 로 켜 두었다. 외부 협업자의 PR은 관리자가 수동 승인하기 전까지 워크플로우가 실행되지 않는다.
-- **MySQL**: self-hosted **Linux** 러너는 `services:` 도커 컨테이너를 지원한다. 다만 조직 러너 1개를 여러 저장소·여러 워크플로우가 공유하므로, 표준 서비스 포트(`3306`) 고정에 따른 충돌을 피하려고 여전히 각 잡에서 `docker run` 으로 직접 기동하고 `if: always()` 스텝으로 정리한다. Redis는 캐시 핸들러 기본값이 `file` 이라 CI 에 필요 없다.
-- **포트**: 조직 러너 1개를 여러 저장소가 공유할 수 있다. **`quality` 잡은 MySQL `43306`, `coverage` 잡은 `43307`** 을 쓴다. 새 포트를 고를 땐 다른 저장소 `.github/workflows/ci.yml` 도 함께 grep 해서 겹치는 값이 없는지 반드시 확인할 것 — 처음 `23306`으로 골랐다가 다른 저장소와 충돌해 CI 가 실패했었다(macOS 개인 러너 시절 이력, 조직 러너 전환 후에도 동일 원칙 적용).
-- **컨테이너 정리는 반드시 `docker rm -f -v`.** `-v` 가 없으면 컨테이너만 지워지고 `/var/lib/mysql` 익명 볼륨이 남는다. 매 실행마다 수백 MB 씩 쌓여 러너의 Docker 디스크를 채우고, 어느 날 갑자기 MySQL 이 `No space left on device` 로 기동조차 못 하게 된다. 실제로 2026-07-17 부터 한 달간 210개(44GB)가 누적돼 PR #255 배포 CI 가 막혔다. 막혔을 때 회수: `docker volume prune -f`(사용 중 볼륨은 건드리지 않는다).
-- **러너가 1개뿐이라 잡은 실질적으로 순차 실행된다.** `quality`/`coverage`는 서로 `needs` 가 없지만, 같은 러너 하나가 한 번에 잡 하나만 처리하므로 자동으로 큐잉되어 동시 실행되지 않는다. 그래도 잡마다 호스트 포트를 다르게 유지하는 이유는 다른 저장소·다른 워크플로우 실행과 겹칠 수 있어서다 — 포트가 겹치면 나중 컨테이너가 바인딩에 실패해 즉시 죽는데, `docker run -d` 는 그 전에 컨테이너 ID 를 찍고 성공한 것처럼 끝나므로 **테스트의 "Connection refused" 수백 건으로만 드러나 원인이 가려진다.** 실제로 PR #255 에서 이 방식으로 `quality` 만 실패했다. 지금은 각 잡이 기동 직후 컨테이너 생존과 준비 완료를 확인하고 실패하면 `docker logs` 와 함께 즉시 중단한다.
-- **호스팅 러너로 되돌리려면**: `runs-on` 을 `ubuntu-latest` 로 바꾸면 된다(Linux 이므로 MySQL은 원하면 `services:` 블록으로 바꿔도 되고, 포트도 표준값 `3306`으로 원복 가능).
+- **The repo is Public** — since a `pull_request` trigger on a self-hosted runner risks running external fork PR code on that runner (a well-known risk), the repo setting `fork-pr-contributor-approval` is set to `all_external_contributors`. External contributors' PRs don't run workflows until an admin manually approves them.
+- **MySQL**: self-hosted **Linux** runners support `services:` Docker containers. However, since a single org runner is shared across multiple repos/workflows, to avoid conflicts from pinning the standard service port (`3306`), each job still starts MySQL directly via `docker run` and cleans up with an `if: always()` step. Redis isn't needed in CI since the cache handler defaults to `file`.
+- **Ports**: multiple repos can share the single org runner. **The `quality` job uses MySQL `43306`, the `coverage` job uses `43307`.** When picking a new port, always grep other repos' `.github/workflows/ci.yml` too to check for conflicts — initially picking `23306` caused a conflict with another repo and CI failed (a historical incident from the personal macOS runner era, but the same principle applies after the org runner transition).
+- **Always clean up containers with `docker rm -f -v`.** Without `-v`, only the container is removed and the `/var/lib/mysql` anonymous volume remains. These pile up by hundreds of MB per run, filling the runner's Docker disk, until one day MySQL can't even start with `No space left on device`. This actually happened — 210 volumes (44GB) accumulated over a month starting 2026-07-17, blocking PR #255's deploy CI. Recovery when blocked: `docker volume prune -f` (doesn't touch volumes in use).
+- **With only one runner, jobs effectively run sequentially.** `quality`/`coverage` have no `needs` between them, but since a single runner processes only one job at a time, they're automatically queued and never run concurrently. Still, each job keeps a different host port because it could overlap with another repo's or another workflow's run — if ports collide, the later container fails to bind and dies immediately, but `docker run -d` prints a container ID and exits as if it succeeded beforehand, so **the cause only shows up as hundreds of "Connection refused" errors in the tests.** This is exactly what happened in PR #255, failing only the `quality` job. Now each job checks the container is alive and ready right after startup and aborts immediately with `docker logs` if it fails.
+- **To revert to a hosted runner**: just change `runs-on` to `ubuntu-latest` (it's Linux, so MySQL can optionally switch to a `services:` block, and the port can revert to the standard `3306`).
 
-**Cron (운영 — 단 1줄 등록):**
+**Cron (production — single line registration):**
 ```
 * * * * * cd /path/to/app && php spark tasks:run >> /dev/null 2>&1
 ```
-`Config/Tasks.php`가 `settings` 테이블에서 활성화된 잡을 읽어 등록. 활성화·주기는 `/admin/schedule`에서 관리.
+`Config/Tasks.php` reads enabled jobs from the `settings` table and registers them. Manage enablement/schedule at `/admin/schedule`.
 
-## 초기 설정
+## Initial setup
 
 ```bash
 cp env .env
-# .env 편집: DB 접속 정보, CI_ENVIRONMENT, TinyMCE 키, app.baseURL(로컬은 기본값 8306 그대로 두되
-#            8306이 아닌 다른 포트로 띄우거나 배포 시엔 반드시 실제 URL로 바꿀 것 — CI4는 baseURL이
-#            없거나 빈 문자열이면 자동 감지하지 않고 예외를 던진다)
+# Edit .env: DB connection info, CI_ENVIRONMENT, TinyMCE key, app.baseURL (leave the local default of 8306
+#            as-is, but if you run on a different port or deploy, always set the real URL — CI4 throws
+#            an exception instead of auto-detecting if baseURL is missing or empty)
 php spark migrate
-# app/Config/App.php: appTimezone = 'Asia/Seoul' 설정
+# app/Config/App.php: set appTimezone = 'Asia/Seoul'
 ```
 
-기본 관리자 계정: `admin@example.com` / `admin1234!`
+Default admin account: `admin@example.com` / `admin1234!`
 
-Linux 업로드 권한: `chmod -R 755 public/uploads writable`
+Linux upload permissions: `chmod -R 755 public/uploads writable`
 
-**Git 훅 활성화 (클론 후 1회):**
+**Enable Git hooks (once after cloning):**
 ```bash
 git config core.hooksPath .githooks
 ```
-- `.githooks/pre-commit` — 커밋 직전 스테이징된 PHP 파일에 PHP-CS-Fixer(`composer cs:fix` 규칙)를 자동 적용(커밋을 막지는 않음).
-- `.githooks/pre-push` — 대상 브랜치별로 정책이 다르다:
-  - `main` 직접 push는 **무조건 차단**(배포는 `dev → main` PR 로만).
-  - 그 외 브랜치는 품질 게이트(`composer ci` = cs·analyse·test, ~10초)를 실행해 CI 왕복 전에 로컬에서 실패를 걸러냄.
-  - 문서 전용 변경(`*.md`, `docs/**`, `.claude/rules/**` 만 바뀐 push)은 검증을 자동으로 건너뜀. 코드가 한 줄이라도 섞이면 즉시 전체 검증으로 돌아간다.
-- 긴급 우회: `SKIP_HOOKS=1 git commit/push ...`(`main` 차단은 우회되지 않음). PHP·Composer 가 없는 환경에서는 해당 검증을 자동으로 건너뛴다.
+- `.githooks/pre-commit` — auto-applies PHP-CS-Fixer (`composer cs:fix` rules) to staged PHP files right before commit (doesn't block the commit).
+- `.githooks/pre-push` — policy differs by target branch:
+  - Direct push to `main` is **unconditionally blocked** (deploy only via `dev → main` PR).
+  - Other branches run the quality gate (`composer ci` = cs, analyse, test, ~10 sec) to catch failures locally before a CI round-trip.
+  - Docs-only changes (pushes touching only `*.md`, `docs/**`, `.claude/rules/**`) automatically skip verification. If even one line of code is mixed in, full verification runs immediately.
+- Emergency bypass: `SKIP_HOOKS=1 git commit/push ...` (doesn't bypass the `main` block). In environments without PHP/Composer, that verification is automatically skipped.
 
-## 상세 규칙 (모듈)
+## Detailed rules (modules)
 
-- **아키텍처** (테마 시스템, BaseController, 인증·라우팅, CSRF 예외, 캐싱, OAuth, 파일 업로드, DB 스키마): @.claude/rules/architecture.md
+- **Architecture** (theme system, BaseController, auth/routing, CSRF exceptions, caching, OAuth, file uploads, DB schema): @.claude/rules/architecture.md
