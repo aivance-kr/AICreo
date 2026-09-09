@@ -29,6 +29,7 @@ final class SeoSettingTest extends AdminTestCase
         $this->assertStringContainsString('name="og_default_image"', $body);
         $this->assertStringContainsString('name="google_verify"', $body);
         $this->assertStringContainsString('name="bing_verify"', $body);
+        $this->assertStringContainsString('name="daum_verify"', $body);
         // org_type 은 select, ai_crawlers_allow 는 switch(checkbox)
         $this->assertStringContainsString('<select name="org_type"', $body);
         $this->assertStringContainsString('type="checkbox" class="form-check-input" role="switch"', $body);
@@ -41,6 +42,7 @@ final class SeoSettingTest extends AdminTestCase
             'og_default_image'  => 'uploads/media/card.png',
             'google_verify'     => 'google-token',
             'bing_verify'       => 'bing-token',
+            'daum_verify'       => 'daum-token',
             'org_type'          => 'LocalBusiness',
             'ai_crawlers_allow' => '1',
         ]);
@@ -51,6 +53,7 @@ final class SeoSettingTest extends AdminTestCase
         $this->assertSame('uploads/media/card.png', $map['og_default_image']);
         $this->assertSame('google-token', $map['google_verify']);
         $this->assertSame('bing-token', $map['bing_verify']);
+        $this->assertSame('daum-token', $map['daum_verify']);
         $this->assertSame('LocalBusiness', $map['org_type']);
         $this->assertSame('1', $map['ai_crawlers_allow']);
     }
@@ -60,6 +63,7 @@ final class SeoSettingTest extends AdminTestCase
         $this->withSession($this->adminSession)->post('admin/settings/seo', [
             'google_verify' => 'g-code-123',
             'bing_verify'   => 'b-code-456',
+            'daum_verify'   => 'd-code-789',
         ]);
         cache()->delete('site_settings');
 
@@ -67,6 +71,7 @@ final class SeoSettingTest extends AdminTestCase
         $body = $this->get('/')->getBody();
         $this->assertStringContainsString('name="google-site-verification" content="g-code-123"', $body);
         $this->assertStringContainsString('name="msvalidate.01" content="b-code-456"', $body);
+        $this->assertStringContainsString('name="DaumVerification" content="d-code-789"', $body);
     }
 
     public function testDisablingAiCrawlersBlocksThemInRobots(): void
