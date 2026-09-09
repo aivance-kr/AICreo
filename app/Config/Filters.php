@@ -6,6 +6,7 @@ namespace Config;
 
 use App\Filters\AuthFilter;
 use App\Filters\RedirectFilter;
+use App\Filters\VisitLogFilter;
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Filters\CSRF;
 use CodeIgniter\Filters\DebugToolbar;
@@ -22,6 +23,7 @@ class Filters extends BaseConfig
         'honeypot' => Honeypot::class,
         'auth'     => AuthFilter::class,   // ← 추가
         'redirect' => RedirectFilter::class,
+        'visitLog' => VisitLogFilter::class,
     ];
 
     /**
@@ -30,7 +32,8 @@ class Filters extends BaseConfig
     public array $globals = [
         'before' => [
             'redirect',
-            'csrf' => ['except' => ['api/*', 'board/image-upload', 'admin/media/upload']],
+            'csrf'     => ['except' => ['api/*', 'board/image-upload', 'admin/media/upload']],
+            'visitLog' => ['except' => ['admin/*', 'sitemap.xml', 'robots.txt', 'llms.txt', 'indexnow-key.txt']],
         ],
         'after' => ['toolbar'],
     ];

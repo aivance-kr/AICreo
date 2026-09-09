@@ -117,6 +117,9 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('comments', 'Admin\CommentController::index');
     $routes->post('comments/(:num)/toggle', 'Admin\CommentController::toggle/$1');
 
+    // 접속 통계
+    $routes->get('stats', 'Admin\StatsController::index');
+
     // 회원 관리
     $routes->get('users', 'Admin\UserController::index');
     $routes->get('users/(:num)/edit', 'Admin\UserController::edit/$1');
