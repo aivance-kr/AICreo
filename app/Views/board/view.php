@@ -21,9 +21,15 @@
         </div>
     </div>
     <div class="card-body">
+        <!-- 본문 상단 광고 -->
+        <?= view('components/ad_slot', ['ads' => $postTopAds]) ?>
+
         <div class="post-content board-post-content">
             <?= $post['content'] ?>
         </div>
+
+        <!-- 본문 하단 광고 -->
+        <?= view('components/ad_slot', ['ads' => $postBotAds]) ?>
 
         <!-- 이미지 첨부 -->
         <?php $images = array_filter($files, fn($f) => $f['is_image']); ?>

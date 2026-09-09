@@ -1,6 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
+<!-- 홈 상단 광고 -->
+<?= view('components/ad_slot', ['ads' => $homeTopAds]) ?>
+
 <section class="py-5">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -36,5 +39,8 @@
         <?php endif; ?>
     </div>
 </section>
+
+<!-- 홈 하단 광고 -->
+<?= view('components/ad_slot', ['ads' => $homeBottomAds]) ?>
 
 <?= $this->endSection() ?>

@@ -5,6 +5,7 @@ namespace App\Controllers\Front;
 use App\Controllers\BaseController;
 use App\Libraries\FileUploader;
 use App\Libraries\Seo\JsonLdBuilder;
+use App\Models\AdModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostCommentModel;
@@ -146,15 +147,19 @@ class BoardController extends BaseController
             ];
         }
 
+        $adModel = new AdModel();
+
         return $this->render('board/view', [
-            'board'    => $board,
-            'post'     => $post,
-            'files'    => $files,
-            'comments' => $comments,
-            'prevPost' => $prevPost,
-            'nextPost' => $nextPost,
-            'jsonLd'   => $jsonLd,
-            'page'     => [
+            'board'      => $board,
+            'post'       => $post,
+            'files'      => $files,
+            'comments'   => $comments,
+            'prevPost'   => $prevPost,
+            'nextPost'   => $nextPost,
+            'postTopAds' => $adModel->getActiveByPosition('post_top'),
+            'postBotAds' => $adModel->getActiveByPosition('post_bottom'),
+            'jsonLd'     => $jsonLd,
+            'page'       => [
                 'title'     => $post['title'],
                 'meta_desc' => mb_substr(trim(strip_tags((string) $post['content'])), 0, 150),
                 'canonical' => $canonical,
