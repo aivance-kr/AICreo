@@ -1,72 +1,72 @@
-# 아키텍처
+# Architecture
 
-## 테마 시스템
+## Theme system
 
-`ThemeView`(`app/Libraries/ThemeView.php`)가 CI4 기본 렌더러를 대체합니다. 뷰 탐색 순서:
+`ThemeView` (`app/Libraries/ThemeView.php`) replaces CI4's default renderer. View lookup order:
 
 1. `app/Views/themes/{active_theme}/{view}.php`
 2. `app/Views/themes/default/{view}.php`
-3. `app/Views/{view}.php` (관리자 뷰, 콘텐츠 뷰 — 테마 적용 대상 아님)
+3. `app/Views/{view}.php` (admin views, content views — not themed)
 
-활성 테마는 `settings.active_theme`에 저장됩니다(캐시됨). 새 테마는 `app/Views/themes/{name}/`와 `public/themes/{name}/`에 파일을 두어 추가하며, default와 다른 부분만 재정의하면 됩니다. `Config/Services.php`가 `ThemeView`를 공유 렌더러로 연결합니다.
+The active theme is stored in `settings.active_theme` (cached). Add a new theme by placing files under `app/Views/themes/{name}/` and `public/themes/{name}/`, overriding only what differs from default. `Config/Services.php` wires `ThemeView` as the shared renderer.
 
-## BaseController — 전역 데이터 주입
+## BaseController — global data injection
 
-모든 컨트롤러는 `BaseController`를 상속합니다. 매 요청마다 실행되는 `initController()`가 `$this->viewData`에 다음을 주입합니다:
+Every controller extends `BaseController`. `initController()`, which runs on every request, injects the following into `$this->viewData`:
 
-- `$settings` — 사이트 전역 키-값 설정 (캐시됨)
-- `$menus` — 내비게이션 트리 (캐시됨)
-- `$authUser` — 세션 기반 사용자 정보 (id, nickname, role, loggedIn)
-- `$subLeftBanners` — 활성 사이드바 배너 (캐시됨, 관리자 경로에서는 건너뜀)
-- `$activePopups` — 현재 URI에 대한 활성 팝업 (캐시됨)
-- `$unreadInquiries` — 읽지 않은 문의 수 (admin 역할만)
+- `$settings` — site-wide key-value settings (cached)
+- `$menus` — navigation tree (cached)
+- `$authUser` — session-based user info (id, nickname, role, loggedIn)
+- `$subLeftBanners` — active sidebar banners (cached, skipped on admin paths)
+- `$activePopups` — active popups for the current URI (cached)
+- `$unreadInquiries` — unread inquiry count (admin role only)
 
-컨트롤러에서는 `$this->render('view/path', $extraData)`를 사용 — `$viewData`를 자동으로 병합합니다.
+Controllers use `$this->render('view/path', $extraData)` — automatically merges with `$viewData`.
 
-## 인증 & 라우팅
+## Auth & routing
 
-- 인증 필터 별칭: `auth` → `App\Filters\AuthFilter`
-- 사용법: `['filter' => 'auth:member']` 또는 `['filter' => 'auth:admin']`
-- 모든 `/admin/*` 경로는 `auth:admin` 필요
-- 동적 페이지 catch-all `(:segment)`는 `Routes.php`에서 반드시 맨 마지막에 위치
+- Auth filter alias: `auth` → `App\Filters\AuthFilter`
+- Usage: `['filter' => 'auth:member']` or `['filter' => 'auth:admin']`
+- All `/admin/*` routes require `auth:admin`
+- The dynamic-page catch-all `(:segment)` must always come last in `Routes.php`
 
-## CSRF 예외
+## CSRF exceptions
 
-다음 경로는 CSRF 토큰 없이 POST를 받으며(에디터 / 미디어 업로드), `Config/Filters.php`에서 제외됩니다:
+The following paths accept POST without a CSRF token (editor / media upload), excluded in `Config/Filters.php`:
 - `board/image-upload`
 - `admin/media/upload`
 
-## 캐싱 전략
+## Caching strategy
 
-CI4 파일 캐시를 다음에 사용합니다:
-- `site_settings` — 전체 설정 키-값 맵 (`SettingModel`)
-- `nav_menus` — 메뉴 트리 (`MenuModel`)
-- `active_banners_{position}` — 위치별 배너 (`BannerModel`)
-- `active_popups` — 전체 활성 팝업 + 페이지 URL 매핑 (`PopupModel`)
+Uses CI4 file cache for:
+- `site_settings` — full settings key-value map (`SettingModel`)
+- `nav_menus` — menu tree (`MenuModel`)
+- `active_banners_{position}` — banners per position (`BannerModel`)
+- `active_popups` — all active popups + page URL mapping (`PopupModel`)
 
-모델 콜백(`afterInsert/Update/Delete`)이 관리자 쓰기 시 해당 캐시 키를 무효화합니다. 배너/팝업 만료는 캐시된 데이터에 대해 PHP에서 검사하므로 시간 기반 캐시 무효화가 필요 없습니다.
+Model callbacks (`afterInsert/Update/Delete`) invalidate the corresponding cache keys on admin writes. Banner/popup expiry is checked in PHP against the cached data, so no time-based cache invalidation is needed.
 
-## 소셜 로그인 (OAuth)
+## Social login (OAuth)
 
-`AbstractOAuthProvider` 기반 클래스와 `GoogleProvider`, `NaverProvider`, `KakaoProvider`로 구성됩니다. `OAuthFactory::create(string $provider)`가 프로바이더를 해석합니다. 키는 `Config/OAuth.php`에 있습니다(`.env`에서 읽음).
+Consists of an `AbstractOAuthProvider` base class and `GoogleProvider`, `NaverProvider`, `KakaoProvider`. `OAuthFactory::create(string $provider)` resolves the provider. Keys live in `Config/OAuth.php` (read from `.env`).
 
-## 파일 업로드
+## File uploads
 
-| 클래스 | 용도 |
+| Class | Use |
 |-------|-------|
-| `FileUploader` | 게시글 첨부파일 — 확장자 화이트리스트, 최대 10 MB, 랜덤 hex 파일명 |
-| `ImageUploader` | 배너 / 팝업 이미지 — 이미지 전용, 최대 2 MB |
-| `MediaUploader` | 관리자 미디어 라이브러리 — 드래그 앤 드롭, `media` 테이블에 경로 저장 |
+| `FileUploader` | Post attachments — extension whitelist, max 10 MB, random hex filename |
+| `ImageUploader` | Banner / popup images — images only, max 2 MB |
+| `MediaUploader` | Admin media library — drag and drop, stores paths in the `media` table |
 
-## DB 스키마 요약
+## DB schema summary
 
 ```
-users               — 회원 / 관리자 역할, 소셜 로그인 필드
-settings            — 키-값 사이트 설정 (active_theme, smtp 등)
-menus               — 2단계 내비게이션 트리
-pages               — slug 기반 동적 페이지
-boards / posts / post_files / post_comments  — 게시판 시스템
-inquiries           — 문의 폼 제출
-banners / popups / popup_pages               — 마케팅 오버레이
-media               — 미디어 라이브러리
+users               — member / admin roles, social login fields
+settings            — key-value site settings (active_theme, smtp, etc.)
+menus               — 2-level navigation tree
+pages               — slug-based dynamic pages
+boards / posts / post_files / post_comments  — board system
+inquiries           — inquiry form submissions
+banners / popups / popup_pages               — marketing overlays
+media               — media library
 ```
