@@ -21,9 +21,15 @@
         </div>
     </div>
     <div class="card-body">
+        <!-- 본문 상단 광고 -->
+        <?= view('components/ad_slot', ['ads' => $postTopAds]) ?>
+
         <div class="post-content board-post-content">
             <?= $post['content'] ?>
         </div>
+
+        <!-- 본문 하단 광고 -->
+        <?= view('components/ad_slot', ['ads' => $postBotAds]) ?>
 
         <!-- 이미지 첨부 -->
         <?php $images = array_filter($files, fn($f) => $f['is_image']); ?>
@@ -145,6 +151,20 @@
                     <label class="visually-hidden" for="comment-author-password">비밀번호</label>
                     <input type="password" name="author_password" id="comment-author-password" class="form-control form-control-sm"
                            placeholder="비밀번호" required autocomplete="new-password">
+                </div>
+            </div>
+            <div class="row g-2 mb-2">
+                <div class="col-sm-3">
+                    <label class="visually-hidden" for="comment-captcha-answer">스팸 방지 계산</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" aria-hidden="true"><?= esc($guestCommentCaptcha['question']) ?></span>
+                        <input type="text" inputmode="numeric" name="captcha_answer" id="comment-captcha-answer" class="form-control"
+                               placeholder="답" required autocomplete="off" aria-label="스팸 방지 계산 답">
+                    </div>
+                </div>
+                <div class="visually-hidden" aria-hidden="true">
+                    <label for="comment-website">웹사이트</label>
+                    <input type="text" name="website" id="comment-website" tabindex="-1" autocomplete="off">
                 </div>
             </div>
             <?php endif; ?>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
+use App\Models\AdModel;
 use App\Models\BannerModel;
 use App\Models\BoardModel;
 use App\Models\PageModel;
@@ -23,6 +24,7 @@ class HomeController extends BaseController
         if (! $isBlogTheme && ($noticeBoard = $boardModel->getBySlug('notice'))) {
             $latestPosts = $postModel
                 ->where('board_id', $noticeBoard['id'])
+                ->where('is_active', 1)
                 ->orderBy('id', 'DESC')
                 ->findAll(3);
         }
@@ -31,6 +33,7 @@ class HomeController extends BaseController
         $latestBlogPosts = $isBlogTheme ? $postModel->getLatestPublic($blogPostLimit) : [];
 
         $bannerModel       = new BannerModel();
+        $adModel           = new AdModel();
         $homePage          = (new PageModel())->getBySlug('home');
         $showLatestNotices = ($this->viewData['settings']['home_show_latest_notices'] ?? '1') === '1';
 
@@ -47,6 +50,8 @@ class HomeController extends BaseController
             'showLatestNotices' => $showLatestNotices,
             'mainTopBanners'    => $bannerModel->getActiveByPosition('main_top'),
             'mainBotBanners'    => $bannerModel->getActiveByPosition('main_bottom'),
+            'homeTopAds'        => $adModel->getActiveByPosition('home_top'),
+            'homeBottomAds'     => $adModel->getActiveByPosition('home_bottom'),
         ]);
     }
 }

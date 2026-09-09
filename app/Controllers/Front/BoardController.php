@@ -5,6 +5,7 @@ namespace App\Controllers\Front;
 use App\Controllers\BaseController;
 use App\Libraries\FileUploader;
 use App\Libraries\Seo\JsonLdBuilder;
+use App\Models\AdModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostCommentModel;
@@ -106,6 +107,10 @@ class BoardController extends BaseController
             throw PageNotFoundException::forPageNotFound();
         }
 
+        if (! $post['is_active'] && $this->getUserRole() !== 'admin') {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
         if (! $this->checkPermission($board['read_permission'])) {
             return redirect()->to('/auth/login')->with('error', '로그인이 필요합니다.');
         }
@@ -117,10 +122,11 @@ class BoardController extends BaseController
 
         $this->postModel->incrementView($postId);
 
-        $files    = $this->fileModel->getByPost($postId);
-        $comments = $this->commentModel->getByPost($postId);
-        $prevPost = $this->postModel->getPrevious($board['id'], $postId);
-        $nextPost = $this->postModel->getNext($board['id'], $postId);
+        $files               = $this->fileModel->getByPost($postId);
+        $comments            = $this->commentModel->getByPost($postId);
+        $prevPost            = $this->postModel->getPrevious($board['id'], $postId);
+        $nextPost            = $this->postModel->getNext($board['id'], $postId);
+        $guestCommentCaptcha = session()->get('user_id') ? null : $this->guestCommentCaptcha($postId);
 
         // 비밀글·비공개 게시판 글은 색인 제외
         $noindex   = (bool) $post['is_secret'] || $board['read_permission'] !== 'guest';
@@ -142,15 +148,20 @@ class BoardController extends BaseController
             ];
         }
 
+        $adModel = new AdModel();
+
         return $this->render('board/view', [
-            'board'    => $board,
-            'post'     => $post,
-            'files'    => $files,
-            'comments' => $comments,
-            'prevPost' => $prevPost,
-            'nextPost' => $nextPost,
-            'jsonLd'   => $jsonLd,
-            'page'     => [
+            'board'               => $board,
+            'post'                => $post,
+            'files'               => $files,
+            'comments'            => $comments,
+            'prevPost'            => $prevPost,
+            'nextPost'            => $nextPost,
+            'postTopAds'          => $adModel->getActiveByPosition('post_top'),
+            'postBotAds'          => $adModel->getActiveByPosition('post_bottom'),
+            'guestCommentCaptcha' => $guestCommentCaptcha,
+            'jsonLd'              => $jsonLd,
+            'page'                => [
                 'title'     => $post['title'],
                 'meta_desc' => mb_substr(trim(strip_tags((string) $post['content'])), 0, 150),
                 'canonical' => $canonical,
@@ -410,6 +421,20 @@ class BoardController extends BaseController
             return redirect()->back()->with('errors', $this->validator->getErrors());
         }
 
+        if ($isGuest && (string) $this->request->getPost('website') !== '') {
+            return redirect()->back()->with('error', '댓글을 등록할 수 없습니다.');
+        }
+
+        if ($isGuest && cache()->get($this->guestCommentRateLimitKey()) !== null) {
+            return redirect()->back()->with('error', '비회원 댓글은 1분에 한 번만 등록할 수 있습니다.');
+        }
+
+        if ($isGuest && ! $this->isValidGuestCommentCaptcha($postId, (string) $this->request->getPost('captcha_answer'))) {
+            $this->refreshGuestCommentCaptcha($postId);
+
+            return redirect()->back()->with('error', '스팸 방지 답이 일치하지 않습니다.');
+        }
+
         $this->commentModel->insert([
             'post_id'         => $postId,
             'user_id'         => session()->get('user_id'),
@@ -419,7 +444,66 @@ class BoardController extends BaseController
             'ip_address'      => $this->request->getIPAddress(),
         ]);
 
+        if ($isGuest) {
+            cache()->save($this->guestCommentRateLimitKey(), true, 60);
+            session()->remove($this->guestCommentCaptchaKey($postId));
+        }
+
         return redirect()->to("/board/{$boardSlug}/{$postId}#comments")->with('success', '댓글이 등록되었습니다.');
+    }
+
+    /**
+     * @return array{question: string, answer: int, issued_at: int}
+     */
+    private function guestCommentCaptcha(int $postId): array
+    {
+        $captcha = session()->get($this->guestCommentCaptchaKey($postId));
+
+        if (! is_array($captcha)
+            || ! isset($captcha['question'], $captcha['answer'], $captcha['issued_at'])
+            || ! is_string($captcha['question'])
+            || ! is_int($captcha['answer'])
+            || ! is_int($captcha['issued_at'])
+            || $captcha['issued_at'] < time() - 600) {
+            return $this->refreshGuestCommentCaptcha($postId);
+        }
+
+        return $captcha;
+    }
+
+    private function isValidGuestCommentCaptcha(int $postId, string $answer): bool
+    {
+        $captcha = $this->guestCommentCaptcha($postId);
+
+        return $answer !== '' && hash_equals((string) $captcha['answer'], $answer);
+    }
+
+    /**
+     * @return array{question: string, answer: int, issued_at: int}
+     */
+    private function refreshGuestCommentCaptcha(int $postId): array
+    {
+        $left    = random_int(1, 9);
+        $right   = random_int(1, 9);
+        $captcha = [
+            'question'  => "{$left} + {$right} = ?",
+            'answer'    => $left + $right,
+            'issued_at' => time(),
+        ];
+
+        session()->set($this->guestCommentCaptchaKey($postId), $captcha);
+
+        return $captcha;
+    }
+
+    private function guestCommentCaptchaKey(int $postId): string
+    {
+        return 'guest_comment_captcha_' . $postId;
+    }
+
+    private function guestCommentRateLimitKey(): string
+    {
+        return 'guest_comment_rate_' . hash('sha256', $this->request->getIPAddress());
     }
 
     public function commentDelete(string $boardSlug, int $postId, int $commentId): ResponseInterface|string

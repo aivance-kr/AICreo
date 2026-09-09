@@ -157,4 +157,75 @@ final class PostModelTest extends DatabaseTestCase
 
         $this->assertNull($this->model->getNext($this->boardId, $current));
     }
+
+    public function testGetPreviousAndNextExcludeHiddenPosts(): void
+    {
+        $this->makePost(['title' => '숨김 이전 글', 'is_active' => 0]);
+        $current = $this->makePost(['title' => '현재 글']);
+        $this->makePost(['title' => '숨김 다음 글', 'is_active' => 0]);
+
+        $this->assertNull($this->model->getPrevious($this->boardId, $current));
+        $this->assertNull($this->model->getNext($this->boardId, $current));
+    }
+
+    public function testGetLatestPublicExcludesHiddenPosts(): void
+    {
+        $this->makePost(['title' => '노출 글']);
+        $this->makePost(['title' => '숨김 글', 'is_active' => 0]);
+
+        $posts = $this->model->getLatestPublic(10);
+
+        $this->assertSame(['노출 글'], array_column($posts, 'title'));
+    }
+
+    public function testGetListExcludesHiddenPosts(): void
+    {
+        $this->makePost(['title' => '노출 글']);
+        $this->makePost(['title' => '숨김 글', 'is_active' => 0]);
+
+        $result = $this->model->getList($this->boardId, 1, 10);
+
+        $this->assertSame(['노출 글'], array_column($result['posts'], 'title'));
+    }
+
+    public function testGetTotalCountExcludesHiddenPosts(): void
+    {
+        $this->makePost();
+        $this->makePost(['is_active' => 0]);
+
+        $this->assertSame(1, $this->model->getTotalCount($this->boardId));
+    }
+
+    public function testSearchExcludesHiddenPosts(): void
+    {
+        $this->makePost(['title' => '검색어 노출']);
+        $this->makePost(['title' => '검색어 숨김', 'is_active' => 0]);
+
+        $result = $this->model->search($this->boardId, '검색어', 'title', 1, 10);
+
+        $this->assertSame(['검색어 노출'], array_column($result['posts'], 'title'));
+        $this->assertSame(1, $result['total']);
+    }
+
+    public function testGetAdminListIncludesHiddenPosts(): void
+    {
+        $this->makePost(['title' => '노출 글']);
+        $this->makePost(['title' => '숨김 글', 'is_active' => 0]);
+
+        $result = $this->model->getAdminList(1, 10);
+
+        $this->assertSame(2, $result['total']);
+        $this->assertCount(2, $result['posts']);
+    }
+
+    public function testToggleActiveFlipsState(): void
+    {
+        $id = $this->makePost();
+
+        $this->model->toggleActive($id);
+        $this->assertSame(0, (int) $this->model->find($id)['is_active']);
+
+        $this->model->toggleActive($id);
+        $this->assertSame(1, (int) $this->model->find($id)['is_active']);
+    }
 }

@@ -110,7 +110,15 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
 
     // 전체 게시물 관리
     $routes->get('posts', 'Admin\PostController::index');
+    $routes->post('posts/(:num)/toggle', 'Admin\PostController::toggle/$1');
     $routes->post('posts/(:num)/delete', 'Admin\PostController::delete/$1');
+
+    // 전체 댓글 관리
+    $routes->get('comments', 'Admin\CommentController::index');
+    $routes->post('comments/(:num)/toggle', 'Admin\CommentController::toggle/$1');
+
+    // 접속 통계
+    $routes->get('stats', 'Admin\StatsController::index');
 
     // 회원 관리
     $routes->get('users', 'Admin\UserController::index');
@@ -138,6 +146,14 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('popups/(:num)/edit', 'Admin\PopupController::edit/$1');
     $routes->post('popups/(:num)/edit', 'Admin\PopupController::update/$1');
     $routes->post('popups/(:num)/delete', 'Admin\PopupController::delete/$1');
+
+    // 광고 관리
+    $routes->get('ads', 'Admin\AdController::index');
+    $routes->get('ads/create', 'Admin\AdController::create');
+    $routes->post('ads/create', 'Admin\AdController::store');
+    $routes->get('ads/(:num)/edit', 'Admin\AdController::edit/$1');
+    $routes->post('ads/(:num)/edit', 'Admin\AdController::update/$1');
+    $routes->post('ads/(:num)/delete', 'Admin\AdController::delete/$1');
 });
 
 // ─── 동적 페이지 (반드시 마지막에 위치) ──────────────────────────────────────────
