@@ -40,12 +40,13 @@
                     <th scope="col">작성자</th>
                     <th scope="col">조회</th>
                     <th scope="col">작성일</th>
+                    <th scope="col">노출</th>
                     <th scope="col"><span class="visually-hidden">관리</span></th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($posts)): ?>
-                <tr><td colspan="7" class="text-center text-muted py-4">게시물이 없습니다.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4">게시물이 없습니다.</td></tr>
                 <?php endif; ?>
                 <?php foreach ($posts as $p): ?>
                 <tr>
@@ -66,7 +67,20 @@
                     <td data-label="작성자" class="small"><?= esc($p['user_nickname'] ?? $p['author_name']) ?></td>
                     <td data-label="조회" class="small text-muted"><?= number_format($p['views']) ?></td>
                     <td data-label="작성일" class="small text-muted"><?= date('Y-m-d', strtotime($p['created_at'])) ?></td>
+                    <td data-label="노출">
+                        <?php if ($p['is_active']): ?>
+                            <span class="badge bg-success">노출</span>
+                        <?php else: ?>
+                            <span class="badge bg-secondary">숨김</span>
+                        <?php endif; ?>
+                    </td>
                     <td data-label="" class="cell-actions">
+                        <form method="post" action="/admin/posts/<?= $p['id'] ?>/toggle" class="d-inline">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <?= $p['is_active'] ? '숨기기' : '노출' ?>
+                            </button>
+                        </form>
                         <form method="post" action="/admin/posts/<?= $p['id'] ?>/delete" class="d-inline"
                               onsubmit="return confirm('정말 삭제하시겠습니까?')">
                             <?= csrf_field() ?>

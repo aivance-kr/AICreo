@@ -110,6 +110,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
 
     // 전체 게시물 관리
     $routes->get('posts', 'Admin\PostController::index');
+    $routes->post('posts/(:num)/toggle', 'Admin\PostController::toggle/$1');
     $routes->post('posts/(:num)/delete', 'Admin\PostController::delete/$1');
 
     // 전체 댓글 관리

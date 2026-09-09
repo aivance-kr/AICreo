@@ -52,4 +52,16 @@ class PostController extends BaseController
 
         return redirect()->back()->with('success', '삭제되었습니다.');
     }
+
+    public function toggle(int $id): ResponseInterface|string
+    {
+        $post = $this->postModel->find($id);
+        if (! $post) {
+            return redirect()->back()->with('error', '게시글을 찾을 수 없습니다.');
+        }
+
+        $this->postModel->toggleActive($id);
+
+        return redirect()->back()->with('success', '노출 상태가 변경되었습니다.');
+    }
 }

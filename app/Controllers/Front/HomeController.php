@@ -23,6 +23,7 @@ class HomeController extends BaseController
         if (! $isBlogTheme && ($noticeBoard = $boardModel->getBySlug('notice'))) {
             $latestPosts = $postModel
                 ->where('board_id', $noticeBoard['id'])
+                ->where('is_active', 1)
                 ->orderBy('id', 'DESC')
                 ->findAll(3);
         }
