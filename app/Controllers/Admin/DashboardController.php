@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\InquiryModel;
+use App\Models\PostCommentModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
 
@@ -14,6 +15,7 @@ class DashboardController extends BaseController
     public function index(): string
     {
         $postModel    = new PostModel();
+        $commentModel = new PostCommentModel();
         $userModel    = new UserModel();
         $inquiryModel = new InquiryModel();
 
@@ -31,6 +33,7 @@ class DashboardController extends BaseController
                 ->join('users', 'users.id = posts.user_id', 'left')
                 ->orderBy('posts.id', 'DESC')
                 ->findAll(5),
+            'recentComments' => $commentModel->getRecent(5),
         ]);
     }
 }
