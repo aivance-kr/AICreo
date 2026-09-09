@@ -143,6 +143,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             <a href="/admin/popups" class="nav-link <?= str_starts_with($uri, 'admin/popups') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/popups') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-window me-2" aria-hidden="true"></i>팝업 관리
             </a>
+            <a href="/admin/ads" class="nav-link <?= str_starts_with($uri, 'admin/ads') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/ads') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-megaphone me-2" aria-hidden="true"></i>광고 관리
+            </a>
 
             <div class="nav-section">운영</div>
             <a href="/admin/stats" class="nav-link <?= str_starts_with($uri, 'admin/stats') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/stats') ? 'aria-current="page"' : '' ?>>
