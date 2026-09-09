@@ -160,6 +160,19 @@ final class BoardControllerTest extends FeatureTestCase
             ->countAllResults());
     }
 
+    public function testWriteFormUploadsPastedImagesBeforeSubmit(): void
+    {
+        $body = $this->withSession([
+            'user_id'       => 1,
+            'user_nickname' => '관리자',
+            'user_role'     => 'admin',
+        ])->get('board/free/write')->getBody();
+
+        $this->assertStringContainsString('automatic_uploads: true', $body);
+        $this->assertStringContainsString('await tinymce.activeEditor.uploadImages()', $body);
+        $this->assertStringContainsString("fetch('/board/image-upload'", $body);
+    }
+
     public function testViewIncrementsViewCount(): void
     {
         $postModel = new PostModel();
