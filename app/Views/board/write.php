@@ -148,6 +148,7 @@ tinymce.init({
     plugins: 'lists link image table code',
     toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | removeformat | code',
     menubar: false,
+    automatic_uploads: true,
     images_upload_handler(blobInfo) {
         return new Promise((resolve, reject) => {
             const fd = new FormData();
@@ -160,8 +161,16 @@ tinymce.init({
     },
 });
 
-document.querySelector('form').addEventListener('submit', function () {
-    tinymce.triggerSave();
+document.querySelector('form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    try {
+        await tinymce.activeEditor.uploadImages();
+        tinymce.triggerSave();
+        this.submit();
+    } catch (error) {
+        alert('이미지 업로드에 실패했습니다. 이미지를 다시 확인해 주세요.');
+    }
 });
 
 // 파일 선택 시 클라이언트 사전 검증
