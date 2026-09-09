@@ -200,7 +200,7 @@ body {
 .blog-main article.list-group-item {
     background: var(--surface-raised);
     border-bottom: 1px solid color-mix(in srgb, var(--primary) 10%, var(--border-hairline));
-    padding: 2.25rem 1.5rem !important;
+    padding: 1.5rem !important;
 }
 
 .blog-main article.list-group-item h2 a {
