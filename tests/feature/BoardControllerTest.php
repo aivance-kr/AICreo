@@ -310,6 +310,23 @@ final class BoardControllerTest extends FeatureTestCase
         $this->assertStringContainsString("board/free?category={$categoryId}", $body);
     }
 
+    public function testCategoryFilteredListPreselectsCategoryInWriteForm(): void
+    {
+        $boardId    = $this->boardId('free');
+        $categoryId = (int) (new BoardCategoryModel())->insert(['board_id' => $boardId, 'slug' => 'daily', 'name' => '일상'], true);
+
+        $listBody = $this->get("board/free?category={$categoryId}")->getBody();
+        $this->assertStringContainsString("/board/free/write?category={$categoryId}", $listBody);
+
+        $writeBody = $this->withSession([
+            'user_id'       => 1,
+            'user_nickname' => '관리자',
+            'user_role'     => 'admin',
+        ])->get("board/free/write?category={$categoryId}")->getBody();
+
+        $this->assertStringContainsString("value=\"{$categoryId}\" selected", $writeBody);
+    }
+
     public function testCategoryFilterNarrowsPostList(): void
     {
         $boardId    = $this->boardId('free');
