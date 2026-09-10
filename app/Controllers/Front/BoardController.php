@@ -186,9 +186,10 @@ class BoardController extends BaseController
         }
 
         return $this->render('board/write', [
-            'board'      => $board,
-            'post'       => null,
-            'categories' => $this->categoryModel->getByBoard($board['id']),
+            'board'              => $board,
+            'post'               => null,
+            'categories'         => $this->categoryModel->getByBoard($board['id']),
+            'selectedCategoryId' => $this->resolveCategoryId($board['id'], $this->request->getGet('category')),
         ]);
     }
 

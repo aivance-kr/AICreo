@@ -34,7 +34,7 @@
             <small class="text-muted"><?= esc($board['description']) ?></small>
         <?php endif; ?>
     </div>
-    <a href="/board/<?= esc($board['slug']) ?>/write" class="btn btn-primary btn-sm">
+    <a href="/board/<?= esc($board['slug']) ?>/write<?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="btn btn-primary btn-sm">
         <i class="bi bi-pencil-square" aria-hidden="true"></i> 글쓰기
     </a>
 </div>
