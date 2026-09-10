@@ -62,7 +62,7 @@
                 <select name="category_id" id="post-category" class="form-select form-select-sm">
                     <option value="">선택 안 함</option>
                     <?php foreach ($categories as $cat): ?>
-                    <option value="<?= $cat['id'] ?>" <?= (int) ($post['category_id'] ?? 0) === (int) $cat['id'] ? 'selected' : '' ?>><?= esc($cat['name']) ?></option>
+                    <option value="<?= $cat['id'] ?>" <?= (int) ($post['category_id'] ?? $selectedCategoryId ?? 0) === (int) $cat['id'] ? 'selected' : '' ?>><?= esc($cat['name']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
