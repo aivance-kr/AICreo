@@ -57,7 +57,12 @@ jobs:
             -e MYSQL_ROOT_PASSWORD=root \
             -e MYSQL_DATABASE=ci4_agency_test \
             --network ci-net-${{ github.run_id }} \
-            mysql:8.0
+            --tmpfs /var/lib/mysql \
+            mysql:8.0 \
+            --innodb-flush-log-at-trx-commit=0 \
+            --innodb-flush-method=nosync \
+            --sync-binlog=0 \
+            --innodb-redo-log-capacity=536870912
           # 포트 바인딩 실패를 조용히 넘기지 않는다.
           # docker run -d 는 포트를 못 잡아도 컨테이너 ID 를 찍고 성공한 것처럼
           # 끝난 뒤 컨테이너만 죽는다. 그러면 아래 대기 루프가 60초를 헛돌고
@@ -186,7 +191,12 @@ jobs:
             -e MYSQL_ROOT_PASSWORD=root \
             -e MYSQL_DATABASE=ci4_agency_test \
             --network ci-net-coverage-${{ github.run_id }} \
-            mysql:8.0
+            --tmpfs /var/lib/mysql \
+            mysql:8.0 \
+            --innodb-flush-log-at-trx-commit=0 \
+            --innodb-flush-method=nosync \
+            --sync-binlog=0 \
+            --innodb-redo-log-capacity=536870912
           # 포트 바인딩 실패를 조용히 넘기지 않는다 — 컨테이너가 살아있는지 먼저 본다.
           sleep 2
           if [ "$(docker inspect -f '{{.State.Running}}' ci-mysql-coverage-${{ github.run_id }})" != "true" ]; then
