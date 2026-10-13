@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
+use App\Libraries\ThemeView;
 use App\Models\AdModel;
 use App\Models\BannerModel;
 use App\Models\BoardModel;
@@ -19,7 +20,7 @@ class HomeController extends BaseController
         $boardModel = new BoardModel();
         $postModel  = new PostModel();
 
-        $isBlogTheme = ($this->viewData['settings']['active_theme'] ?? 'default') === 'blog';
+        $isBlogTheme = ThemeView::isBlogTheme($this->viewData['settings']['active_theme'] ?? 'default');
         $latestPosts = [];
         if (! $isBlogTheme && ($noticeBoard = $boardModel->getBySlug('notice'))) {
             $latestPosts = $postModel
@@ -51,6 +52,7 @@ class HomeController extends BaseController
             'mainTopBanners'    => $bannerModel->getActiveByPosition('main_top'),
             'mainBotBanners'    => $bannerModel->getActiveByPosition('main_bottom'),
             'homeTopAds'        => $adModel->getActiveByPosition('home_top'),
+            'homeFeedAds'       => $adModel->getActiveByPosition('home_feed'),
             'homeBottomAds'     => $adModel->getActiveByPosition('home_bottom'),
         ]);
     }

@@ -10,9 +10,11 @@ class AdModel extends Model
 {
     public const POSITIONS = [
         'home_top'    => '홈 상단',
+        'home_feed'   => '홈 목록 중간 (블로그형 테마)',
         'home_bottom' => '홈 하단',
         'post_top'    => '게시글 본문 상단',
         'post_bottom' => '게시글 본문 하단',
+        'sidebar'     => '사이드바 (블로그형 테마)',
     ];
 
     protected $table         = 'ads';

@@ -1,0 +1,136 @@
+/* 시안 C — 조용한 목록: 가독성 최우선의 미니멀 리스트. 그린 포인트, Pretendard. */
+html { scroll-padding-top: 5rem; }   /* 고정 헤더에 초점 요소가 가리지 않게 (WCAG 2.4.11) */
+body {
+    --primary: #0a7a4a;            /* 흰 배경 5.6:1 */
+    --bs-primary: var(--primary);
+    --bs-primary-rgb: 10, 122, 74;
+    --focus-ring-color: #075c37;
+    --text-strong: #1b1f1d;
+    --text-body: #2b312e;
+    --text-muted: #5d6762;         /* 흰 배경 5.8:1 */
+    --border-subtle: #e6eae8;
+    --border-hairline: #eef1f0;
+    --font-sans: Pretendard, 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+    background: var(--surface-raised);
+    color: var(--text-body);
+    font-family: var(--font-sans);
+    line-height: 1.75;
+}
+a { color: inherit; }
+.qt-wrap { margin: 0 auto; max-width: 1040px; padding: 0 20px; }
+.qt-header { backdrop-filter: blur(8px); background: rgb(255 255 255 / .94); border-bottom: 1px solid var(--border-subtle); position: sticky; top: 0; z-index: 20; }
+.qt-bar { align-items: center; display: flex; flex-wrap: wrap; gap: .25rem 1.75rem; min-height: 60px; }
+.qt-brand { color: var(--text-strong); font-size: 1.25rem; font-weight: 800; letter-spacing: -.03em; text-decoration: none; }
+.qt-brand img { max-height: 2.25rem; }
+.qt-navbar { flex: 1; padding: 0; }
+.qt-nav { gap: 1.25rem; }
+.qt-navbar .nav-link { color: var(--text-muted); font-size: .9375rem; font-weight: 500; padding: .5rem 0; }
+.qt-navbar .nav-link:hover, .qt-navbar .nav-link.active { color: var(--text-strong); }
+.qt-navbar .nav-link.active { box-shadow: inset 0 -2px 0 var(--primary); }
+.qt-toggler { border-color: var(--border-subtle); margin-left: auto; }
+.qt-toggler-label { margin-left: .4rem; }
+.qt-account { display: flex; font-size: .875rem; gap: .9rem; }
+.qt-account a { color: var(--primary); font-weight: 600; text-decoration: none; }
+@media (max-width: 991.98px) { .qt-navbar { flex-basis: 100%; order: 3; } .qt-nav { padding-bottom: .5rem; } .qt-account { margin-left: auto; } }
+
+.qt-intro { padding: 3rem 0 .5rem; }
+.qt-intro h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.3; margin: 0 0 .5rem; }
+.qt-intro p { color: var(--text-muted); font-size: 1.0625rem; margin: 0; }
+.qt-item { border-bottom: 1px solid var(--border-subtle); }
+.qt-item a { align-items: start; color: inherit; display: grid; gap: 1.5rem; grid-template-columns: 1fr 150px; padding: 1.75rem 0; text-decoration: none; }
+.qt-item h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -.025em; line-height: 1.45; margin: .15rem 0 .4rem; }
+.qt-item a:hover h2 { color: var(--primary); }
+.qt-item p { -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--text-muted); display: -webkit-box; font-size: .9375rem; margin: 0 0 .6rem; overflow: hidden; }
+.qt-meta { color: var(--text-muted); font-size: .8125rem; }
+.qt-meta b { color: var(--primary); font-weight: 600; }
+.qt-item__img { aspect-ratio: 1; border-radius: 10px; object-fit: cover; width: 100%; }
+.qt-item__img--blank { background: linear-gradient(135deg, #d7efe3, #a8dcc0); }
+@media (max-width: 767.98px) { .qt-item a { gap: 1rem; grid-template-columns: 1fr 96px; } }
+.qt-list > .ad-unit { margin: 1.5rem 0; }
+
+.qt-footer { border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: .8125rem; margin-top: 2rem; padding: 1.75rem 0 3rem; }
+.qt-footer__nav { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin-bottom: 1rem; }
+.qt-footer a { color: var(--text-strong); text-decoration: none; }
+.qt-footer a:hover { color: var(--primary); }
+
+/* ───── 광고 슬롯 (components/ad_unit) ─────
+   "광고" 라벨은 항상 보이게 두고(애드센스: 광고와 콘텐츠 구분), 슬롯별 최소 높이를 예약해
+   광고가 늦게 로드돼도 본문이 밀리지 않게 한다(CLS). 채워지지 않은 슬롯은 접는다. */
+.ad-unit {
+    background: #f6f8f7;
+    border: 1px solid #dbe1de;
+    border-radius: 8px;
+    clear: both;
+    margin: 1.75rem 0;
+    min-height: 110px;
+    overflow: hidden;
+    padding: 1.5rem .5rem .5rem;
+    position: relative;
+    text-align: center;
+}
+.ad-unit__label {
+    color: var(--text-muted);
+    font-size: .6875rem;
+    left: .6rem;
+    letter-spacing: .04em;
+    position: absolute;
+    top: .3rem;
+}
+.ad-unit[data-slot="feed"] { min-height: 140px; }
+.ad-unit[data-slot="sidebar"] { min-height: 280px; margin-top: 0; }
+.ad-unit:has(ins[data-ad-status="unfilled"]) { display: none; }
+
+/* ───── 사이드바 카테고리 ───── */
+.side-cats { margin-top: 2rem; }
+.side-cats__title {
+    border-bottom: 2px solid #1b1f1d;
+    color: var(--text-strong);
+    font-size: .8125rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    margin: 0 0 .25rem;
+    padding-bottom: .5rem;
+}
+.side-cats__board { color: var(--text-muted); font-size: .8125rem; margin: 1rem 0 .25rem; }
+.side-cats__list { list-style: none; margin: 0; padding: 0; }
+.side-cats__list a {
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-body);
+    display: block;
+    padding: .6rem 0;
+    text-decoration: none;
+}
+.side-cats__list a:hover { color: var(--primary); }
+
+/* ───── 푸터 정보 블록 ───── */
+.site-footer__desc { margin: 0 0 .75rem; }
+.site-footer__contact, .site-footer__sns { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; list-style: none; margin: 0 0 .5rem; padding: 0; }
+.site-footer__sns a { font-size: 1.25rem; }
+.site-footer__copy { font-size: .8125rem; margin: .5rem 0 0; }
+
+/* ───── 게시판·인증·페이지 콘텐츠 스킨 (콘텐츠 뷰는 테마 영향을 받지 않으므로 CSS 로만 맞춘다) ───── */
+.qt-main .container { max-width: none; padding-left: 0; padding-right: 0; }
+.qt-main h1, .qt-main h2 { letter-spacing: -.025em; }
+.qt-main .card { border-color: var(--border-subtle); border-radius: 10px; }
+.qt-main .card-header { background: transparent !important; border-color: var(--border-subtle); }
+.qt-main .list-group-item { background: transparent; border-color: var(--border-subtle); }
+.qt-main .table { --bs-table-bg: transparent; }
+.qt-main .badge.text-bg-light { background-color: color-mix(in srgb, var(--primary) 12%, var(--surface-raised)) !important; color: var(--primary) !important; }
+.qt-main .page-link { color: var(--primary); }
+.qt-main .page-item.active .page-link { background: var(--primary); border-color: var(--primary); color: #fff; }
+.qt-main .btn-primary { --bs-btn-color: #fff; --bs-btn-hover-color: #fff; --bs-btn-active-color: #fff; }
+.page-content img, .post-content img, .blog-post-body img { height: auto; max-width: 100%; }
+.post-content { font-size: 1.0625rem; line-height: 1.9; max-width: 46rem; overflow-wrap: break-word; }
+.post-content a { text-decoration: underline; text-underline-offset: .18em; }
+.board-post-content, .home-post-content { white-space: pre-line; }
+.board-post-content img, .home-post-content img { display: block; margin-block: 1rem; }
+.page-content { line-height: 1.85; }
+.qt-empty { color: var(--text-muted); padding: 2rem 0; }
+.qt-main > .ad-unit:first-child { margin-top: 0; }
+
+/* ───── 본문 + 사이드바 shell ───── */
+.qt-shell { display: grid; gap: 2.5rem; grid-template-columns: minmax(0, 1fr); padding-bottom: 4rem; padding-top: 2rem; }
+@media (min-width: 992px) {
+    .qt-shell.has-aside { gap: 3rem; grid-template-columns: minmax(0, 1fr) 300px; }
+    .qt-aside .ad-unit[data-slot="sidebar"] { position: sticky; top: 1rem; }
+}
