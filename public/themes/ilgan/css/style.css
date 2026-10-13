@@ -21,7 +21,8 @@ a { color: inherit; }
 /* 제호 */
 .il-mast { border-bottom: 4px double var(--text-strong); padding-top: 1.25rem; }
 .il-mast__top { color: var(--text-muted); display: flex; font-size: .8125rem; gap: 1rem; justify-content: space-between; }
-.il-account { display: flex; gap: .9rem; }
+.il-account { display: flex; flex-wrap: wrap; gap: .25rem .9rem; justify-content: flex-end; }
+@media (max-width: 575.98px) { .il-mast__top > span:first-child { display: none; } .il-mast__top { justify-content: flex-end; } }
 .il-account a { text-decoration: none; }
 .il-account a:hover { color: var(--primary); }
 .il-brand { color: var(--text-strong); display: block; font: 900 clamp(2.2rem, 7vw, 4rem)/1.15 var(--il-serif); letter-spacing: -.04em; margin: .35rem 0 .75rem; text-align: center; text-decoration: none; }

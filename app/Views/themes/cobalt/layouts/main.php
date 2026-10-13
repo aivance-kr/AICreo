@@ -62,9 +62,7 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
     </button>
                 <div class="collapse navbar-collapse" id="mainNav">
                     <?= view('themes/default/components/menu_items', ['menus' => $menus, 'navClass' => 'cb-nav']) ?>
-                </div>
-            </nav>
-            <div class="cb-account">
+                    <div class="cb-account">
                 <?php if ($authUser['loggedIn']): ?>
                     <span><?= esc($authUser['nickname']) ?></span>
                     <?php if ($authUser['role'] === 'admin'): ?><a href="/admin">관리자</a><?php endif; ?>
@@ -73,7 +71,9 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
                 <?php else: ?>
                     <a href="/auth/login">로그인</a>
                 <?php endif; ?>
-            </div>
+                    </div>
+                </div>
+            </nav>
         </div>
     </div>
 </header>
@@ -81,7 +81,8 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
 <?php if (uri_string() === ''): ?>
 <section class="cb-hero">
     <div class="cb-wrap">
-        <h1><?= esc(($page['title'] ?? '') !== '' ? $page['title'] : ($settings['site_name'] ?? '')) ?></h1>
+        <?php $heroTitle = (string) (($page['title'] ?? '') !== '' ? $page['title'] : ($settings['site_name'] ?? '')); ?>
+        <h1<?= $heroTitle === ($settings['site_name'] ?? '') ? ' class="visually-hidden"' : '' ?>><?= esc($heroTitle) ?></h1>
         <?php if (! empty($settings['site_desc'])): ?><p><?= esc($settings['site_desc']) ?></p><?php endif; ?>
     </div>
 </section>

@@ -9,11 +9,10 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
 ?>
 
 <section class="qt-intro">
-    <h1><?= esc($page['title'] ?: ($settings['site_name'] ?? '')) ?></h1>
+    <?php $introTitle = (string) ($page['title'] ?: ($settings['site_name'] ?? '')); ?>
+    <h1<?= $introTitle === ($settings['site_name'] ?? '') ? ' class="visually-hidden"' : '' ?>><?= esc($introTitle) ?></h1>
     <?php if (! empty($settings['site_desc'])): ?><p><?= esc($settings['site_desc']) ?></p><?php endif; ?>
 </section>
-
-<?= view('components/ad_slot', ['ads' => $homeTopAds, 'slot' => 'home_top']) ?>
 
 <?php if ($latestBlogPosts !== []): ?>
 <div class="qt-list">
@@ -30,6 +29,9 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
             <?php if ($thumb): ?><img class="qt-item__img" src="<?= esc($thumb, 'attr') ?>" alt="" loading="<?= $i < 2 ? 'eager' : 'lazy' ?>"><?php else: ?><div class="qt-item__img qt-item__img--blank" aria-hidden="true"></div><?php endif; ?>
         </a>
     </article>
+    <?php if ($i === 0): ?>
+    <?= view('components/ad_slot', ['ads' => $homeTopAds, 'slot' => 'home_top']) ?>
+    <?php endif; ?>
     <?php if (in_array($i + 1, $feedAfter, true)): ?>
             <?= view('components/ad_slot', ['ads' => $homeFeedAds, 'slot' => 'feed']) ?>
         <?php endif; ?>

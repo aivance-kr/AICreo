@@ -8,8 +8,6 @@ $postUrl   = static fn (array $p): string => '/board/' . $p['board_slug'] . '/' 
 $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? mask_name($p['author_name'] ?? ''));
 ?>
 
-<?= view('components/ad_slot', ['ads' => $homeTopAds, 'slot' => 'home_top']) ?>
-
 <?php if ($latestBlogPosts !== []): ?>
 <div class="cb-cards">
     <?php foreach ($latestBlogPosts as $i => $post): ?>
@@ -25,6 +23,9 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
             </div>
         </a>
     </article>
+    <?php if ($i === 0): ?>
+    <?= view('components/ad_slot', ['ads' => $homeTopAds, 'slot' => 'home_top']) ?>
+    <?php endif; ?>
     <?php if (in_array($i + 1, $feedAfter, true)): ?>
     <?= view('components/ad_slot', ['ads' => $homeFeedAds, 'slot' => 'feed']) ?>
         <?php endif; ?>

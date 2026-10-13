@@ -61,18 +61,18 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
     </button>
             <div class="collapse navbar-collapse" id="mainNav">
                 <?= view('themes/default/components/menu_items', ['menus' => $menus, 'navClass' => 'qt-nav']) ?>
+                <div class="qt-account">
+                <?php if ($authUser['loggedIn']): ?>
+                    <span><?= esc($authUser['nickname']) ?></span>
+                    <?php if ($authUser['role'] === 'admin'): ?><a href="/admin">관리자</a><?php endif; ?>
+                    <a href="/auth/profile">내 정보</a>
+                    <a href="/auth/logout">로그아웃</a>
+                <?php else: ?>
+                    <a href="/auth/login">로그인</a>
+                <?php endif; ?>
+                </div>
             </div>
         </nav>
-        <div class="qt-account">
-            <?php if ($authUser['loggedIn']): ?>
-                <span><?= esc($authUser['nickname']) ?></span>
-                <?php if ($authUser['role'] === 'admin'): ?><a href="/admin">관리자</a><?php endif; ?>
-                <a href="/auth/profile">내 정보</a>
-                <a href="/auth/logout">로그아웃</a>
-            <?php else: ?>
-                <a href="/auth/login">로그인</a>
-            <?php endif; ?>
-        </div>
     </div>
 </header>
 
