@@ -32,13 +32,21 @@ a { color: inherit; }
 .cb-toggler { border-color: rgb(255 255 255 / .6); color: #fff; margin-left: auto; }
 .cb-toggler .navbar-toggler-icon { filter: invert(1); }
 .cb-toggler-label { margin-left: .4rem; }
-.cb-account { display: flex; font-size: .875rem; gap: .9rem; }
+.cb-account { align-items: center; display: flex; flex-wrap: wrap; font-size: .875rem; gap: .25rem .9rem; margin-left: auto; }
 .cb-account a { color: #dfe4ff; text-decoration: none; }
 .cb-account a:hover { color: var(--cb-lime); }
-@media (max-width: 991.98px) { .cb-navbar { flex-basis: 100%; order: 3; } .cb-nav { padding: .5rem 0; } }
+/* 모바일: nav 래퍼를 풀어 로고(좌)·햄버거(우)를 한 줄에 두고, 메뉴+계정은 펼침 영역으로 내린다 */
+@media (max-width: 991.98px) {
+    .cb-bar { justify-content: space-between; }
+    .cb-navbar { display: contents; }
+    .cb-nav { padding: .5rem 0; }
+    .cb-account { border-top: 1px solid rgb(255 255 255 / .25); margin: 0; padding: .75rem 0 .25rem; }
+}
+@media (max-width: 575.98px) { .cb-toggler-label { display: none; } }
 
 /* 홈 히어로: 헤더와 같은 코발트로 이어 붙는다 */
 .cb-hero { background: var(--primary); color: #fff; padding: 2.5rem 0 3.5rem; }
+@media (max-width: 575.98px) { .cb-hero { padding: 1.25rem 0 2rem; } }
 .cb-hero h1 { font: 400 clamp(2.2rem, 6.5vw, 4.4rem)/1.1 var(--cb-display); margin: 0 0 .6rem; max-width: 14em; }
 .cb-hero p { color: #e4e8ff; font-size: 1.125rem; margin: 0; max-width: 34em; }
 

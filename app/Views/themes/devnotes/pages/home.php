@@ -7,9 +7,9 @@ $feedAfter = [2, 5];
 $postUrl   = static fn (array $p): string => '/board/' . $p['board_slug'] . '/' . $p['id'];
 $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? mask_name($p['author_name'] ?? ''));
 ?>
-<?= view('components/ad_slot', ['ads' => $homeTopAds, 'slot' => 'home_top']) ?>
 
-<h1 class="dn-page-title"><?= esc($page['title'] ?: '최근 글') ?></h1>
+<?php $pageTitle = (string) ($page['title'] ?: '최근 글'); ?>
+<h1 class="dn-page-title<?= $pageTitle === ($settings['site_name'] ?? '') ? ' visually-hidden' : '' ?>"><?= esc($pageTitle) ?></h1>
 <?php if (! empty($settings['site_desc'])): ?><p class="dn-lede"><?= esc($settings['site_desc']) ?></p><?php endif; ?>
 
 <?php if ($latestBlogPosts !== []): ?>
@@ -23,6 +23,9 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
             <span class="dn-meta"><time datetime="<?= esc($post['created_at']) ?>"><?= esc(substr((string) $post['created_at'], 0, 10)) ?></time> · <?= post_read_minutes($post['content']) ?> min</span>
         </a>
     </article>
+    <?php if ($i === 0): ?>
+    <?= view('components/ad_slot', ['ads' => $homeTopAds, 'slot' => 'home_top']) ?>
+    <?php endif; ?>
     <?php if (in_array($i + 1, $feedAfter, true)): ?>
             <?= view('components/ad_slot', ['ads' => $homeFeedAds, 'slot' => 'feed']) ?>
         <?php endif; ?>

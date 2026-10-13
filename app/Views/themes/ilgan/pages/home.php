@@ -7,7 +7,6 @@ $feedAfter = [2, 5];
 $postUrl   = static fn (array $p): string => '/board/' . $p['board_slug'] . '/' . $p['id'];
 $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? mask_name($p['author_name'] ?? ''));
 ?>
-<?= view('components/ad_slot', ['ads' => $homeTopAds, 'slot' => 'home_top']) ?>
 
 <?php if ($latestBlogPosts !== []): ?>
     <?php $lead = $latestBlogPosts[0]; $leadThumb = \App\Models\PostModel::extractThumbnail($lead['content']); ?>
@@ -20,6 +19,8 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
             <span class="il-meta"><?= esc($author($lead)) ?> · <time datetime="<?= esc($lead['created_at']) ?>"><?= esc(substr((string) $lead['created_at'], 0, 10)) ?></time> · 읽는 시간 <?= post_read_minutes($lead['content']) ?>분</span>
         </a>
     </article>
+
+    <?= view('components/ad_slot', ['ads' => $homeTopAds, 'slot' => 'home_top']) ?>
 
     <div class="il-list">
         <?php foreach (array_slice($latestBlogPosts, 1) as $i => $post): ?>
