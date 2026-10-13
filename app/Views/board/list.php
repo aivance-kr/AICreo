@@ -13,7 +13,7 @@
 <?= $this->section('content') ?>
 
 <div class="container py-4">
-<?php if (($settings['active_theme'] ?? 'default') !== 'blog' && ! empty($categories)): ?>
+<?php if (! \App\Libraries\ThemeView::isBlogTheme($settings['active_theme'] ?? 'default') && ! empty($categories)): ?>
 <div class="row g-4">
 <div class="col-lg-3 order-lg-2">
     <nav class="list-group mb-4" aria-label="카테고리">

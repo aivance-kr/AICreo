@@ -264,6 +264,10 @@ final class ViewAccessibilityTest extends CIUnitTestCase
             'layouts/admin.php',
             'themes/default/layouts/main.php',
             'themes/blog/layouts/main.php',
+            'themes/ilgan/layouts/main.php',
+            'themes/cobalt/layouts/main.php',
+            'themes/quiet/layouts/main.php',
+            'themes/devnotes/layouts/main.php',
         ];
 
         foreach ($layouts as $layout) {

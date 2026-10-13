@@ -1,0 +1,144 @@
+/* 시안 A — 일간: 신문 지면형. 잉크 + 주홍, 명조 헤드라인, 우측 300px 광고 사이드바. */
+body {
+    --primary: #c8201a;            /* 흰 배경 대비 5.9:1 */
+    --bs-primary: var(--primary);
+    --bs-primary-rgb: 200, 32, 26;
+    --focus-ring-color: #c8201a;
+    --text-strong: #14161a;
+    --text-body: #272a30;
+    --text-muted: #555b66;         /* 흰 배경 7:1 */
+    --border-subtle: #d9dce1;
+    --border-hairline: #e8eaee;
+    --il-serif: 'Noto Serif KR', 'Nanum Myeongjo', serif;
+    background: var(--surface-raised);
+    color: var(--text-body);
+    font-family: var(--font-sans);
+    line-height: 1.75;
+}
+a { color: inherit; }
+.il-wrap { margin: 0 auto; max-width: 1160px; padding: 0 20px; }
+
+/* 제호 */
+.il-mast { border-bottom: 4px double var(--text-strong); padding-top: 1.25rem; }
+.il-mast__top { color: var(--text-muted); display: flex; font-size: .8125rem; gap: 1rem; justify-content: space-between; }
+.il-account { display: flex; gap: .9rem; }
+.il-account a { text-decoration: none; }
+.il-account a:hover { color: var(--primary); }
+.il-brand { color: var(--text-strong); display: block; font: 900 clamp(2.2rem, 7vw, 4rem)/1.15 var(--il-serif); letter-spacing: -.04em; margin: .35rem 0 .75rem; text-align: center; text-decoration: none; }
+.il-brand img { max-height: 3.5rem; max-width: 100%; }
+.il-navbar { border-top: 1px solid var(--text-strong); padding: 0; }
+.il-navbar .il-wrap { align-items: center; display: flex; flex-wrap: wrap; justify-content: center; }
+.il-nav { gap: 1.75rem; }
+.il-navbar .nav-link { color: var(--text-strong); font-size: .9375rem; font-weight: 700; padding: .75rem 0; }
+.il-navbar .nav-link:hover { color: var(--primary); }
+.il-navbar .nav-link.active { box-shadow: inset 0 -3px 0 var(--primary); color: var(--primary); }
+.il-navbar .dropdown-menu { border-radius: 0; }
+.il-toggler { border-color: var(--text-strong); color: var(--text-strong); font-weight: 700; margin: .5rem 0; }
+.il-toggler-label { margin-left: .4rem; }
+@media (max-width: 991.98px) { .il-nav { gap: 0; padding-bottom: .5rem; } }
+
+/* 홈 */
+.il-kicker { color: var(--primary); display: block; font-size: .75rem; font-weight: 700; letter-spacing: .04em; }
+.il-meta { color: var(--text-muted); font-size: .8125rem; }
+.il-thumb { aspect-ratio: 21/9; background: repeating-linear-gradient(135deg, #e9ebef 0 14px, #f4f5f7 14px 28px); margin-bottom: .9rem; }
+.il-thumb--sm { aspect-ratio: 4/3; margin: 0; }
+.il-lead a, .il-row a { color: inherit; display: block; text-decoration: none; }
+.il-lead__img { aspect-ratio: 16/9; display: block; margin-bottom: .9rem; object-fit: cover; width: 100%; }
+.il-lead h2 { font: 900 clamp(1.7rem, 4vw, 2.5rem)/1.3 var(--il-serif); letter-spacing: -.03em; margin: .25rem 0 .6rem; }
+.il-lead p { color: var(--text-muted); margin: 0 0 .5rem; }
+.il-lead a:hover h2, .il-row a:hover h3 { color: var(--primary); }
+.il-row a { align-items: start; display: grid; gap: 1.25rem; grid-template-columns: 1fr 168px; }
+.il-row { border-top: 1px solid var(--border-subtle); padding: 1.4rem 0; }
+.il-row h3 { font: 700 1.25rem/1.45 var(--il-serif); margin: .15rem 0 .4rem; }
+.il-row p { color: var(--text-muted); font-size: .9375rem; margin: 0 0 .4rem; }
+.il-row__img { aspect-ratio: 4/3; object-fit: cover; width: 100%; }
+.il-list { margin-top: 1.5rem; }
+@media (max-width: 575.98px) { .il-row a { grid-template-columns: 1fr 104px; gap: .9rem; } .il-row p { display: none; } }
+
+/* 푸터 */
+.il-footer { border-top: 4px double var(--text-strong); color: var(--text-muted); font-size: .8125rem; margin-top: 2rem; padding: 1.75rem 0 2.5rem; }
+.il-footer__nav { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin-bottom: 1rem; }
+.il-footer a { color: var(--text-strong); text-decoration: none; }
+.il-footer a:hover { color: var(--primary); }
+
+/* ───── 광고 슬롯 (components/ad_unit) ─────
+   "광고" 라벨은 항상 보이게 두고(애드센스: 광고와 콘텐츠 구분), 슬롯별 최소 높이를 예약해
+   광고가 늦게 로드돼도 본문이 밀리지 않게 한다(CLS). 채워지지 않은 슬롯은 접는다. */
+.ad-unit {
+    background: #f4f5f7;
+    border: 1px solid #d9dce1;
+    border-radius: 0;
+    clear: both;
+    margin: 1.75rem 0;
+    min-height: 110px;
+    overflow: hidden;
+    padding: 1.5rem .5rem .5rem;
+    position: relative;
+    text-align: center;
+}
+.ad-unit__label {
+    color: var(--text-muted);
+    font-size: .6875rem;
+    left: .6rem;
+    letter-spacing: .04em;
+    position: absolute;
+    top: .3rem;
+}
+.ad-unit[data-slot="feed"] { min-height: 140px; }
+.ad-unit[data-slot="sidebar"] { min-height: 280px; margin-top: 0; }
+.ad-unit:has(ins[data-ad-status="unfilled"]) { display: none; }
+
+/* ───── 사이드바 카테고리 ───── */
+.side-cats { margin-top: 2rem; }
+.side-cats__title {
+    border-bottom: 2px solid #14161a;
+    color: var(--text-strong);
+    font-size: .8125rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    margin: 0 0 .25rem;
+    padding-bottom: .5rem;
+}
+.side-cats__board { color: var(--text-muted); font-size: .8125rem; margin: 1rem 0 .25rem; }
+.side-cats__list { list-style: none; margin: 0; padding: 0; }
+.side-cats__list a {
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-body);
+    display: block;
+    padding: .6rem 0;
+    text-decoration: none;
+}
+.side-cats__list a:hover { color: var(--primary); }
+
+/* ───── 푸터 정보 블록 ───── */
+.site-footer__desc { margin: 0 0 .75rem; }
+.site-footer__contact, .site-footer__sns { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; list-style: none; margin: 0 0 .5rem; padding: 0; }
+.site-footer__sns a { font-size: 1.25rem; }
+.site-footer__copy { font-size: .8125rem; margin: .5rem 0 0; }
+
+/* ───── 게시판·인증·페이지 콘텐츠 스킨 (콘텐츠 뷰는 테마 영향을 받지 않으므로 CSS 로만 맞춘다) ───── */
+.il-main .container { max-width: none; padding-left: 0; padding-right: 0; }
+.il-main h1, .il-main h2 { letter-spacing: -.025em; }
+.il-main .card { border-color: var(--border-subtle); border-radius: 0; }
+.il-main .card-header { background: transparent !important; border-color: var(--border-subtle); }
+.il-main .list-group-item { background: transparent; border-color: var(--border-subtle); }
+.il-main .table { --bs-table-bg: transparent; }
+.il-main .badge.text-bg-light { background-color: color-mix(in srgb, var(--primary) 12%, var(--surface-raised)) !important; color: var(--primary) !important; }
+.il-main .page-link { color: var(--primary); }
+.il-main .page-item.active .page-link { background: var(--primary); border-color: var(--primary); color: #fff; }
+.il-main .btn-primary { --bs-btn-color: #fff; --bs-btn-hover-color: #fff; --bs-btn-active-color: #fff; }
+.page-content img, .post-content img, .blog-post-body img { height: auto; max-width: 100%; }
+.post-content { font-size: 1.0625rem; line-height: 1.9; max-width: 46rem; overflow-wrap: break-word; }
+.post-content a { text-decoration: underline; text-underline-offset: .18em; }
+.board-post-content, .home-post-content { white-space: pre-line; }
+.board-post-content img, .home-post-content img { display: block; margin-block: 1rem; }
+.page-content { line-height: 1.85; }
+.il-empty { color: var(--text-muted); padding: 2rem 0; }
+.il-main > .ad-unit:first-child { margin-top: 0; }
+
+/* ───── 본문 + 사이드바 shell ───── */
+.il-shell { display: grid; gap: 2.5rem; grid-template-columns: minmax(0, 1fr); padding-bottom: 4rem; padding-top: 2rem; }
+@media (min-width: 992px) {
+    .il-shell.has-aside { gap: 3rem; grid-template-columns: minmax(0, 1fr) 300px; }
+    .il-aside .ad-unit[data-slot="sidebar"] { position: sticky; top: 1rem; }
+}
