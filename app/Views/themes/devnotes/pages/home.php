@@ -10,7 +10,6 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
 
 <?php $pageTitle = (string) ($page['title'] ?: '최근 글'); ?>
 <h1 class="dn-page-title<?= $pageTitle === ($settings['site_name'] ?? '') ? ' visually-hidden' : '' ?>"><?= esc($pageTitle) ?></h1>
-<?php if (! empty($settings['site_desc'])): ?><p class="dn-lede"><?= esc($settings['site_desc']) ?></p><?php endif; ?>
 
 <?php if ($latestBlogPosts !== []): ?>
 <div class="dn-list">

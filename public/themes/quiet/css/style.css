@@ -35,7 +35,7 @@ a { color: inherit; }
 @media (max-width: 991.98px) {
     .qt-bar { flex-wrap: wrap; justify-content: space-between; }
     .qt-navbar { display: contents; }
-    .qt-nav { padding-bottom: .5rem; }
+    .qt-nav { gap: 0; padding-bottom: .5rem; }
     .qt-account { border-top: 1px solid var(--border-subtle); margin: 0; padding: .75rem 0 1rem; }
 }
 @media (max-width: 575.98px) { .qt-toggler-label { display: none; } }
