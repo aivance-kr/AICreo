@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Libraries\ThemeView;
+use App\Models\AdModel;
 use App\Models\BannerModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
@@ -35,7 +37,8 @@ class BaseController extends Controller
         $menus = (new MenuModel())->getTree();
 
         $boardCategories = [];
-        if (($settings['active_theme'] ?? 'default') === 'blog') {
+        $isBlogTheme     = ThemeView::isBlogTheme($settings['active_theme'] ?? 'default');
+        if ($isBlogTheme) {
             $categoryModel = new BoardCategoryModel();
 
             foreach ((new BoardModel())->getActiveBoards() as $board) {
@@ -67,8 +70,13 @@ class BaseController extends Controller
             ? []
             : (new PopupModel())->getActiveForPage(uri_string());
 
+        // 사이드바 광고 — 블로그형 테마의 콘텐츠 페이지에만. 로그인·글쓰기·수정 같은
+        // 게시자 콘텐츠가 없는 화면에는 광고를 싣지 않는다(애드센스 정책).
+        $adSafe     = ! $isAdmin && preg_match('#^auth(/|$)|(^|/)(write|edit|password|delete)(/|$)#', uri_string()) !== 1;
+        $sidebarAds = ($isBlogTheme && $adSafe) ? (new AdModel())->getActiveByPosition('sidebar') : [];
+
         // jsonLd 기본값을 항상 [] 로 명시 (Config\View::$saveData=true 공유 렌더러 누출 방지)
-        $this->viewData = ['settings' => $settings, 'menus' => $menus, 'boardCategories' => $boardCategories, 'authUser' => $authUser, 'unreadInquiries' => $unreadInquiries, 'subLeftBanners' => $subLeftBanners, 'activePopups' => $activePopups, 'jsonLd' => []];
+        $this->viewData = ['settings' => $settings, 'menus' => $menus, 'boardCategories' => $boardCategories, 'authUser' => $authUser, 'unreadInquiries' => $unreadInquiries, 'subLeftBanners' => $subLeftBanners, 'activePopups' => $activePopups, 'sidebarAds' => $sidebarAds, 'jsonLd' => []];
     }
 
     protected function getUserRole(): string
