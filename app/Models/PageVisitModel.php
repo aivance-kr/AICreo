@@ -15,16 +15,57 @@ class PageVisitModel extends Model
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $updatedField  = '';
-    protected $allowedFields = ['uri', 'ip_address', 'user_agent', 'referer'];
+    protected $allowedFields = ['uri', 'ip_address', 'user_agent', 'referer', 'is_not_found'];
 
-    public function logVisit(string $uri, string $ipAddress, ?string $userAgent, ?string $referer): void
+    public function logVisit(string $uri, string $ipAddress, ?string $userAgent, ?string $referer): int
     {
-        $this->insert([
+        return (int) $this->insert([
             'uri'        => $uri,
             'ip_address' => $ipAddress,
             'user_agent' => $userAgent,
             'referer'    => $referer,
-        ]);
+        ], true);
+    }
+
+    public function markNotFound(int $id): void
+    {
+        $this->builder()->where('id', $id)->update(['is_not_found' => 1]);
+    }
+
+    /**
+     * $since 이후 $windowSeconds 초 안에 존재하지 않는 주소로 $threshold 회 이상 접속한 IP.
+     *
+     * @return list<string>
+     */
+    public function notFoundBurstIps(Time $since, int $threshold, int $windowSeconds): array
+    {
+        $rows = $this->builder()
+            ->select('ip_address, created_at')
+            ->where('is_not_found', 1)
+            ->where('created_at >=', $since->toDateTimeString())
+            ->orderBy('ip_address')
+            ->orderBy('created_at')
+            ->get()
+            ->getResultArray();
+
+        $timesByIp = [];
+
+        foreach ($rows as $row) {
+            $timesByIp[(string) $row['ip_address']][] = strtotime((string) $row['created_at']);
+        }
+
+        $ips = [];
+
+        foreach ($timesByIp as $ip => $times) {
+            for ($i = 0, $last = count($times) - $threshold; $i <= $last; $i++) {
+                if ($windowSeconds >= $times[$i + $threshold - 1] - $times[$i]) {
+                    $ips[] = (string) $ip;
+                    break;
+                }
+            }
+        }
+
+        return $ips;
     }
 
     public function countSince(Time $since): int

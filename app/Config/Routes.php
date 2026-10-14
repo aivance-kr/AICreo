@@ -123,6 +123,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     // 접속 통계
     $routes->get('stats', 'Admin\StatsController::index');
     $routes->get('stats/day/(:segment)', 'Admin\StatsController::day/$1');
+    $routes->post('stats/block-ip', 'Admin\StatsController::blockIp');
 
     // 회원 관리
     $routes->get('users', 'Admin\UserController::index');
