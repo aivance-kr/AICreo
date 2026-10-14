@@ -35,13 +35,21 @@ class BlockNotFoundIpsCommand extends BaseCommand
             self::WINDOW_SECONDS,
         );
 
+        $blocked = 0;
+
         foreach ($ips as $ip) {
-            $blockedModel->block($ip, BlockedIpModel::REASON_AUTO);
+            if (! $blockedModel->block($ip, BlockedIpModel::REASON_AUTO)) {
+                CLI::write("건너뜀(Cloudflare IP): {$ip}", 'yellow');
+
+                continue;
+            }
+
+            $blocked++;
             CLI::write("차단: {$ip}");
         }
 
         $purged = $blockedModel->purgeExpired();
 
-        CLI::write(sprintf('완료: 신규/연장 차단 %d건, 만료 정리 %d건.', count($ips), $purged), 'green');
+        CLI::write(sprintf('완료: 신규/연장 차단 %d건, 만료 정리 %d건.', $blocked, $purged), 'green');
     }
 }

@@ -91,7 +91,9 @@ class StatsController extends BaseController
             return redirect()->back()->with('error', '현재 접속 중인 내 IP 는 차단할 수 없습니다.');
         }
 
-        (new BlockedIpModel())->block($ip, BlockedIpModel::REASON_MANUAL);
+        if (! (new BlockedIpModel())->block($ip, BlockedIpModel::REASON_MANUAL)) {
+            return redirect()->back()->with('error', 'Cloudflare IP 는 정상 방문자까지 막을 수 있어 차단할 수 없습니다.');
+        }
 
         return redirect()->back()->with('success', "{$ip} 을(를) " . BlockedIpModel::BLOCK_DAYS . '일간 차단했습니다.');
     }

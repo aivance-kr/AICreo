@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Config;
 
+use App\Libraries\CloudflareIps;
 use CodeIgniter\Config\BaseConfig;
 
 class App extends BaseConfig
@@ -205,4 +206,12 @@ class App extends BaseConfig
      * @see http://www.w3.org/TR/CSP/
      */
     public bool $CSPEnabled = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // 운영 서버는 Cloudflare 뒤에 있다. 엣지 IP 에서 온 요청만 CF-Connecting-IP 를 신뢰한다.
+        $this->proxyIPs = CloudflareIps::proxyMap();
+    }
 }
