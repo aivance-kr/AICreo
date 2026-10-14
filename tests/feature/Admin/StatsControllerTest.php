@@ -79,6 +79,13 @@ final class StatsControllerTest extends AdminTestCase
         $this->assertTrue((new BlockedIpModel())->isBlocked('8.8.8.8'));
     }
 
+    public function testCloudflareIpIsNotBlocked(): void
+    {
+        $this->withSession($this->adminSession)->post('admin/stats/block-ip', ['ip' => '172.67.10.20']);
+
+        $this->assertSame(0, (new BlockedIpModel())->countAllResults());
+    }
+
     public function testInvalidIpIsNotBlocked(): void
     {
         $this->withSession($this->adminSession)->post('admin/stats/block-ip', ['ip' => 'not-an-ip']);

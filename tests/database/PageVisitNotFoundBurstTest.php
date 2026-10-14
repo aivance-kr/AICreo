@@ -67,4 +67,16 @@ final class PageVisitNotFoundBurstTest extends DatabaseTestCase
 
         $this->assertTrue((new BlockedIpModel())->isBlocked('5.5.5.5'));
     }
+
+    public function testCommandSkipsCloudflareIp(): void
+    {
+        $now = Time::now();
+        $this->insertNotFound('172.67.10.20', $now->subMinutes(40));
+        $this->insertNotFound('172.67.10.20', $now->subMinutes(20));
+        $this->insertNotFound('172.67.10.20', $now->subMinutes(1));
+
+        command('ip:auto-block');
+
+        $this->assertFalse((new BlockedIpModel())->isBlocked('172.67.10.20'));
+    }
 }
