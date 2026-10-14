@@ -70,3 +70,10 @@ inquiries           — inquiry form submissions
 banners / popups / popup_pages               — marketing overlays
 media               — media library
 ```
+
+## IP 차단
+
+- `blocked_ips` 테이블 + `BlockedIpFilter`(전역 before)가 차단 IP의 모든 요청을 403으로 막는다.
+- 자동 차단: `php spark ip:auto-block` — 최근 24시간 방문 로그에서 1시간 안에 404(`page_visits.is_not_found=1`)를 3회 이상 낸 IP를 30일간 차단하고, 만료된 차단을 정리한다. **서버 crontab에 하루 한 번 등록해야 한다** (예: `0 4 * * * cd /path/to/app && php spark ip:auto-block`).
+- 수동 차단: 관리자 일별 방문기록(`/admin/stats/day/{date}`)의 IP별 차단 버튼.
+- 404 표시는 `NotFoundVisitExceptionHandler`가 한다(404는 일반 after 필터가 돌지 않고, 라우트 미매칭 주소는 before 필터도 돌지 않기 때문).
