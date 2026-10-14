@@ -77,3 +77,5 @@ media               — media library
 - 자동 차단: `php spark ip:auto-block` — 최근 24시간 방문 로그에서 1시간 안에 404(`page_visits.is_not_found=1`)를 3회 이상 낸 IP를 30일간 차단하고, 만료된 차단을 정리한다. **서버 crontab에 하루 한 번 등록해야 한다** (예: `0 4 * * * cd /path/to/app && php spark ip:auto-block`).
 - 수동 차단: 관리자 일별 방문기록(`/admin/stats/day/{date}`)의 IP별 차단 버튼.
 - 404 표시는 `NotFoundVisitExceptionHandler`가 한다(404는 일반 after 필터가 돌지 않고, 라우트 미매칭 주소는 before 필터도 돌지 않기 때문).
+- Cloudflare 뒤에서 실제 접속자 IP 를 받도록 `Config\App` 생성자가 `proxyIPs` 에 `App\Libraries\CloudflareIps` 대역(`CF-Connecting-IP`)을 등록한다. 엣지 IP 가 아닌 곳에서 온 요청의 헤더는 무시된다. Cloudflare 대역이 바뀌면 `CloudflareIps::RANGES` 를 갱신한다.
+- `BlockedIpModel::block()` 은 Cloudflare 엣지 IP 를 차단하지 않고 `false` 를 돌려준다(정상 방문자 오차단 방지).

@@ -53,4 +53,12 @@ final class VisitLogFilterTest extends AdminTestCase
         $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (Test Browser)'])->get('/')->assertStatus(403);
         $this->assertSame(0, $this->visitModel->countAllResults());
     }
+
+    public function testBlockedIpIsForbiddenEvenOnUnroutedPath(): void
+    {
+        (new BlockedIpModel())->block('0.0.0.0', BlockedIpModel::REASON_AUTO);
+
+        $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (Test Browser)'])->get('/wp-admin/css/colors/sunrise')->assertStatus(403);
+        $this->assertSame(0, $this->visitModel->countAllResults());
+    }
 }

@@ -21,6 +21,14 @@ final class BlockedIpModelTest extends DatabaseTestCase
         $this->assertFalse($model->isBlocked('1.2.3.5'));
     }
 
+    public function testCloudflareIpIsNeverBlocked(): void
+    {
+        $model = new BlockedIpModel();
+
+        $this->assertFalse($model->block('172.67.10.20', BlockedIpModel::REASON_AUTO));
+        $this->assertSame(0, $model->countAllResults());
+    }
+
     public function testBlockingAgainExtendsInsteadOfDuplicating(): void
     {
         $model = new BlockedIpModel();
