@@ -125,6 +125,10 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('stats/day/(:segment)', 'Admin\StatsController::day/$1');
     $routes->post('stats/block-ip', 'Admin\StatsController::blockIp');
 
+    // 차단 IP 목록
+    $routes->get('blocked-ips', 'Admin\BlockedIpController::index');
+    $routes->post('blocked-ips/(:num)/delete', 'Admin\BlockedIpController::delete/$1');
+
     // 회원 관리
     $routes->get('users', 'Admin\UserController::index');
     $routes->get('users/(:num)/edit', 'Admin\UserController::edit/$1');

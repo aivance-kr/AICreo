@@ -61,4 +61,25 @@ class BlockedIpModel extends Model
 
         return $this->db->affectedRows();
     }
+
+    /**
+     * 현재 차단 중인 행(만료 전)을 최신순으로 페이지 단위로 돌려준다. 키워드는 IP 부분 일치.
+     *
+     * @return array{items: list<array<string, mixed>>, total: int}
+     */
+    public function searchActive(string $keyword, int $page, int $perPage): array
+    {
+        $builder = $this->builder()->where('blocked_until >', Time::now()->toDateTimeString());
+
+        if ($keyword !== '') {
+            $builder->like('ip_address', $keyword);
+        }
+
+        $total = (clone $builder)->countAllResults(false);
+        $items = $builder->orderBy('id', 'DESC')
+            ->limit($perPage, ($page - 1) * $perPage)
+            ->get()->getResultArray();
+
+        return ['items' => $items, 'total' => $total];
+    }
 }
