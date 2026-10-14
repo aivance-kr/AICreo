@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin;
 
+use App\Models\BlockedIpModel;
 use App\Models\PageVisitModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use Tests\Support\AdminTestCase;
@@ -69,5 +70,19 @@ final class StatsControllerTest extends AdminTestCase
         $this->expectException(PageNotFoundException::class);
 
         $this->withSession($this->adminSession)->get('admin/stats/day/not-a-date');
+    }
+
+    public function testAdminCanBlockIp(): void
+    {
+        $this->withSession($this->adminSession)->post('admin/stats/block-ip', ['ip' => '8.8.8.8']);
+
+        $this->assertTrue((new BlockedIpModel())->isBlocked('8.8.8.8'));
+    }
+
+    public function testInvalidIpIsNotBlocked(): void
+    {
+        $this->withSession($this->adminSession)->post('admin/stats/block-ip', ['ip' => 'not-an-ip']);
+
+        $this->assertSame(0, (new BlockedIpModel())->countAllResults());
     }
 }

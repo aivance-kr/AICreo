@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\BlockedIpModel;
 use App\Models\PageVisitModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
 
 class StatsController extends BaseController
@@ -75,6 +77,23 @@ class StatsController extends BaseController
             'currentPage' => $page,
             'totalPages'  => (int) ceil($total / self::DAY_PAGE_SIZE),
         ]);
+    }
+
+    public function blockIp(): ResponseInterface
+    {
+        $ip = (string) $this->request->getPost('ip');
+
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            return redirect()->back()->with('error', '올바른 IP 주소가 아닙니다.');
+        }
+
+        if ($ip === $this->request->getIPAddress()) {
+            return redirect()->back()->with('error', '현재 접속 중인 내 IP 는 차단할 수 없습니다.');
+        }
+
+        (new BlockedIpModel())->block($ip, BlockedIpModel::REASON_MANUAL);
+
+        return redirect()->back()->with('success', "{$ip} 을(를) " . BlockedIpModel::BLOCK_DAYS . '일간 차단했습니다.');
     }
 
     /**

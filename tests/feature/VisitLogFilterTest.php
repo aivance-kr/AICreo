@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\BlockedIpModel;
 use App\Models\PageVisitModel;
 use Tests\Support\AdminTestCase;
 
@@ -42,6 +43,14 @@ final class VisitLogFilterTest extends AdminTestCase
     {
         $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1)'])->get('/');
 
+        $this->assertSame(0, $this->visitModel->countAllResults());
+    }
+
+    public function testBlockedIpGetsForbidden(): void
+    {
+        (new BlockedIpModel())->block('0.0.0.0', BlockedIpModel::REASON_MANUAL);
+
+        $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (Test Browser)'])->get('/')->assertStatus(403);
         $this->assertSame(0, $this->visitModel->countAllResults());
     }
 }

@@ -12,11 +12,11 @@
     <div class="table-responsive">
         <table class="table table-sm table-hover align-middle mb-0 small">
             <thead class="table-light">
-                <tr><th>시각</th><th>페이지</th><th>IP</th><th>유입(Referer)</th><th>User-Agent</th></tr>
+                <tr><th>시각</th><th>페이지</th><th>IP</th><th>유입(Referer)</th><th>User-Agent</th><th></th></tr>
             </thead>
             <tbody>
                 <?php if (empty($visits)): ?>
-                <tr><td colspan="5" class="text-center text-muted py-3">방문 기록이 없습니다</td></tr>
+                <tr><td colspan="6" class="text-center text-muted py-3">방문 기록이 없습니다</td></tr>
                 <?php endif; ?>
                 <?php foreach ($visits as $v): ?>
                 <tr>
@@ -25,6 +25,13 @@
                     <td class="text-nowrap"><?= esc($v['ip_address']) ?></td>
                     <td class="text-break"><?= $v['referer'] !== null && $v['referer'] !== '' ? esc($v['referer']) : '<span class="text-muted">직접 접속</span>' ?></td>
                     <td class="text-break"><?= esc((string) $v['user_agent']) ?></td>
+                    <td class="text-nowrap">
+                        <form method="post" action="<?= base_url('admin/stats/block-ip') ?>" onsubmit="return confirm('<?= esc($v['ip_address'], 'js') ?> 을(를) 30일간 차단할까요?')">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="ip" value="<?= esc($v['ip_address']) ?>">
+                            <button type="submit" class="btn btn-sm btn-outline-danger py-0">차단</button>
+                        </form>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
