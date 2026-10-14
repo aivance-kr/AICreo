@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\BoardModel;
 use App\Models\PostModel;
+use App\Models\SettingModel;
 use Tests\Support\FeatureTestCase;
 
 /**
@@ -30,6 +31,8 @@ final class NoindexTest extends FeatureTestCase
 
     public function testRegisterPageIsNoindex(): void
     {
+        (new SettingModel())->saveSettings(['signup_enabled' => '1']);
+
         $body = $this->get('auth/register')->getBody();
 
         $this->assertStringContainsString('name="robots" content="noindex, nofollow"', $body);

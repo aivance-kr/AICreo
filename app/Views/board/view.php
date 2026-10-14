@@ -10,7 +10,10 @@
 
 <div class="card mb-4">
     <div class="card-header bg-white">
-        <h1 class="h5 mb-1"><?= esc($post['title']) ?></h1>
+        <h1 class="h5 mb-1">
+            <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
+            <?= esc($post['title']) ?>
+        </h1>
         <div class="d-flex gap-3 text-muted small">
             <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span> <?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
             <span><i class="bi bi-clock" aria-hidden="true"></i><span class="visually-hidden">작성일 </span> <?= $post['created_at'] ?></span>
@@ -18,9 +21,15 @@
         </div>
     </div>
     <div class="card-body">
-        <div class="post-content">
+        <!-- 본문 상단 광고 -->
+        <?= view('components/ad_slot', ['ads' => $postTopAds]) ?>
+
+        <div class="post-content board-post-content">
             <?= $post['content'] ?>
         </div>
+
+        <!-- 본문 하단 광고 -->
+        <?= view('components/ad_slot', ['ads' => $postBotAds]) ?>
 
         <!-- 이미지 첨부 -->
         <?php $images = array_filter($files, fn($f) => $f['is_image']); ?>
@@ -81,6 +90,26 @@
     </div>
 </div>
 
+<?php if ($prevPost || $nextPost): ?>
+<!-- 이전글 / 다음글 -->
+<div class="card mb-4">
+    <div class="list-group list-group-flush">
+        <?php if ($nextPost): ?>
+        <a href="/board/<?= esc($board['slug']) ?>/<?= $nextPost['id'] ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
+            <span class="text-muted small flex-shrink-0" style="width:4.5rem;"><i class="bi bi-arrow-up" aria-hidden="true"></i> 다음글</span>
+            <span class="text-truncate"><?= esc($nextPost['title']) ?></span>
+        </a>
+        <?php endif; ?>
+        <?php if ($prevPost): ?>
+        <a href="/board/<?= esc($board['slug']) ?>/<?= $prevPost['id'] ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
+            <span class="text-muted small flex-shrink-0" style="width:4.5rem;"><i class="bi bi-arrow-down" aria-hidden="true"></i> 이전글</span>
+            <span class="text-truncate"><?= esc($prevPost['title']) ?></span>
+        </a>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- 댓글 -->
 <div id="comments" class="card mb-4">
     <div class="card-header bg-white">
@@ -122,6 +151,20 @@
                     <label class="visually-hidden" for="comment-author-password">비밀번호</label>
                     <input type="password" name="author_password" id="comment-author-password" class="form-control form-control-sm"
                            placeholder="비밀번호" required autocomplete="new-password">
+                </div>
+            </div>
+            <div class="row g-2 mb-2">
+                <div class="col-sm-3">
+                    <label class="visually-hidden" for="comment-captcha-answer">스팸 방지 계산</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" aria-hidden="true"><?= esc($guestCommentCaptcha['question']) ?></span>
+                        <input type="text" inputmode="numeric" name="captcha_answer" id="comment-captcha-answer" class="form-control"
+                               placeholder="답" required autocomplete="off" aria-label="스팸 방지 계산 답">
+                    </div>
+                </div>
+                <div class="visually-hidden" aria-hidden="true">
+                    <label for="comment-website">웹사이트</label>
+                    <input type="text" name="website" id="comment-website" tabindex="-1" autocomplete="off">
                 </div>
             </div>
             <?php endif; ?>

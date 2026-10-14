@@ -2,86 +2,86 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working in this repository.
 
-> **Common rules are automatically inherited from the global [`~/.claude/CLAUDE.md`](~/.claude/CLAUDE.md)** (language, Git workflow, security, code style, testing, API, LSP). This document defines only rules **specific to the AiCreo repository**.
+> **Common rules are inherited automatically from the global [`~/.claude/CLAUDE.md`](~/.claude/CLAUDE.md)** (language, Git workflow, security, code style, testing, API, LSP). This document defines **AICreo repo-specific** rules only.
 >
 > **Exception:** mid-task progress messages are written in **English**; only the final result summary is written in **Korean**.
 
-## Repository Overview
+## Repository overview
 
-A CodeIgniter 4 corporate homepage template (board CMS / site builder) for solo web agencies — provides dynamic pages, a board system, inquiry forms, and an admin panel.
+A CodeIgniter 4 corporate website template (board CMS / site builder) for a solo web agency — provides dynamic pages, a board system, inquiry forms, and an admin panel.
 
-The repository root is a single CI4 project. Run all `php spark`, `composer`, and `git` commands from the root.
+The repo root is a single CI4 project. Run all `php spark`, `composer`, and `git` commands from the root.
 
 > **PHP 8.5+ required** (pinned in `composer.json` `require`/`platform`). PHPStan level 6.
 
 ## Commands
 
 ```bash
-php spark serve --host 127.0.0.1 --port 8306  # Run the dev server (http://creo.test, via Caddy reverse proxy)
-php spark migrate            # Run all pending migrations (create tables + seed)
-php spark migrate:rollback   # Roll back the last migration batch
+php spark serve --host 127.0.0.1 --port 8306  # run dev server (http://creo.test, via Caddy reverse proxy)
+php spark migrate            # run all pending migrations (create tables + seed)
+php spark migrate:rollback   # roll back the last migration batch
 ```
 
-> ⚠️ **Omitting `--host` causes access to `creo.test` to fail with `502 Bad Gateway`.** Without `--host`, binding to the default `localhost` only listens on IPv6 (`::1`) in this macOS environment, but the shared Caddy that proxies `creo.test` (`~/claude-works/dev-proxy/Caddyfile`) tries to connect via `127.0.0.1:8306` (IPv4) and is refused. Always specify `--host 127.0.0.1`.
+> ⚠️ **Omitting `--host` causes `creo.test` access to fail with `502 Bad Gateway`.** Without `--host`, binding to the default `localhost` on this macOS environment listens only on IPv6 (`::1`), while the shared Caddy proxying `creo.test` (`~/claude-works/dev-proxy/Caddyfile`) tries to connect via `127.0.0.1:8306` (IPv4) and gets refused. Always specify `--host 127.0.0.1`.
 
-**Verification gate — what runs where.** Verification finishes locally. No CI runs on `feature → dev` PRs (code review only); CI runs only on `dev → main` deployment PRs.
+**Verification gate — where what runs.** Verification finishes locally. `feature → dev` PRs don't run CI (code review only); CI runs only on `dev → main` deploy PRs.
 
 ```
 feature/*  ──[local verification: composer ci]──▶  dev  ──[PR + code review]──▶  dev → main PR ──[CI]──▶  main
                     ↑
-              This is the real gate (feature → dev is a Squash merge, so there's no CI there)
+              this is the actual gate (feature → dev is a Squash merge, so no CI runs there)
 ```
 
 ```bash
 composer cs          # PHP-CS-Fixer style check (dry-run)
-composer cs:fix      # Auto-normalize style
+composer cs:fix      # auto-normalize style
 composer analyse     # PHPStan static analysis (level 6)
 composer test        # PHPUnit (test DB is MySQL)
-composer ci          # cs + analyse + test all at once — pass CI preemptively with this before push
-composer rector:dry  # Preview code modernization (optional), apply with composer rector
+composer ci          # cs + analyse + test in one go — pre-clear CI before push
+composer rector:dry  # preview code modernization (optional), apply with composer rector
 ```
 
-| Timing | What |
+| When | What |
 |------|--------|
-| During development | Run `composer analyse` + `composer test` frequently |
-| Before push (any branch except `main`) | `composer ci` is required — don't push if it fails. Enforced by the `pre-push` hook |
-| `feature → dev` PR | No CI. Code review only — the `composer ci` from the last push is the only line of defense |
-| `dev → main` PR | Full GitHub Actions (`quality` job: cs·analyse·test, PHP 8.5/MySQL 8.0 + `coverage` job: report in job summary) |
+| During development | Run `composer analyse` + `composer test` as needed |
+| Before push (every branch except `main`) | `composer ci` is required — don't push if it fails. Enforced by the `pre-push` hook |
+| `feature → dev` PR | No CI. Code review only — the `composer ci` from the last push is the only safeguard |
+| `dev → main` PR | Full GitHub Actions (`quality` job: cs, analyse, test on PHP 8.5/MySQL 8.0 + `coverage` job: report in the job summary) |
 
-#### Deployment runs automatically on push to `main`
+#### Deployment runs automatically on a `main` push
 
-`deploy.yml` runs on `push: branches: [main]` and performs, via SSH, `git reset --hard origin/main` → `composer install --no-dev` → `php spark migrate --all` → `cache:clear` on the production server. **Migrations run automatically as part of deployment, so there's no need to run them separately.**
+`deploy.yml` runs on `push: branches: [main]`, SSHing into the production server to do `git reset --hard origin/main` → `composer install --no-dev` → `php spark migrate --all` → `cache:clear`. **Migrations run automatically as part of deployment, so there's no need to run them separately.**
 
-> ⚠️ Previously, deployment was gated on `workflow_run: workflows:[CI], branches:[main]`, running only after CI succeeded. But when the CI trigger changed to `pull_request: [main]` (#244), **this connection silently broke** — a CI run triggered by `pull_request` belongs to the head branch (`dev`), so it doesn't match the `branches: [main]` filter. As a result, deployment never ran after 2026-07-16 — merges succeeded normally, but the production server was left running old code (discovered after the #255 deployment). **Whenever touching the CI trigger, always check whether `deploy.yml` depends on it.**
+> ⚠️ It used to trigger deployment after CI succeeded via `workflow_run: workflows:[CI], branches:[main]`. But when the CI trigger changed to `pull_request: [main]` (#244), **this link quietly broke** — a CI run triggered by `pull_request` has its branch set to the head (`dev`), so it doesn't match the `branches: [main]` filter. As a result, deployment hadn't run even once since 2026-07-16 — merges succeeded normally, but the production server was left on old code (discovered after the #255 deploy). **Whenever you touch CI triggers, always check whether `deploy.yml` depends on them.**
 
-`feature → dev` is handled via GitHub Squash merge, so neither the local hook nor CI runs at that moment — which is why `feature/*` pushes enforce `composer ci` the same as `dev` pushes (it isn't skipped). Skipping this step lets unverified code accumulate in `dev`, and CI only catches it for the first time at the deployment PR, making root-cause tracing expensive — skipping it is a rule violation.
+Since `feature → dev` goes through a GitHub Squash merge, neither the local hook nor CI runs at that moment — so `feature/*` pushes enforce `composer ci` the same as `dev` pushes (never skipped). Skipping this step lets unverified code pile up on `dev`, with CI only catching it at the deploy PR stage where root-causing costs much more — skipping it is a rule violation.
 
 #### Runs on a self-hosted runner
 
-Instead of a GitHub-hosted runner (`ubuntu-latest`), this runs on **a single self-hosted Linux (X64) runner belonging to the `aivance-kr` organization** (migrated to the organization in 2026-09 · from a personal macOS runner to an organization Linux runner). The `quality`, `coverage`, `notify`, and `deploy` jobs all use `runs-on: [self-hosted, Linux, X64]`.
+Runs not on GitHub-hosted runners (`ubuntu-latest`) but on **a single self-hosted Linux (X64) runner belonging to the `aivance-kr` organization** (migrated to the org in 2026-09 · from a personal macOS runner to an org Linux runner). `quality`, `coverage`, `notify`, and `deploy` jobs all use `runs-on: [self-hosted, Linux, X64]`.
 
-> ⚠️ Actual infrastructure details such as runner registration location and service name are not yet reflected in this document — whoever set up the organization runner should fill in this section with the real values (registration path, service management method, etc.).
+> ⚠️ Actual infra details like the runner's registration location and service name aren't reflected in this doc yet — whoever set up the org runner should fill in this section with the real values (registration path, service management approach, etc.).
 
-- **The repository is Public** — since a `pull_request` trigger on a self-hosted runner risks running external fork PR code on the runner (a well-known risk), `fork-pr-contributor-approval` is set to `all_external_contributors` in the repository settings. Workflows don't run for external contributors' PRs until an admin manually approves them.
-- **MySQL**: the self-hosted **Linux** runner supports `services:` Docker containers. However, since one organization runner is shared across multiple repositories/workflows, each job still boots MySQL directly with `docker run` (to avoid conflicts from pinning the standard service port `3306`) and cleans up with an `if: always()` step. Redis isn't needed for CI since the cache handler default is `file`.
-- **Ports**: multiple repositories can share the single organization runner. **The `quality` job uses MySQL port `43306`, and the `coverage` job uses `43307`.** When picking a new port, always grep other repositories' `.github/workflows/ci.yml` too to make sure there's no overlap — the port was initially chosen as `23306` but conflicted with another repository and caused CI to fail (a history from the personal macOS runner era, but the same principle applies after moving to the organization runner).
-- **Container cleanup must use `docker rm -f -v`.** Without `-v`, only the container is removed and the `/var/lib/mysql` anonymous volume is left behind. It accumulates hundreds of MB per run, filling up the runner's Docker disk, and one day MySQL suddenly fails to even start with "No space left on device." In fact, 210 volumes (44GB) accumulated over a month starting 2026-07-17, blocking the PR #255 deployment CI. Recovery when blocked: `docker volume prune -f` (doesn't touch volumes in use).
-- **With only one runner, jobs are effectively serialized.** `quality`/`coverage` have no `needs` dependency between them, but since the single shared runner processes only one job at a time, they're automatically queued and never run concurrently. Even so, each job still uses a different host port, because it could still overlap with another repository's or workflow's run — if ports collide, the later container fails to bind and dies immediately, but `docker run -d` prints a container ID and exits looking successful before that happens, so **the cause is obscured and only shows up as hundreds of "Connection refused" test failures.** This actually happened in PR #255, where only `quality` failed this way. Now each job checks that its container is alive and ready right after starting it, and aborts immediately with `docker logs` output if not.
-- **To revert to a hosted runner**: change `runs-on` to `ubuntu-latest` (since it's Linux, MySQL can optionally be switched back to a `services:` block, and the port can be reverted to the standard `3306`).
+- **The repo is Public** — since a `pull_request` trigger on a self-hosted runner risks running external fork PR code on that runner (a well-known risk), the repo setting `fork-pr-contributor-approval` is set to `all_external_contributors`. External contributors' PRs don't run workflows until an admin manually approves them.
+- **MySQL**: self-hosted **Linux** runners support `services:` Docker containers. However, since a single org runner is shared across multiple repos/workflows, to avoid conflicts from pinning the standard service port (`3306`), each job still starts MySQL directly via `docker run` and cleans up with an `if: always()` step. Redis isn't needed in CI since the cache handler defaults to `file`.
+- **Ports**: multiple repos can share the single org runner. **The `quality` job uses MySQL `43306`, the `coverage` job uses `43307`.** When picking a new port, always grep other repos' `.github/workflows/ci.yml` too to check for conflicts — initially picking `23306` caused a conflict with another repo and CI failed (a historical incident from the personal macOS runner era, but the same principle applies after the org runner transition).
+- **Always clean up containers with `docker rm -f -v`.** Without `-v`, only the container is removed and the `/var/lib/mysql` anonymous volume remains. These pile up by hundreds of MB per run, filling the runner's Docker disk, until one day MySQL can't even start with `No space left on device`. This actually happened — 210 volumes (44GB) accumulated over a month starting 2026-07-17, blocking PR #255's deploy CI. Recovery when blocked: `docker volume prune -f` (doesn't touch volumes in use).
+- **With only one runner, jobs effectively run sequentially.** `quality`/`coverage` have no `needs` between them, but since a single runner processes only one job at a time, they're automatically queued and never run concurrently. Still, each job keeps a different host port because it could overlap with another repo's or another workflow's run — if ports collide, the later container fails to bind and dies immediately, but `docker run -d` prints a container ID and exits as if it succeeded beforehand, so **the cause only shows up as hundreds of "Connection refused" errors in the tests.** This is exactly what happened in PR #255, failing only the `quality` job. Now each job checks the container is alive and ready right after startup and aborts immediately with `docker logs` if it fails.
+- **To revert to a hosted runner**: just change `runs-on` to `ubuntu-latest` (it's Linux, so MySQL can optionally switch to a `services:` block, and the port can revert to the standard `3306`).
 
-**Cron (production — a single line registration):**
+**Cron (production — single line registration):**
 ```
 * * * * * cd /path/to/app && php spark tasks:run >> /dev/null 2>&1
 ```
-`Config/Tasks.php` reads enabled jobs from the `settings` table and registers them. Enable/disable and intervals are managed at `/admin/schedule`.
+`Config/Tasks.php` reads enabled jobs from the `settings` table and registers them. Manage enablement/schedule at `/admin/schedule`.
 
-## Initial Setup
+## Initial setup
 
 ```bash
 cp env .env
-# Edit .env: DB connection info, CI_ENVIRONMENT, TinyMCE key, app.baseURL (leave the local default at 8306,
-#            but be sure to change it to the actual URL if running on a port other than 8306 or when deploying —
-#            CI4 doesn't auto-detect and throws an exception if baseURL is missing or an empty string)
+# Edit .env: DB connection info, CI_ENVIRONMENT, TinyMCE key, app.baseURL (leave the local default of 8306
+#            as-is, but if you run on a different port or deploy, always set the real URL — CI4 throws
+#            an exception instead of auto-detecting if baseURL is missing or empty)
 php spark migrate
 # app/Config/App.php: set appTimezone = 'Asia/Seoul'
 ```
@@ -94,13 +94,13 @@ Linux upload permissions: `chmod -R 755 public/uploads writable`
 ```bash
 git config core.hooksPath .githooks
 ```
-- `.githooks/pre-commit` — automatically applies PHP-CS-Fixer (`composer cs:fix` rules) to staged PHP files right before commit (doesn't block the commit).
+- `.githooks/pre-commit` — auto-applies PHP-CS-Fixer (`composer cs:fix` rules) to staged PHP files right before commit (doesn't block the commit).
 - `.githooks/pre-push` — policy differs by target branch:
-  - Direct push to `main` is **unconditionally blocked** (deployment only via `dev → main` PR).
-  - Other branches run the quality gate (`composer ci` = cs·analyse·test, ~10 seconds) to catch failures locally before the CI round trip.
-  - Docs-only changes (pushes touching only `*.md`, `docs/**`, `.claude/rules/**`) automatically skip verification. If even a single line of code is mixed in, it immediately reverts to full verification.
-- Emergency bypass: `SKIP_HOOKS=1 git commit/push ...` (the `main` block is not bypassed). Environments without PHP/Composer automatically skip that verification.
+  - Direct push to `main` is **unconditionally blocked** (deploy only via `dev → main` PR).
+  - Other branches run the quality gate (`composer ci` = cs, analyse, test, ~10 sec) to catch failures locally before a CI round-trip.
+  - Docs-only changes (pushes touching only `*.md`, `docs/**`, `.claude/rules/**`) automatically skip verification. If even one line of code is mixed in, full verification runs immediately.
+- Emergency bypass: `SKIP_HOOKS=1 git commit/push ...` (doesn't bypass the `main` block). In environments without PHP/Composer, that verification is automatically skipped.
 
-## Detailed Rules (Modules)
+## Detailed rules (modules)
 
-- **Architecture** (theme system, BaseController, auth & routing, CSRF exceptions, caching, OAuth, file uploads, DB schema): @.claude/rules/architecture.md
+- **Architecture** (theme system, BaseController, auth/routing, CSRF exceptions, caching, OAuth, file uploads, DB schema): @.claude/rules/architecture.md

@@ -3,6 +3,8 @@
 
 <!-- 메인 상단 배너 -->
 <?= view('components/banner_slot', ['banners' => $mainTopBanners]) ?>
+<!-- 홈 상단 광고 -->
+<?= view('components/ad_slot', ['ads' => $homeTopAds]) ?>
 
 <?php if ($page['is_custom_home'] ?? false): ?>
 <!-- 관리자 페이지 관리에서 슬러그 home으로 저장한 홈 콘텐츠 -->
@@ -105,6 +107,8 @@
 </section>
 <?php endif; ?>
 
+<!-- 홈 하단 광고 -->
+<?= view('components/ad_slot', ['ads' => $homeBottomAds]) ?>
 <!-- 메인 하단 배너 -->
 <?= view('components/banner_slot', ['banners' => $mainBotBanners]) ?>
 

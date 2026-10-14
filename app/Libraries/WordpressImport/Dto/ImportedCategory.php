@@ -10,6 +10,12 @@ final readonly class ImportedCategory
         public int $wpTermId,
         public string $nicename,
         public string $name,
+        public string $parentNicename = '',
     ) {
+    }
+
+    public function isRoot(): bool
+    {
+        return $this->parentNicename === '';
     }
 }

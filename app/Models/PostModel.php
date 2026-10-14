@@ -13,7 +13,7 @@ class PostModel extends Model
     protected $allowedFields  = [
         'board_id', 'category_id', 'user_id', 'title', 'content',
         'author_name', 'author_password',
-        'is_notice', 'is_secret', 'ip_address',
+        'is_notice', 'is_secret', 'is_active', 'ip_address',
         'views', 'wp_post_id', 'created_at', 'updated_at',
     ];
     protected $afterInsert = ['clearSitemapCache'];
@@ -31,6 +31,7 @@ class PostModel extends Model
         return $this->select('posts.id, posts.updated_at, boards.slug AS board_slug')
             ->join('boards', 'boards.id = posts.board_id', 'inner')
             ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
             ->where('boards.is_active', 1)
             ->where('boards.read_permission', 'guest')
             ->orderBy('posts.id', 'DESC')
@@ -48,10 +49,28 @@ class PostModel extends Model
             ->join('boards', 'boards.id = posts.board_id', 'inner')
             ->join('users', 'users.id = posts.user_id', 'left')
             ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
             ->where('boards.is_active', 1)
             ->where('boards.read_permission', 'guest')
             ->orderBy('posts.id', 'DESC')
             ->findAll($limit);
+    }
+
+    /**
+     * 게시글 본문 HTML에서 첫 번째 이미지 src 를 추출한다 (블로그형/갤러리형 목록 썸네일용).
+     */
+    public static function extractThumbnail(?string $content): ?string
+    {
+        if ($content === null || $content === '') {
+            return null;
+        }
+
+        // 워드프레스 이관 게시글 일부는 img src 속성에 따옴표가 없다 — 따옴표 유무 모두 대응.
+        if (preg_match('/<img[^>]+src=(?:"([^"]*)"|\'([^\']*)\'|([^\s"\'>]+))/i', $content, $m) !== 1) {
+            return null;
+        }
+
+        return $m[1] !== '' ? $m[1] : (($m[2] ?? '') !== '' ? $m[2] : ($m[3] ?? ''));
     }
 
     /**
@@ -73,16 +92,22 @@ class PostModel extends Model
     {
         $offset = ($page - 1) * $perPage;
 
-        $noticeBuilder = $this->where('board_id', $boardId)->where('is_notice', 1);
-        if ($categoryId !== null) {
-            $noticeBuilder->where('category_id', $categoryId);
-        }
-        $notices = $noticeBuilder->orderBy('id', 'DESC')->findAll(5);
-
-        $postBuilder = $this->select('posts.*, users.nickname as user_nickname')
-            ->join('users', 'users.id = posts.user_id', 'left')
+        $noticeBuilder = $this->select('posts.*, board_categories.name as category_name')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId)
-            ->where('posts.is_notice', 0);
+            ->where('posts.is_notice', 1)
+            ->where('posts.is_active', 1);
+        if ($categoryId !== null) {
+            $noticeBuilder->where('posts.category_id', $categoryId);
+        }
+        $notices = $noticeBuilder->orderBy('posts.id', 'DESC')->findAll(5);
+
+        $postBuilder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name')
+            ->join('users', 'users.id = posts.user_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
+            ->where('posts.board_id', $boardId)
+            ->where('posts.is_notice', 0)
+            ->where('posts.is_active', 1);
         if ($categoryId !== null) {
             $postBuilder->where('posts.category_id', $categoryId);
         }
@@ -93,7 +118,7 @@ class PostModel extends Model
 
     public function getTotalCount(int $boardId, ?int $categoryId = null): int
     {
-        $builder = $this->where('board_id', $boardId)->where('is_notice', 0);
+        $builder = $this->where('board_id', $boardId)->where('is_notice', 0)->where('is_active', 1);
         if ($categoryId !== null) {
             $builder->where('category_id', $categoryId);
         }
@@ -106,14 +131,74 @@ class PostModel extends Model
      */
     public function getDetail(int $id): ?array
     {
-        return $this->select('posts.*, users.nickname as user_nickname, users.email as user_email')
+        return $this->select('posts.*, users.nickname as user_nickname, users.email as user_email, board_categories.name as category_name')
             ->join('users', 'users.id = posts.user_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->find($id);
     }
 
     public function incrementView(int $id): void
     {
         $this->db->query('UPDATE posts SET views = views + 1 WHERE id = ?', [$id]);
+    }
+
+    /**
+     * 같은 게시판의 이전 글(더 오래된 글) — 공지·비밀글·숨김글 제외.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getPrevious(int $boardId, int $postId): ?array
+    {
+        return $this->select('id, title')
+            ->where('board_id', $boardId)
+            ->where('is_notice', 0)
+            ->where('is_secret', 0)
+            ->where('is_active', 1)
+            ->where('id <', $postId)
+            ->orderBy('id', 'DESC')
+            ->first();
+    }
+
+    /**
+     * 같은 게시판의 다음 글(더 최근 글) — 공지·비밀글·숨김글 제외.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getNext(int $boardId, int $postId): ?array
+    {
+        return $this->select('id, title')
+            ->where('board_id', $boardId)
+            ->where('is_notice', 0)
+            ->where('is_secret', 0)
+            ->where('is_active', 1)
+            ->where('id >', $postId)
+            ->orderBy('id', 'ASC')
+            ->first();
+    }
+
+    /**
+     * 노출 상태를 반전한다(관리자 숨기기/노출 토글). update() 경유로
+     * afterUpdate 훅(clearSitemapCache)이 정상 실행되게 한다.
+     */
+    public function toggleActive(int $id): void
+    {
+        $post = $this->find($id);
+        if ($post === null) {
+            return;
+        }
+
+        $this->update($id, ['is_active' => $post['is_active'] ? 0 : 1]);
+    }
+
+    /**
+     * 게시물을 다른 게시판으로 일괄 이동한다. 카테고리는 게시판별이므로 비운다.
+     * update() 경유로 afterUpdate 훅(clearSitemapCache)이 실행된다.
+     *
+     * @param list<int> $ids
+     */
+    public function moveToBoard(array $ids, int $boardId): void
+    {
+        $this->update($ids, ['board_id' => $boardId, 'category_id' => null]);
     }
 
     /**
@@ -149,9 +234,11 @@ class PostModel extends Model
     public function search(int $boardId, string $keyword, string $type, int $page, int $perPage, ?int $categoryId = null): array
     {
         $offset  = ($page - 1) * $perPage;
-        $builder = $this->select('posts.*, users.nickname as user_nickname')
+        $builder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name')
             ->join('users', 'users.id = posts.user_id', 'left')
-            ->where('posts.board_id', $boardId);
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
+            ->where('posts.board_id', $boardId)
+            ->where('posts.is_active', 1);
 
         if ($categoryId !== null) {
             $builder->where('posts.category_id', $categoryId);

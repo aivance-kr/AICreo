@@ -86,9 +86,11 @@
                 </div>
                 <?php endif; ?>
 
+                <?php if (($settings['signup_enabled'] ?? '0') === '1'): ?>
                 <div class="text-center mt-4 small">
                     <a href="/auth/register" class="text-decoration-none">회원가입</a>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

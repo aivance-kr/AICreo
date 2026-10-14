@@ -27,6 +27,16 @@
                 'ProfessionalService' => '전문 서비스 (ProfessionalService)',
                 'Store'               => '상점 (Store)',
             ];
+
+            // SEO 탭 항목별 설명 · 발급처 안내
+            $seoHelp = [
+                'og_default_image'  => '개별 페이지에 OG 이미지가 없을 때 카카오톡·페이스북 등에 공유될 때 대신 쓰이는 기본 미리보기 이미지입니다. 권장 크기 1200×630px.',
+                'google_verify'     => '<a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer">Google Search Console</a>에서 속성 추가 → "HTML 태그" 인증 방식을 선택하면 나오는 content 값을 입력하세요.',
+                'bing_verify'       => '<a href="https://www.bing.com/webmasters" target="_blank" rel="noopener noreferrer">Bing Webmaster Tools</a>에서 사이트 추가 → "메타 태그" 인증 방식을 선택하면 나오는 content 값을 입력하세요.',
+                'daum_verify'       => '<a href="https://webmaster.daum.net" target="_blank" rel="noopener noreferrer">Daum 검색등록</a>에서 사이트 등록 → "HTML 태그" 인증 방식을 선택하면 나오는 content 값을 입력하세요.',
+                'org_type'          => '검색엔진이 사이트를 어떤 조직으로 이해할지 정하는 schema.org 타입입니다. 업종에 맞는 항목을 선택하세요.',
+                'ai_crawlers_allow' => 'ChatGPT·Claude 등 AI 크롤러의 사이트 수집(GEO)을 허용할지 여부입니다. robots.txt·llms.txt에 반영됩니다.',
+            ];
             ?>
             <?php foreach ($settings as $s): ?>
             <div class="mb-3">
@@ -38,12 +48,18 @@
                                <?= $s['value'] === '1' ? 'checked' : '' ?>>
                         <label class="form-check-label small fw-semibold" for="chk_<?= esc($s['key']) ?>"><?= esc($s['label']) ?></label>
                     </div>
+                    <?php if ($group === 'seo' && isset($seoHelp[$s['key']])): ?>
+                        <div class="form-text mt-0"><?= $seoHelp[$s['key']] ?></div>
+                    <?php endif; ?>
                 <?php else: ?>
                 <?php if ($s['type'] === 'image'): ?>
                     <?php /* 이미지 항목은 컨트롤이 여러 개(선택 버튼 + 업로드)라 단일 label 이 아니라 그룹 이름으로 낸다 */ ?>
                     <span class="d-block form-label small fw-semibold" id="lbl_<?= esc($s['key']) ?>"><?= esc($s['label']) ?></span>
                 <?php else: ?>
                     <label class="form-label small fw-semibold" for="set_<?= esc($s['key']) ?>"><?= esc($s['label']) ?></label>
+                <?php endif; ?>
+                <?php if ($group === 'seo' && isset($seoHelp[$s['key']])): ?>
+                    <div class="form-text mt-0 mb-1"><?= $seoHelp[$s['key']] ?></div>
                 <?php endif; ?>
                 <?php if ($s['type'] === 'textarea'): ?>
                     <textarea name="<?= esc($s['key']) ?>" id="set_<?= esc($s['key']) ?>" class="form-control form-control-sm" rows="3"><?= esc($s['value']) ?></textarea>
@@ -71,6 +87,10 @@
                         <label class="btn btn-outline-primary btn-sm mb-0" for="upload_<?= esc($s['key']) ?>">
                             <i class="bi bi-upload" aria-hidden="true"></i> 직접 업로드
                         </label>
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="del_<?= esc($s['key']) ?>"
+                                onclick="clearSettingImage('<?= esc($s['key']) ?>')" <?= $s['value'] ? '' : 'hidden' ?>>
+                            <i class="bi bi-trash" aria-hidden="true"></i> 삭제
+                        </button>
                     </div>
                     <?php /* 업로드 실패를 브라우저 alert 대신 필드 옆에 남긴다 */ ?>
                     <div class="form-text text-danger" id="err_<?= esc($s['key']) ?>" role="alert"></div>
@@ -125,6 +145,15 @@ function applyImageToField(key, path, label) {
         class: 'img-thumbnail',
         alt: label || '선택한 이미지',
     }));
+
+    document.getElementById('del_' + key)?.removeAttribute('hidden');
+}
+
+/** 저장된 이미지를 지운다 — 실제 삭제는 폼 저장 시 빈 값으로 반영된다 */
+function clearSettingImage(key) {
+    document.getElementById('input_' + key).value = '';
+    document.getElementById('preview_' + key).replaceChildren();
+    document.getElementById('del_' + key)?.setAttribute('hidden', '');
 }
 
 function setFieldError(key, message) {

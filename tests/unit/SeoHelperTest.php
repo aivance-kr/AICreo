@@ -89,6 +89,13 @@ final class SeoHelperTest extends CIUnitTestCase
         $this->assertStringContainsString('name="msvalidate.01" content="bing-token"', $html);
     }
 
+    public function testRenderIncludesDaumVerification(): void
+    {
+        $html = $this->helper(['daum_verify' => 'daum-token'])->render();
+
+        $this->assertStringContainsString('name="DaumVerification" content="daum-token"', $html);
+    }
+
     public function testRenderOutputsCanonicalLink(): void
     {
         $html = $this->helper()->render();

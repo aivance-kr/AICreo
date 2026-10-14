@@ -13,7 +13,7 @@ class BoardModel extends Model
         'slug', 'name', 'description',
         'read_permission', 'write_permission',
         'allow_file', 'allow_image',
-        'posts_per_page', 'sort_order', 'is_active',
+        'posts_per_page', 'list_skin', 'sort_order', 'is_active',
         'wp_term_id',
     ];
     protected $afterInsert = ['clearSitemapCache'];

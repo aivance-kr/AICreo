@@ -59,13 +59,21 @@ class AuthController extends BaseController
         return redirect()->to('/auth/login');
     }
 
-    public function register(): string
+    public function register(): ResponseInterface|string
     {
+        if (($this->viewData['settings']['signup_enabled'] ?? '0') !== '1') {
+            return redirect()->to('/auth/login')->with('error', '현재 회원가입이 비활성화되어 있습니다.');
+        }
+
         return $this->render('auth/register', ['page' => ['title' => '회원가입', 'noindex' => true]]);
     }
 
     public function registerProcess(): ResponseInterface|string
     {
+        if (($this->viewData['settings']['signup_enabled'] ?? '0') !== '1') {
+            return redirect()->to('/auth/login')->with('error', '현재 회원가입이 비활성화되어 있습니다.');
+        }
+
         $rules = [
             'email'            => 'required|valid_email|is_unique[users.email]',
             'password'         => 'required|min_length[8]',

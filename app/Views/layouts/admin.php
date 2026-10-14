@@ -4,6 +4,7 @@ $uri = uri_string();
 // 사이드바 활성 항목 판정 — 설정 3종은 접두어가 겹치므로 먼저 갈라낸다.
 $isThemeSettings   = str_starts_with($uri, 'admin/settings/theme');
 $isOauthSettings   = str_starts_with($uri, 'admin/settings/oauth');
+$isBackup           = str_starts_with($uri, 'admin/backup');
 $isGeneralSettings = str_starts_with($uri, 'admin/settings') && ! $isThemeSettings && ! $isOauthSettings;
 $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
 ?>
@@ -130,6 +131,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             <a href="/admin/posts" class="nav-link <?= str_starts_with($uri, 'admin/posts') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/posts') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>전체 게시물
             </a>
+            <a href="/admin/comments" class="nav-link <?= str_starts_with($uri, 'admin/comments') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/comments') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-chat-left-text me-2" aria-hidden="true"></i>전체 댓글
+            </a>
             <a href="/admin/media" class="nav-link <?= str_starts_with($uri, 'admin/media') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/media') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-images me-2" aria-hidden="true"></i>미디어
             </a>
@@ -139,8 +143,14 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             <a href="/admin/popups" class="nav-link <?= str_starts_with($uri, 'admin/popups') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/popups') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-window me-2" aria-hidden="true"></i>팝업 관리
             </a>
+            <a href="/admin/ads" class="nav-link <?= str_starts_with($uri, 'admin/ads') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/ads') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-megaphone me-2" aria-hidden="true"></i>광고 관리
+            </a>
 
             <div class="nav-section">운영</div>
+            <a href="/admin/stats" class="nav-link <?= str_starts_with($uri, 'admin/stats') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/stats') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-bar-chart me-2" aria-hidden="true"></i>접속 통계
+            </a>
             <a href="/admin/users" class="nav-link <?= str_starts_with($uri, 'admin/users') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/users') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-person-lines-fill me-2" aria-hidden="true"></i>회원 관리
             </a>
@@ -163,6 +173,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             </a>
             <a href="/admin/settings/oauth" class="nav-link <?= $isOauthSettings ? 'active' : '' ?>" <?= $isOauthSettings ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-people me-2" aria-hidden="true"></i>소셜 로그인
+            </a>
+            <a href="/admin/backup" class="nav-link <?= $isBackup ? 'active' : '' ?>" <?= $isBackup ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-database-down me-2" aria-hidden="true"></i>백업 관리
             </a>
 
             <div class="nav-section mt-3">사이트</div>

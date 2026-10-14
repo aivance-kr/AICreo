@@ -74,11 +74,12 @@ class SeoHelper
             $html .= '<meta name="twitter:image" content="' . esc($ogImage) . "\">\n";
         }
 
-        // 검색엔진 웹마스터 인증 (Naver·Google·Bing)
+        // 검색엔진 웹마스터 인증 (Naver·Google·Bing·Daum)
         foreach ([
             'naver_verify'  => 'naver-site-verification',
             'google_verify' => 'google-site-verification',
             'bing_verify'   => 'msvalidate.01',
+            'daum_verify'   => 'DaumVerification',
         ] as $key => $metaName) {
             if (! empty($this->settings[$key])) {
                 $html .= '<meta name="' . $metaName . '" content="' . esc($this->settings[$key]) . "\">\n";

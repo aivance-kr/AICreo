@@ -56,6 +56,7 @@ class BoardManagerController extends BaseController
             'allow_file'       => (int) $this->request->getPost('allow_file'),
             'allow_image'      => (int) $this->request->getPost('allow_image'),
             'posts_per_page'   => (int) $this->request->getPost('posts_per_page') ?: 15,
+            'list_skin'        => $this->resolveListSkin($this->request->getPost('list_skin')),
             'sort_order'       => (int) $this->request->getPost('sort_order'),
         ]);
 
@@ -80,6 +81,7 @@ class BoardManagerController extends BaseController
             'allow_file'       => (int) $this->request->getPost('allow_file'),
             'allow_image'      => (int) $this->request->getPost('allow_image'),
             'posts_per_page'   => (int) $this->request->getPost('posts_per_page') ?: 15,
+            'list_skin'        => $this->resolveListSkin($this->request->getPost('list_skin')),
             'sort_order'       => (int) $this->request->getPost('sort_order'),
             'is_active'        => (int) $this->request->getPost('is_active'),
         ]);
@@ -198,5 +200,13 @@ class BoardManagerController extends BaseController
         $this->categoryModel->delete($categoryId);
 
         return redirect()->to("/admin/boards/{$boardId}/categories")->with('success', '삭제되었습니다.');
+    }
+
+    /**
+     * 게시판 목록 스킨 값 정규화 — 허용 목록 밖 값은 기본값(일반 리스트형)으로 대체.
+     */
+    private function resolveListSkin(?string $raw): string
+    {
+        return in_array($raw, ['list', 'blog', 'gallery'], true) ? $raw : 'list';
     }
 }

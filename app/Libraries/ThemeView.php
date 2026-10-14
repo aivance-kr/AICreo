@@ -13,7 +13,18 @@ use CodeIgniter\View\View;
  */
 class ThemeView extends View
 {
+    /**
+     * 게시글 목록·카테고리 사이드·광고 슬롯을 쓰는 «블로그형» 테마.
+     * 컨트롤러가 홈 최신 글, 카테고리, 사이드바 광고를 이 테마에만 준비한다.
+     */
+    public const BLOG_THEMES = ['blog', 'ilgan', 'cobalt', 'quiet', 'devnotes'];
+
     private ?string $resolvedTheme = null;
+
+    public static function isBlogTheme(string $theme): bool
+    {
+        return in_array($theme, self::BLOG_THEMES, true);
+    }
 
     private function activeTheme(): string
     {

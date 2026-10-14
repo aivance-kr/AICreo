@@ -98,6 +98,33 @@
             </div>
         </div>
     </div>
+
+    <!-- 최근 댓글 -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between">
+                <strong>최근 댓글</strong>
+                <a href="/admin/comments" class="small text-decoration-none">전체보기</a>
+            </div>
+            <div class="list-group list-group-flush">
+                <?php foreach ($recentComments as $comment): ?>
+                <a href="/board/<?= esc($comment['board_slug']) ?>/<?= $comment['post_id'] ?>#comments"
+                   target="_blank" rel="noopener"
+                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div class="text-truncate" style="max-width:240px">
+                        <span class="badge bg-light text-dark border me-1 small"><?= esc($comment['board_name']) ?></span>
+                        <span class="small text-dark"><?= esc($comment['post_title']) ?></span>
+                        <span class="text-muted small ms-1"><?= esc(mb_substr($comment['content'], 0, 30)) ?></span>
+                    </div>
+                    <span class="text-muted small flex-shrink-0 ms-2"><?= substr($comment['created_at'], 0, 10) ?></span>
+                </a>
+                <?php endforeach; ?>
+                <?php if (empty($recentComments)): ?>
+                    <div class="list-group-item text-muted small text-center py-3">댓글이 없습니다</div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
 </div>
 
 <?= $this->endSection() ?>

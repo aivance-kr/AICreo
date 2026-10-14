@@ -1,6 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
+<!-- 홈 상단 광고 -->
+<?= view('components/ad_slot', ['ads' => $homeTopAds]) ?>
+
 <section class="py-5">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,7 +21,7 @@
                             <div>
                                 <span class="badge text-bg-light mb-2"><?= esc($post['board_name']) ?></span>
                                 <h2 class="h5 mb-3"><a class="text-decoration-none" href="/board/<?= esc($post['board_slug']) ?>/<?= esc($post['id']) ?>"><?= esc($post['title']) ?></a></h2>
-                                <div class="post-content blog-post-body mb-3"><?= $post['content'] ?></div>
+                                <div class="post-content blog-post-body home-post-content mb-3"><?= $post['content'] ?></div>
                                 <div class="blog-post-meta text-muted small">
                                     <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'] ?? '')) ?></span>
                                     <span><i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">조회수 </span><?= number_format((int) ($post['views'] ?? 0)) ?></span>
@@ -36,5 +39,8 @@
         <?php endif; ?>
     </div>
 </section>
+
+<!-- 홈 하단 광고 -->
+<?= view('components/ad_slot', ['ads' => $homeBottomAds]) ?>
 
 <?= $this->endSection() ?>
