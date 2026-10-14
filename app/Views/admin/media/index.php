@@ -53,11 +53,27 @@
 <?php if ($totalPages > 1): ?>
 <nav class="mt-4 d-flex justify-content-center">
     <ul class="pagination pagination-sm">
-        <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+        <?php
+        // 현재 페이지가 속한 10개 단위 블록만 노출
+        $blockSize = 10;
+        $startPage = intdiv($currentPage - 1, $blockSize) * $blockSize + 1;
+        $endPage   = min($startPage + $blockSize - 1, $totalPages);
+        ?>
+        <?php if ($startPage > 1): ?>
+        <li class="page-item">
+            <a class="page-link" href="?page=<?= $startPage - 1 ?>">&laquo;</a>
+        </li>
+        <?php endif; ?>
+        <?php for ($p = $startPage; $p <= $endPage; $p++): ?>
         <li class="page-item <?= $p === $currentPage ? 'active' : '' ?>">
             <a class="page-link" href="?page=<?= $p ?>"><?= $p ?></a>
         </li>
         <?php endfor; ?>
+        <?php if ($endPage < $totalPages): ?>
+        <li class="page-item">
+            <a class="page-link" href="?page=<?= $endPage + 1 ?>">&raquo;</a>
+        </li>
+        <?php endif; ?>
     </ul>
 </nav>
 <?php endif; ?>
