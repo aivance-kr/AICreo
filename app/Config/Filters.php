@@ -33,12 +33,24 @@ class Filters extends BaseConfig
      */
     public array $globals = [
         'before' => [
-            'blockedIp',
             'redirect',
             'csrf'     => ['except' => ['api/*', 'board/image-upload', 'admin/media/upload']],
             'visitLog' => ['except' => VisitLogFilter::EXCLUDED_PATHS],
         ],
         'after' => ['toolbar'],
+    ];
+
+    /**
+     * 차단 IP 검사는 라우트에 매칭되지 않는 주소(스캐너의 /foo/bar.php 등)에도 적용돼야 하므로
+     * 라우트와 무관하게 항상 실행되는 required 필터에 둔다.
+     *
+     * @var array{before: list<string>, after: list<string>}
+     */
+    public array $required = [
+        'before' => [
+            'blockedIp',
+        ],
+        'after' => [],
     ];
 
     /**
