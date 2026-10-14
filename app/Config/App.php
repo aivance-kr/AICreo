@@ -212,6 +212,9 @@ class App extends BaseConfig
         parent::__construct();
 
         // 운영 서버는 Cloudflare 뒤에 있다. 엣지 IP 에서 온 요청만 CF-Connecting-IP 를 신뢰한다.
-        $this->proxyIPs = CloudflareIps::proxyMap();
+        // .env 등으로 proxyIPs 를 직접 지정했으면 그 값을 우선한다.
+        if ($this->proxyIPs === []) {
+            $this->proxyIPs = CloudflareIps::proxyMap();
+        }
     }
 }
