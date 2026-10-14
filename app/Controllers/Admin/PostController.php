@@ -53,6 +53,25 @@ class PostController extends BaseController
         return redirect()->back()->with('success', '삭제되었습니다.');
     }
 
+    public function bulkMove(): ResponseInterface|string
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', (array) $this->request->getPost('post_ids')),
+        )));
+        $targetId = (int) $this->request->getPost('target_board_id');
+
+        if ($ids === []) {
+            return redirect()->back()->with('error', '이동할 게시물을 선택해 주세요.');
+        }
+        if ($this->boardModel->find($targetId) === null) {
+            return redirect()->back()->with('error', '이동할 게시판을 선택해 주세요.');
+        }
+
+        $this->postModel->moveToBoard($ids, $targetId);
+
+        return redirect()->back()->with('success', count($ids) . '개 게시물을 이동했습니다.');
+    }
+
     public function toggle(int $id): ResponseInterface|string
     {
         $post = $this->postModel->find($id);

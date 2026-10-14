@@ -191,6 +191,17 @@ class PostModel extends Model
     }
 
     /**
+     * 게시물을 다른 게시판으로 일괄 이동한다. 카테고리는 게시판별이므로 비운다.
+     * update() 경유로 afterUpdate 훅(clearSitemapCache)이 실행된다.
+     *
+     * @param list<int> $ids
+     */
+    public function moveToBoard(array $ids, int $boardId): void
+    {
+        $this->update($ids, ['board_id' => $boardId, 'category_id' => null]);
+    }
+
+    /**
      * @return array{posts: list<array<string, mixed>>, total: int}
      */
     public function getAdminList(int $page, int $perPage, string $keyword = '', int $boardId = 0): array
