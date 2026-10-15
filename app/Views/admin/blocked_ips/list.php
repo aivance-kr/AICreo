@@ -6,9 +6,9 @@
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
     <form method="get" class="d-flex gap-2" role="search">
         <label class="visually-hidden" for="blocked-ip-search">IP 검색</label>
-        <input type="text" name="q" id="blocked-ip-search" class="form-control form-control-sm" placeholder="IP 검색"
-               value="<?= esc($keyword) ?>">
-        <button type="submit" class="btn btn-sm btn-primary">검색</button>
+        <input type="search" name="q" id="blocked-ip-search" class="form-control form-control-sm" placeholder="IP 검색"
+               value="<?= esc($keyword) ?>" autocomplete="off" spellcheck="false">
+        <button type="submit" class="btn btn-sm btn-secondary">검색</button>
         <?php if ($keyword !== ''): ?>
         <a href="<?= base_url('admin/blocked-ips') ?>" class="btn btn-sm btn-outline-secondary">초기화</a>
         <?php endif; ?>
@@ -30,7 +30,9 @@
             </thead>
             <tbody>
                 <?php if (empty($items)): ?>
-                <tr><td colspan="5" class="text-center text-muted py-4">차단된 IP 가 없습니다.</td></tr>
+                <tr><td colspan="5" class="text-center text-muted py-4">
+                    <?= $keyword !== '' ? '“' . esc($keyword) . '”와 일치하는 차단 IP 가 없습니다.' : '차단 중인 IP 가 없습니다.' ?>
+                </td></tr>
                 <?php endif; ?>
                 <?php foreach ($items as $item): ?>
                 <tr>
@@ -43,9 +45,10 @@
                     <td data-label="차단일" class="small text-muted"><?= esc(date('Y-m-d H:i', strtotime((string) $item['created_at']))) ?></td>
                     <td data-label="해제 예정" class="small text-muted"><?= esc(date('Y-m-d H:i', strtotime($item['blocked_until']))) ?></td>
                     <td data-label="" class="cell-actions">
-                        <form method="post" action="/admin/blocked-ips/<?= $item['id'] ?>/delete" class="d-inline">
+                        <form method="post" action="/admin/blocked-ips/<?= (int) $item['id'] ?>/delete" class="d-inline"
+                              onsubmit="return confirm('<?= esc($item['ip_address'], 'js') ?> 차단을 해제하시겠습니까?')">
                             <?= csrf_field() ?>
-                            <button type="submit" class="btn btn-sm btn-outline-danger">차단 해제</button>
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">차단 해제</button>
                         </form>
                     </td>
                 </tr>
@@ -56,12 +59,12 @@
 </div>
 
 <?php if ($totalPages > 1): ?>
-<nav class="mt-3">
+<nav class="mt-3" aria-label="차단 IP 페이지 이동">
     <ul class="pagination pagination-sm justify-content-center">
         <?php $qs = $keyword !== '' ? '&' . http_build_query(['q' => $keyword]) : ''; ?>
         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
         <li class="page-item <?= $i === $currentPage ? 'active' : '' ?>">
-            <a class="page-link" href="?page=<?= $i ?><?= $qs ?>"><?= $i ?></a>
+            <a class="page-link" href="?page=<?= $i ?><?= $qs ?>"<?= $i === $currentPage ? ' aria-current="page"' : '' ?>><?= $i ?></a>
         </li>
         <?php endfor; ?>
     </ul>
