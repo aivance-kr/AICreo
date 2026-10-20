@@ -31,6 +31,12 @@ final class PostHelperTest extends CIUnitTestCase
         $this->assertSame('가 · 나 다', post_excerpt('<p>가 &middot; 나&nbsp;다</p>', 50));
     }
 
+    public function testExcerptDoesNotRevealEncodedTags(): void
+    {
+        // 엔티티로 인코딩된 태그가 풀려 마크업으로 되살아나면 안 된다
+        $this->assertSame('경고 alert(1)x', post_excerpt('<p>경고 &lt;script&gt;alert(1)&lt;/script&gt;x</p>', 50));
+    }
+
     public function testExcerptTruncatesByCharacterCount(): void
     {
         $this->assertSame('가나다…', post_excerpt('가나다라마바사', 3));
