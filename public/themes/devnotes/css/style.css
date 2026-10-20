@@ -60,13 +60,13 @@ a { color: inherit; }
 .dn-lede { color: var(--text-muted); margin: 0 0 1.25rem; }
 .dn-post { border-top: 1px solid var(--border-subtle); }
 .dn-post a { color: inherit; display: block; padding: 1.4rem 0; text-decoration: none; }
-.dn-post h2 { font-size: 1.25rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.5; margin: .4rem 0 .3rem; }
+.dn-post h2 { font-size: var(--fs-list-title); font-weight: 700; letter-spacing: -.02em; line-height: 1.5; margin: .4rem 0 .3rem; }
 .dn-post a:hover h2 { color: var(--primary); }
-.dn-post p { color: var(--text-muted); font-size: .9375rem; margin: 0; }
+.dn-post p { color: var(--text-muted); font-size: var(--fs-summary); margin: 0; }
 .dn-tags { display: flex; font: .75rem var(--dn-mono); gap: .4rem; }
 .dn-tag { border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-muted); padding: 0 .5rem; }
 .dn-tag--key { border-color: rgb(255 176 32 / .45); color: var(--primary); }
-.dn-meta { color: var(--text-muted); display: block; font: .78rem var(--dn-mono); margin-top: .6rem; }
+.dn-meta { color: var(--text-muted); display: block; font: var(--fs-meta) var(--dn-mono); margin-top: .6rem; }
 .dn-list > .ad-unit { margin: .75rem 0; }
 
 /* 콘텐츠 뷰의 bg-white·bg-light 하드코딩을 다크 표면으로 */
