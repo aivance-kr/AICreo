@@ -25,7 +25,7 @@
         <?= view('components/ad_slot', ['ads' => $postTopAds]) ?>
 
         <div class="post-content board-post-content">
-            <?= $post['content'] ?>
+            <?= post_content_html($post['content']) ?>
         </div>
 
         <!-- 본문 하단 광고 -->
