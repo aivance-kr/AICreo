@@ -52,6 +52,7 @@ a { color: inherit; }
 .il-row h3 { font: 700 var(--fs-list-title)/1.45 var(--il-serif); margin: .15rem 0 .4rem; }
 .il-row p { color: var(--text-muted); font-size: var(--fs-summary); margin: 0 0 .4rem; }
 .il-row__img { aspect-ratio: 4/3; border: 1px solid var(--border-subtle); object-fit: cover; width: 100%; }
+.il-main .board-list-blog img, .il-main .board-list-gallery img { border: 1px solid var(--border-subtle); }
 .il-list { margin-top: 1.5rem; }
 @media (max-width: 575.98px) { .il-row a { gap: .9rem; } .il-row a:has(.il-row__img) { grid-template-columns: 1fr 104px; } .il-row p { display: none; } }
 
