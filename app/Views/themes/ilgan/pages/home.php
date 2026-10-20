@@ -12,7 +12,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
     <?php $lead = $latestBlogPosts[0]; $leadThumb = \App\Models\PostModel::extractThumbnail($lead['content']); ?>
     <article class="il-lead">
         <a href="<?= esc($postUrl($lead)) ?>">
-            <?php if ($leadThumb): ?><img class="il-lead__img" src="<?= esc($leadThumb, 'attr') ?>" alt="" loading="eager"><?php else: ?><div class="il-thumb" aria-hidden="true"></div><?php endif; ?>
+            <?php if ($leadThumb): ?><img class="il-lead__img" src="<?= esc($leadThumb, 'attr') ?>" alt="" loading="eager"><?php endif; ?>
             <span class="il-kicker"><?= esc($lead['board_name']) ?></span>
             <h2><?= esc($lead['title']) ?></h2>
             <p><?= esc(post_excerpt($lead['content'], 140)) ?></p>
@@ -33,7 +33,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
                     <p><?= esc(post_excerpt($post['content'], 90)) ?></p>
                     <span class="il-meta"><?= esc($author($post)) ?> · <time datetime="<?= esc($post['created_at']) ?>"><?= esc(substr((string) $post['created_at'], 0, 10)) ?></time> · <?= post_read_minutes($post['content']) ?>분</span>
                 </div>
-                <?php if ($thumb): ?><img class="il-row__img" src="<?= esc($thumb, 'attr') ?>" alt="" loading="lazy"><?php else: ?><div class="il-thumb il-thumb--sm" aria-hidden="true"></div><?php endif; ?>
+                <?php if ($thumb): ?><img class="il-row__img" src="<?= esc($thumb, 'attr') ?>" alt="" loading="lazy"><?php endif; ?>
             </a>
         </article>
         <?php if (in_array($i + 1, $feedAfter, true)): ?>
