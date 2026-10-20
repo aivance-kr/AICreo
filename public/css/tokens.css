@@ -221,11 +221,12 @@
     font-size: var(--fs-list-title);
     line-height: 1.45;
 }
-.board-list-blog p {
-    font-size: var(--fs-summary);
-}
 .board-list-blog .small {
     font-size: var(--fs-meta);
+}
+/* 요약 <p> 에도 Bootstrap .small 이 붙어 있어, 위 메타 규칙보다 구체적이어야 이긴다 */
+.board-list-blog p.small {
+    font-size: var(--fs-summary);
 }
 .board-list-gallery .small {
     font-size: 1rem;
