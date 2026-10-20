@@ -197,3 +197,29 @@
 .board-table > :not(caption) > * > * {
     padding-block: .5rem;
 }
+
+/* ─── 게시판 목록 글자 크기 — 모든 테마 공통 ───────────────
+ * 목록 글자가 메인(제목 1.25rem·요약 .9375rem·메타 .8125rem)과 상세 본문(1rem)보다
+ * 작아 보였다. 목록 3종(표·블로그형·갤러리)을 메인 기준으로 맞춘다.
+ */
+.board-table th,
+.board-table td {
+    font-size: 1rem;
+    vertical-align: middle;
+}
+.board-table th {
+    font-size: .9375rem;
+}
+.board-list-blog h2 {
+    font-size: 1.25rem;
+    line-height: 1.45;
+}
+.board-list-blog p {
+    font-size: .9375rem;
+}
+.board-list-blog .small {
+    font-size: .8125rem;
+}
+.board-list-gallery .small {
+    font-size: 1rem;
+}

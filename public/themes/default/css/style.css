@@ -68,12 +68,7 @@ body {
 /* ─── 게시판 ─────────────────────────────────────── */
 .board-table th {
     background: #f8f9fa;
-    font-size: .8rem;
     font-weight: 600;
-}
-.board-table td {
-    font-size: .875rem;
-    vertical-align: middle;
 }
 
 /* ─── 카드 공통 ──────────────────────────────────── */
