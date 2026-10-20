@@ -160,10 +160,6 @@ body {
 .post-content li > p:last-child {
     margin-bottom: 0;
 }
-.board-post-content,
-.home-post-content {
-    white-space: pre-line;
-}
 .board-post-content img,
 .home-post-content img {
     display: block;
