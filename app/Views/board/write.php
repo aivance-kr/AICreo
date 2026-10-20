@@ -149,6 +149,9 @@ tinymce.init({
     toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | removeformat | code',
     menubar: false,
     automatic_uploads: true,
+    // 상대 경로로 저장하면 글 보는 주소(/index.php/...)에 따라 이미지 경로가 어긋난다 — 루트 기준 절대 경로로 저장
+    relative_urls: false,
+    remove_script_host: true,
     images_upload_handler(blobInfo) {
         return new Promise((resolve, reject) => {
             const fd = new FormData();
