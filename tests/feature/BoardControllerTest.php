@@ -268,6 +268,23 @@ final class BoardControllerTest extends FeatureTestCase
         $this->assertSame(1, (new PostCommentModel())->where('post_id', $postId)->countAllResults());
     }
 
+    public function testGuestCommentAllowedWhenBoardWriteRequiresMember(): void
+    {
+        $postId = $this->guestCommentPostId();
+        (new BoardModel())->update($this->boardId('qna'), ['write_permission' => 'member']);
+
+        $this->withSession([
+            'guest_comment_captcha_' . $postId => $this->guestCommentCaptcha(5),
+        ])->post("board/qna/{$postId}/comment", [
+            'author_name'     => '비회원',
+            'author_password' => '1234',
+            'content'         => '글쓰기 member 게시판 비회원 댓글',
+            'captcha_answer'  => '5',
+        ]);
+
+        $this->assertSame(1, (new PostCommentModel())->where('post_id', $postId)->countAllResults());
+    }
+
     public function testViewShowsPreviousAndNextPostLinks(): void
     {
         $postModel = new PostModel();

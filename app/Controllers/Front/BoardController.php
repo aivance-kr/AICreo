@@ -407,7 +407,8 @@ class BoardController extends BaseController
     public function commentStore(string $boardSlug, int $postId): ResponseInterface|string
     {
         $board = $this->boardModel->getBySlug($boardSlug);
-        if (! $board || ! $this->checkPermission($board['write_permission'])) {
+        // 댓글은 글쓰기 권한이 아니라 읽기 권한을 따른다 (글쓰기 member 게시판도 비회원 댓글 허용)
+        if (! $board || ! $this->checkPermission($board['read_permission'])) {
             return redirect()->back()->with('error', '권한이 없습니다.');
         }
 
