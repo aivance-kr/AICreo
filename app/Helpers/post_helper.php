@@ -26,3 +26,20 @@ if (! function_exists('post_read_minutes')) {
         return max(1, (int) ceil(mb_strlen($text) / 500));
     }
 }
+
+if (! function_exists('post_content_html')) {
+    /**
+     * 게시글 본문의 업로드 파일 경로를 루트 기준 절대 경로(/uploads/...)로 보정한다.
+     *
+     * 에디터가 이미지를 상대 경로(../../uploads/...)로 저장하던 시절의 글은 /index.php/ 주소에서
+     * 열면 /index.php/uploads/... 로 해석돼 이미지가 깨진다. src·href 속성만 대상으로 한다.
+     */
+    function post_content_html(?string $html): string
+    {
+        return (string) preg_replace(
+            '~(\s(?:src|href)=["\']?)(?:/?(?:\.\./|\./)*)(?:index\.php/)?(uploads/)~i',
+            '$1/$2',
+            (string) $html,
+        );
+    }
+}
