@@ -59,9 +59,6 @@ body {
     max-width: 100%;
     height: auto;
 }
-.board-post-content {
-    white-space: pre-line;
-}
 .board-post-content img {
     display: block;
     margin-block: 1rem;
