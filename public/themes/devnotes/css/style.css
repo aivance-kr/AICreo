@@ -38,12 +38,12 @@ a { color: inherit; }
 .dn-rail__desc { color: var(--text-muted); font-size: .8125rem; margin: .4rem 0 1.25rem; }
 .dn-toggler { border-color: var(--border-subtle); display: none; }
 .dn-menu ul { list-style: none; margin: 0; padding: 0; }
-.dn-menu a, .dn-menu__label { border-radius: 6px; color: #c4cad4; display: block; font-size: .9rem; padding: .35rem .65rem; text-decoration: none; }
+.dn-menu a, .dn-menu__label { border-radius: 6px; color: #c4cad4; display: block; font-size: var(--fs-nav); padding: .35rem .65rem; text-decoration: none; }
 .dn-menu__label { color: var(--text-muted); font: 600 .6875rem var(--dn-mono); letter-spacing: .1em; margin-top: .9rem; }
 .dn-menu a:hover { background: #161b22; color: #fff; }
 .dn-menu a.is-active { background: rgb(255 176 32 / .14); color: var(--primary); }
 .dn-submenu { border-left: 1px solid var(--border-subtle); margin: .15rem 0 .4rem .65rem !important; }
-.dn-submenu a { font-size: .85rem; padding-left: .85rem; }
+.dn-submenu a { font-size: var(--fs-nav-sub); padding-left: .85rem; }
 .dn-account { border-top: 1px solid var(--border-subtle); display: flex; flex-wrap: wrap; font-size: .8125rem; gap: .5rem .9rem; margin-top: 1.5rem; padding-top: 1rem; }
 .dn-account a { color: var(--text-muted); text-decoration: none; }
 .dn-account a:hover { color: var(--primary); }
@@ -114,18 +114,19 @@ a { color: inherit; }
 .side-cats__title {
     border-bottom: 2px solid #e6e9ee;
     color: var(--text-strong);
-    font-size: .8125rem;
+    font-size: var(--fs-nav-label);
     font-weight: 700;
     letter-spacing: .06em;
     margin: 0 0 .25rem;
     padding-bottom: .5rem;
 }
-.side-cats__board { color: var(--text-muted); font-size: .8125rem; margin: 1rem 0 .25rem; }
+.side-cats__board { color: var(--text-muted); font-size: var(--fs-nav-label); margin: 1rem 0 .25rem; }
 .side-cats__list { list-style: none; margin: 0; padding: 0; }
 .side-cats__list a {
     border-bottom: 1px solid var(--border-subtle);
     color: var(--text-body);
     display: block;
+    font-size: var(--fs-nav);
     padding: .6rem 0;
     text-decoration: none;
 }
