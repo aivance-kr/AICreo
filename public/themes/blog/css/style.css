@@ -153,6 +153,13 @@ body {
     line-height: 1.8;
     overflow-wrap: break-word;
 }
+.post-content p,
+.post-content li > p {
+    margin-bottom: .75rem;
+}
+.post-content li > p:last-child {
+    margin-bottom: 0;
+}
 .board-post-content,
 .home-post-content {
     white-space: pre-line;
