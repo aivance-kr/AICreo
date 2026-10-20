@@ -46,7 +46,7 @@ class BoardController extends BaseController
             return redirect()->to('/auth/login')->with('error', '로그인이 필요합니다.');
         }
 
-        $page       = (int) ($this->request->getGet('page') ?? 1);
+        $page       = max(1, (int) ($this->request->getGet('page') ?? 1));
         $keyword    = $this->request->getGet('keyword');
         $type       = $this->request->getGet('type') ?? 'title';
         $categories = $this->categoryModel->getByBoard($board['id']);

@@ -172,7 +172,7 @@
 
 <!-- 페이지네이션 -->
 <?php
-$extraQs = ($keyword ? '&keyword=' . urlencode($keyword) . '&type=' . $searchType : '')
+$extraQs = ($keyword ? '&keyword=' . urlencode($keyword) . '&type=' . urlencode((string) $searchType) : '')
     . ($currentCategory ? '&category=' . $currentCategory : '');
 ?>
 <?php if ($totalPages > 1): ?>
@@ -186,18 +186,18 @@ $extraQs = ($keyword ? '&keyword=' . urlencode($keyword) . '&type=' . $searchTyp
         ?>
         <?php if ($startPage > 1): ?>
             <li class="page-item">
-                <a class="page-link" href="?page=<?= $startPage - 1 ?><?= $extraQs ?>" aria-label="이전 페이지 묶음">&laquo;</a>
+                <a class="page-link" href="?page=<?= $startPage - 1 ?><?= esc($extraQs, 'attr') ?>" aria-label="이전 페이지 묶음">&laquo;</a>
             </li>
         <?php endif; ?>
         <?php for ($p = $startPage; $p <= $endPage; $p++): ?>
             <li class="page-item <?= $p === $currentPage ? 'active' : '' ?>">
-                <a class="page-link" href="?page=<?= $p ?><?= $extraQs ?>"
+                <a class="page-link" href="?page=<?= $p ?><?= esc($extraQs, 'attr') ?>"
                    <?= $p === $currentPage ? 'aria-current="page"' : '' ?>><span class="visually-hidden">페이지 </span><?= $p ?></a>
             </li>
         <?php endfor; ?>
         <?php if ($endPage < $totalPages): ?>
             <li class="page-item">
-                <a class="page-link" href="?page=<?= $endPage + 1 ?><?= $extraQs ?>" aria-label="다음 페이지 묶음">&raquo;</a>
+                <a class="page-link" href="?page=<?= $endPage + 1 ?><?= esc($extraQs, 'attr') ?>" aria-label="다음 페이지 묶음">&raquo;</a>
             </li>
         <?php endif; ?>
     </ul>
