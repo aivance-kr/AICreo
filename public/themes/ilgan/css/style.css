@@ -41,20 +41,19 @@ a { color: inherit; }
 /* 홈 */
 .il-kicker { color: var(--primary); display: block; font-size: .75rem; font-weight: 700; letter-spacing: .04em; }
 .il-meta { color: var(--text-muted); font-size: var(--fs-meta); }
-.il-thumb { aspect-ratio: 21/9; background: repeating-linear-gradient(135deg, #e9ebef 0 14px, #f4f5f7 14px 28px); margin-bottom: .9rem; }
-.il-thumb--sm { aspect-ratio: 4/3; margin: 0; }
 .il-lead a, .il-row a { color: inherit; display: block; text-decoration: none; }
-.il-lead__img { aspect-ratio: 16/9; display: block; margin-bottom: .9rem; object-fit: cover; width: 100%; }
+.il-lead__img { aspect-ratio: 16/9; border: 1px solid var(--border-subtle); display: block; margin-bottom: .9rem; object-fit: cover; width: 100%; }
 .il-lead h2 { font: 900 clamp(1.7rem, 4vw, 2.5rem)/1.3 var(--il-serif); letter-spacing: -.03em; margin: .25rem 0 .6rem; }
 .il-lead p { color: var(--text-muted); margin: 0 0 .5rem; }
 .il-lead a:hover h2, .il-row a:hover h3 { color: var(--primary); }
-.il-row a { align-items: start; display: grid; gap: 1.25rem; grid-template-columns: 1fr 168px; }
+.il-row a { align-items: start; display: grid; gap: 1.25rem; }
+.il-row a:has(.il-row__img) { grid-template-columns: 1fr 168px; }
 .il-row { border-top: 1px solid var(--border-subtle); padding: 1.4rem 0; }
 .il-row h3 { font: 700 var(--fs-list-title)/1.45 var(--il-serif); margin: .15rem 0 .4rem; }
 .il-row p { color: var(--text-muted); font-size: var(--fs-summary); margin: 0 0 .4rem; }
-.il-row__img { aspect-ratio: 4/3; object-fit: cover; width: 100%; }
+.il-row__img { aspect-ratio: 4/3; border: 1px solid var(--border-subtle); object-fit: cover; width: 100%; }
 .il-list { margin-top: 1.5rem; }
-@media (max-width: 575.98px) { .il-row a { grid-template-columns: 1fr 104px; gap: .9rem; } .il-row p { display: none; } }
+@media (max-width: 575.98px) { .il-row a { gap: .9rem; } .il-row a:has(.il-row__img) { grid-template-columns: 1fr 104px; } .il-row p { display: none; } }
 
 /* 푸터 */
 .il-footer { border-top: 4px double var(--text-strong); color: var(--text-muted); font-size: .8125rem; margin-top: 2rem; padding: 1.75rem 0 2.5rem; }
