@@ -194,28 +194,6 @@
 }
 
 
-/* ─── 게시글 본문 단락 간격·표 높이 (#387) ─────────────────
- * 에디터 본문의 <p> 기본 여백(1rem)에 줄 간격이 겹쳐 단락이 벌어져 보였다.
- * 단락 여백을 줄이고, 본문 안 표는 셀 여백으로 행 높이를 맞춘다.
- */
-.post-content p,
-.post-content ul,
-.post-content ol,
-.post-content blockquote {
-    margin-block: 0 .5rem;
-}
-.post-content table {
-    width: 100%;
-    margin-block: .5rem;
-    border-collapse: collapse;
-}
-.post-content th,
-.post-content td {
-    padding: .4rem .65rem;
-    line-height: 1.5;
-    vertical-align: middle;
-    border: 1px solid var(--border-subtle);
-}
 .board-table > :not(caption) > * > * {
     padding-block: .5rem;
 }

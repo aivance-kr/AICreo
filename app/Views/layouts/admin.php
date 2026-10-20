@@ -22,7 +22,7 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
           integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
           integrity="sha384-QuGBSgV5Im3DzL2z+8Ko9/hqNy/N0O7zwvXAtfd1MvPKWa/UbeLV65cfm4BV5Wgq" crossorigin="anonymous">
-    <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="<?= asset_url('css/tokens.css') ?>">
     <style>
         body  { background: var(--surface-body); font-family: var(--font-sans); color: var(--text-body); }
 
