@@ -37,7 +37,7 @@ class FeedController extends BaseController
 
         foreach ($posts as $post) {
             $link    = base_url('board/' . $post['board_slug'] . '/' . $post['id']);
-            $excerpt = mb_substr(trim(strip_tags((string) $post['content'])), 0, 200);
+            $excerpt = post_excerpt($post['content'], 200);
             $pubDate = date('r', strtotime((string) $post['created_at']));
 
             $items .= "  <item>\n";

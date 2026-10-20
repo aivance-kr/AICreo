@@ -25,6 +25,12 @@ final class PostHelperTest extends CIUnitTestCase
         $this->assertSame('안녕 하세요 &', post_excerpt("<p>안녕\n  <b>하세요</b></p> &amp;", 50));
     }
 
+    public function testExcerptDecodesNamedEntities(): void
+    {
+        // 에디터가 저장한 &middot;·&nbsp; 가 목록에 글자 그대로 찍히지 않아야 한다
+        $this->assertSame('가 · 나 다', post_excerpt('<p>가 &middot; 나&nbsp;다</p>', 50));
+    }
+
     public function testExcerptTruncatesByCharacterCount(): void
     {
         $this->assertSame('가나다…', post_excerpt('가나다라마바사', 3));
