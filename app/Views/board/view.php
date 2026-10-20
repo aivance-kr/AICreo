@@ -10,7 +10,7 @@
 
 <div class="card mb-4">
     <div class="card-header bg-white">
-        <h1 class="h5 mb-1">
+        <h1 class="board-view-title fw-bold mb-1">
             <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
             <?= esc($post['title']) ?>
         </h1>

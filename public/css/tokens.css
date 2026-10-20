@@ -39,6 +39,8 @@
        본문(1rem)보다 요약이 작으면 읽기 힘들어 요약은 본문과 같고,
        메타(작성자·날짜)만 .875rem 으로 낮춘다. */
     --fs-list-title: 1.25rem;
+    /* 게시판 목록·상세 제목은 메뉴(.9375rem)와 같은 크기로 통일한다. 홈 목록 제목과는 별개. */
+    --fs-board-title: .9375rem;
     --fs-summary:    1rem;
     --fs-meta:       .875rem;
 
@@ -218,8 +220,11 @@
     font-size: var(--fs-meta);
 }
 .board-list-blog h2 {
-    font-size: var(--fs-list-title);
+    font-size: var(--fs-board-title);
     line-height: 1.45;
+}
+.board-view-title {
+    font-size: var(--fs-board-title);
 }
 .board-list-blog .small {
     font-size: var(--fs-meta);
