@@ -6,7 +6,7 @@
 .post-content {
     font-family: var(--font-sans, sans-serif);
     font-size: 1rem;
-    line-height: 1.6;
+    line-height: 1.5;
     color: var(--text-body, #212529);
     word-break: break-word;
 }
@@ -14,7 +14,7 @@
 .post-content ul,
 .post-content ol,
 .post-content blockquote {
-    margin-block: 0 .5rem;
+    margin-block: 0 .75rem;
 }
 .post-content h1,
 .post-content h2,

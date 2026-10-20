@@ -45,15 +45,20 @@ body {
 /* ─── 게시글 본문 ────────────────────────────────── */
 .post-content {
     min-height: 200px;
-    line-height: 1.8;
+    font-size: 1rem;
+    line-height: 1.5;
     overflow-wrap: break-word;
+}
+.post-content p,
+.post-content li > p {
+    margin-bottom: .75rem;
+}
+.post-content li > p:last-child {
+    margin-bottom: 0;
 }
 .post-content img {
     max-width: 100%;
     height: auto;
-}
-.board-post-content {
-    white-space: pre-line;
 }
 .board-post-content img {
     display: block;
