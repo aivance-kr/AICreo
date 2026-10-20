@@ -36,15 +36,16 @@ class FeedController extends BaseController
         $items = '';
 
         foreach ($posts as $post) {
-            $link    = base_url('board/' . $post['board_slug'] . '/' . $post['id']);
-            $excerpt = post_excerpt($post['content'], 200);
+            $link = base_url('board/' . $post['board_slug'] . '/' . $post['id']);
+            // 엔티티를 풀면 &#1; 같은 XML 금지 제어문자가 생겨 피드 전체가 깨진다 — 출력 전에 제거
+            $excerpt = (string) preg_replace('/[^\x{9}\x{A}\x{D}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', post_excerpt($post['content'], 200));
             $pubDate = date('r', strtotime((string) $post['created_at']));
 
             $items .= "  <item>\n";
             $items .= '    <title>' . htmlspecialchars((string) $post['title'], ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</title>\n";
             $items .= '    <link>' . htmlspecialchars($link, ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</link>\n";
             $items .= '    <guid>' . htmlspecialchars($link, ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</guid>\n";
-            $items .= '    <description>' . htmlspecialchars($excerpt, ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</description>\n";
+            $items .= '    <description>' . htmlspecialchars($excerpt, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "</description>\n";
             $items .= '    <pubDate>' . $pubDate . "</pubDate>\n";
             $items .= "  </item>\n";
         }
