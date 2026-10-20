@@ -35,6 +35,13 @@
     /* ─── 타이포 ────────────────────────────────────────── */
     --font-sans: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
 
+    /* 글 목록 역할별 크기 — 모든 테마(홈 목록·게시판 목록)가 같은 값을 쓴다.
+       본문(1rem)보다 요약이 작으면 읽기 힘들어 요약은 본문과 같고,
+       메타(작성자·날짜)만 .875rem 으로 낮춘다. */
+    --fs-list-title: 1.25rem;
+    --fs-summary:    1rem;
+    --fs-meta:       .875rem;
+
     /* ─── 레이아웃 ──────────────────────────────────────── */
     --sidebar-w: 240px;
 
@@ -208,17 +215,17 @@
     vertical-align: middle;
 }
 .board-table th {
-    font-size: .9375rem;
+    font-size: var(--fs-meta);
 }
 .board-list-blog h2 {
-    font-size: 1.25rem;
+    font-size: var(--fs-list-title);
     line-height: 1.45;
 }
 .board-list-blog p {
-    font-size: .9375rem;
+    font-size: var(--fs-summary);
 }
 .board-list-blog .small {
-    font-size: .8125rem;
+    font-size: var(--fs-meta);
 }
 .board-list-gallery .small {
     font-size: 1rem;
