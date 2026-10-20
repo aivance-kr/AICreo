@@ -163,7 +163,7 @@ class BoardController extends BaseController
             'jsonLd'              => $jsonLd,
             'page'                => [
                 'title'     => $post['title'],
-                'meta_desc' => mb_substr(trim(strip_tags((string) $post['content'])), 0, 150),
+                'meta_desc' => post_excerpt($post['content'], 150),
                 'canonical' => $canonical,
                 'noindex'   => $noindex,
             ],

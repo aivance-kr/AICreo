@@ -74,7 +74,7 @@
                 <?php if ($post['is_notice']): ?><span class="badge text-bg-warning mb-1">공지</span><?php endif; ?>
                 <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary mb-1"><?= esc($post['category_name']) ?></span><?php endif; ?>
                 <h2 class="h6 mb-1 text-dark"><?= esc($post['title']) ?><?php if ($post['is_secret']): ?> <i class="bi bi-lock-fill text-muted small" aria-hidden="true"></i><?php endif; ?></h2>
-                <p class="text-muted small mb-1"><?= esc(mb_substr(trim(strip_tags((string) $post['content'])), 0, 100)) ?></p>
+                <p class="text-muted small mb-1"><?= esc(post_excerpt($post['content'], 100)) ?></p>
                 <div class="text-muted small">
                     <span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
                     · <span><?= substr($post['created_at'], 0, 10) ?></span>
