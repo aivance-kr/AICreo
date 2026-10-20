@@ -30,8 +30,9 @@
           integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
           integrity="sha384-QuGBSgV5Im3DzL2z+8Ko9/hqNy/N0O7zwvXAtfd1MvPKWa/UbeLV65cfm4BV5Wgq" crossorigin="anonymous">
-    <link rel="stylesheet" href="/css/tokens.css">
-    <link rel="stylesheet" href="/themes/default/css/style.css?v=<?= filemtime(FCPATH . 'themes/default/css/style.css') ?>">
+    <link rel="stylesheet" href="<?= asset_url('css/tokens.css') ?>">
+    <link rel="stylesheet" href="<?= asset_url('css/post-content.css') ?>">
+    <link rel="stylesheet" href="<?= asset_url('themes/default/css/style.css') ?>">
     <?= $this->renderSection('head') ?>
 </head>
 <body>
