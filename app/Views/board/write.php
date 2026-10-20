@@ -148,6 +148,7 @@ tinymce.init({
     plugins: 'lists link image table code',
     toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | removeformat | code',
     menubar: false,
+    content_style: 'body { font-size: 1rem; line-height: 1.5; } p { margin: 0 0 .75rem; }',
     automatic_uploads: true,
     // 상대 경로로 저장하면 글 보는 주소(/index.php/...)에 따라 이미지 경로가 어긋난다 — 루트 기준 절대 경로로 저장
     relative_urls: false,
