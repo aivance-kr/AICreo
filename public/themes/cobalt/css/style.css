@@ -113,18 +113,19 @@ a { color: inherit; }
 .side-cats__title {
     border-bottom: 2px solid #101437;
     color: var(--text-strong);
-    font-size: .8125rem;
+    font-size: var(--fs-nav-label);
     font-weight: 700;
     letter-spacing: .06em;
     margin: 0 0 .25rem;
     padding-bottom: .5rem;
 }
-.side-cats__board { color: var(--text-muted); font-size: .8125rem; margin: 1rem 0 .25rem; }
+.side-cats__board { color: var(--text-muted); font-size: var(--fs-nav-label); margin: 1rem 0 .25rem; }
 .side-cats__list { list-style: none; margin: 0; padding: 0; }
 .side-cats__list a {
     border-bottom: 1px solid var(--border-subtle);
     color: var(--text-body);
     display: block;
+    font-size: var(--fs-nav);
     padding: .6rem 0;
     text-decoration: none;
 }

@@ -20,9 +20,9 @@
                         <div class="d-flex justify-content-between gap-3">
                             <div>
                                 <span class="badge text-bg-light mb-2"><?= esc($post['board_name']) ?></span>
-                                <h2 class="h5 mb-3"><a class="text-decoration-none" href="/board/<?= esc($post['board_slug']) ?>/<?= esc($post['id']) ?>"><?= esc($post['title']) ?></a></h2>
+                                <h2 class="fw-bold mb-2" style="font-size:var(--fs-list-title);line-height:1.45"><a class="text-decoration-none" href="/board/<?= esc($post['board_slug']) ?>/<?= esc($post['id']) ?>"><?= esc($post['title']) ?></a></h2>
                                 <div class="post-content blog-post-body home-post-content mb-3"><?= $post['content'] ?></div>
-                                <div class="blog-post-meta text-muted small">
+                                <div class="blog-post-meta text-muted" style="font-size:var(--fs-meta)">
                                     <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'] ?? '')) ?></span>
                                     <span><i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">조회수 </span><?= number_format((int) ($post['views'] ?? 0)) ?></span>
                                 </div>

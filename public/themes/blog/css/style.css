@@ -87,7 +87,7 @@ body {
 .blog-menu-label {
     color: var(--text-body);
     display: block;
-    font-size: 1rem;
+    font-size: var(--fs-nav);
     padding: .5rem .65rem;
     text-decoration: none;
 }
@@ -107,7 +107,7 @@ body {
 }
 
 .blog-submenu a {
-    font-size: .7rem;
+    font-size: var(--fs-nav-sub);
     padding-left: 1rem;
 }
 

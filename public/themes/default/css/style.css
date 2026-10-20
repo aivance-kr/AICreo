@@ -16,7 +16,7 @@ body {
 }
 .nav-link {
     font-weight: 500;
-    font-size: .9rem;
+    font-size: var(--fs-nav);
 }
 /* 현재 위치 표시 — aria-current 와 짝이 되는 시각 신호 */
 .navbar-nav .nav-link.active {
