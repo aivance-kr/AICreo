@@ -130,8 +130,9 @@ a { color: inherit; }
 .il-main .btn-primary { --bs-btn-color: #fff; --bs-btn-hover-color: #fff; --bs-btn-active-color: #fff; }
 .page-content img, .post-content img, .blog-post-body img { height: auto; max-width: 100%; }
 .post-content { font-size: 1.0625rem; line-height: 1.9; max-width: 46rem; overflow-wrap: break-word; }
+.post-content p, .post-content li > p { margin-bottom: .75rem; }
+.post-content li > p:last-child { margin-bottom: 0; }
 .post-content a { text-decoration: underline; text-underline-offset: .18em; }
-.board-post-content, .home-post-content { white-space: pre-line; }
 .board-post-content img, .home-post-content img { display: block; margin-block: 1rem; }
 .page-content { line-height: 1.85; }
 .il-empty { color: var(--text-muted); padding: 2rem 0; }
