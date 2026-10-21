@@ -12,6 +12,7 @@
     "require": {
         "php": "^8.5",
         "codeigniter4/framework": "^4.7",
+        "ezyang/htmlpurifier": "^4.19",
         "league/commonmark": "^2.10"
     },
     "require-dev": {
