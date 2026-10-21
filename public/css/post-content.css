@@ -47,7 +47,8 @@
     vertical-align: middle;
     border: 1px solid var(--border-subtle, #dee2e6);
 }
-.post-content pre {
+.post-content pre,
+.page-content pre {
     margin-block: .75rem;
     padding: .75rem 1rem;
     overflow-x: auto;
@@ -57,7 +58,8 @@
     border: 1px solid var(--border-subtle, #dee2e6);
     border-radius: .375rem;
 }
-.post-content pre code {
+.post-content pre code,
+.page-content pre code {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     white-space: pre;
 }
