@@ -113,3 +113,6 @@
 <?= view('components/banner_slot', ['banners' => $mainBotBanners]) ?>
 
 <?= $this->endSection() ?>
+<?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/code-highlight.js') ?>" defer></script>
+<?= $this->endSection() ?>
