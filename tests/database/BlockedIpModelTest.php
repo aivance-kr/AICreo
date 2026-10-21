@@ -29,6 +29,25 @@ final class BlockedIpModelTest extends DatabaseTestCase
         $this->assertSame(0, $model->countAllResults());
     }
 
+    public function testWhitelistedIpIsNeverBlocked(): void
+    {
+        putenv('security.ipWhitelist=9.9.9.9, 8.8.8.8');
+        $_ENV['security.ipWhitelist'] = '9.9.9.9, 8.8.8.8';
+
+        try {
+            $model = new BlockedIpModel();
+
+            $this->assertFalse($model->block('8.8.8.8', BlockedIpModel::REASON_AUTO));
+            $this->assertSame(0, $model->countAllResults());
+
+            $model->insert(['ip_address' => '9.9.9.9', 'reason' => BlockedIpModel::REASON_MANUAL, 'blocked_until' => '2999-01-01 00:00:00']);
+            $this->assertFalse($model->isBlocked('9.9.9.9'));
+        } finally {
+            putenv('security.ipWhitelist');
+            unset($_ENV['security.ipWhitelist']);
+        }
+    }
+
     public function testBlockingAgainExtendsInsteadOfDuplicating(): void
     {
         $model = new BlockedIpModel();
