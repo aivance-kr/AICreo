@@ -240,7 +240,24 @@ function renderMediaPickerPagination(data, focusCurrent) {
         return;
     }
 
-    for (let p = 1; p <= data.totalPages; p++) {
+    // 현재 페이지가 속한 10개 단위 블록만 노출
+    const blockSize = 10;
+    const startPage = Math.floor((data.currentPage - 1) / blockSize) * blockSize + 1;
+    const endPage   = Math.min(startPage + blockSize - 1, data.totalPages);
+
+    const addJump = (label, page, text) => {
+        const li = el('li', { class: 'page-item' });
+        const a  = el('a', { class: 'page-link', href: '#', 'data-page': String(page), 'aria-label': label });
+        a.appendChild(document.createTextNode(text));
+        li.appendChild(a);
+        mediaPickerPager.appendChild(li);
+    };
+
+    if (startPage > 1) {
+        addJump('이전 페이지 묶음', startPage - 1, '\u00ab');
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
         const isCurrent = p === data.currentPage;
         const li = el('li', { class: 'page-item' + (isCurrent ? ' active' : '') });
         const a  = el('a', { class: 'page-link', href: '#', 'data-page': String(p) });
@@ -253,6 +270,10 @@ function renderMediaPickerPagination(data, focusCurrent) {
 
         li.appendChild(a);
         mediaPickerPager.appendChild(li);
+    }
+
+    if (endPage < data.totalPages) {
+        addJump('다음 페이지 묶음', endPage + 1, '\u00bb');
     }
 
     // 페이지를 눌러 다시 그렸다면 초점이 사라진 요소에 남는다. 새 현재 페이지로 옮긴다.

@@ -99,11 +99,27 @@
         $qs = http_build_query(array_filter(['q' => $keyword, 'role' => $role, 'status' => $status]));
         $qs = $qs ? '&' . $qs : '';
         ?>
-        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+        <?php
+        // 현재 페이지가 속한 10개 단위 블록만 노출
+        $blockSize = 10;
+        $startPage = intdiv($currentPage - 1, $blockSize) * $blockSize + 1;
+        $endPage   = min($startPage + $blockSize - 1, $totalPages);
+        ?>
+        <?php if ($startPage > 1): ?>
+        <li class="page-item">
+            <a class="page-link" href="?page=<?= $startPage - 1 ?><?= $qs ?>" aria-label="이전 페이지 묶음">&laquo;</a>
+        </li>
+        <?php endif; ?>
+        <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
         <li class="page-item <?= $i === $currentPage ? 'active' : '' ?>">
             <a class="page-link" href="?page=<?= $i ?><?= $qs ?>"><?= $i ?></a>
         </li>
         <?php endfor; ?>
+        <?php if ($endPage < $totalPages): ?>
+        <li class="page-item">
+            <a class="page-link" href="?page=<?= $endPage + 1 ?><?= $qs ?>" aria-label="다음 페이지 묶음">&raquo;</a>
+        </li>
+        <?php endif; ?>
     </ul>
 </nav>
 <?php endif; ?>
