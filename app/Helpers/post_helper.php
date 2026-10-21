@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use App\Libraries\HtmlSanitizer;
 
 if (! function_exists('post_excerpt')) {
     /**
@@ -33,13 +34,14 @@ if (! function_exists('post_content_html')) {
      *
      * 에디터가 이미지를 상대 경로(../../uploads/...)로 저장하던 시절의 글은 /index.php/ 주소에서
      * 열면 /index.php/uploads/... 로 해석돼 이미지가 깨진다. src·href 속성만 대상으로 한다.
+     * 출력 직전에 허용목록 정화도 해, 과거에 저장된 위험한 HTML 도 무력화한다.
      */
     function post_content_html(?string $html): string
     {
         return (string) preg_replace(
             '~(\s(?:src|href)=["\']?)(?:/?(?:\.\./|\./)*)(?:index\.php/)?(uploads/)~i',
             '$1/$2',
-            (string) $html,
+            HtmlSanitizer::clean($html),
         );
     }
 }

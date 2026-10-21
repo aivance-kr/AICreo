@@ -4,6 +4,7 @@ namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
 use App\Libraries\FileUploader;
+use App\Libraries\HtmlSanitizer;
 use App\Libraries\Seo\JsonLdBuilder;
 use App\Models\AdModel;
 use App\Models\BoardCategoryModel;
@@ -625,25 +626,10 @@ class BoardController extends BaseController
     }
 
     /**
-     * 에디터 HTML에서 XSS 위험 패턴 제거
-     * 완전한 sanitize는 HTMLPurifier 도입 권장 (composer require ezyang/htmlpurifier)
+     * 에디터 HTML 을 허용목록 기반으로 정화한다
      */
     private function sanitizeContent(?string $html): string
     {
-        if ($html === null || $html === '') {
-            return '';
-        }
-
-        // <script> 블록 제거
-        $html = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $html);
-
-        // on* 이벤트 핸들러 속성 제거 (onclick, onload, onerror 등)
-        $html = preg_replace('/\s+on\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', (string) $html);
-
-        // javascript: / vbscript: / data: 링크 제거
-        $html = preg_replace('/\b(javascript|vbscript|data)\s*:/i', '', (string) $html);
-
-        // <iframe>, <object>, <embed>, <form> 태그 제거
-        return preg_replace('/<\/?(iframe|object|embed|form)\b[^>]*>/i', '', (string) $html);
+        return HtmlSanitizer::clean($html);
     }
 }
