@@ -47,7 +47,8 @@
     vertical-align: middle;
     border: 1px solid var(--border-subtle, #dee2e6);
 }
-.post-content pre {
+.post-content pre,
+.page-content pre {
     margin-block: .75rem;
     padding: .75rem 1rem;
     overflow-x: auto;
@@ -57,7 +58,18 @@
     border: 1px solid var(--border-subtle, #dee2e6);
     border-radius: .375rem;
 }
-.post-content pre code {
+.post-content pre code,
+.page-content pre code {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     white-space: pre;
+}
+/* Prism 테마가 pre 배경을 덮어쓰지 않도록 우리 박스 스타일을 유지 */
+.post-content pre[class*="language-"],
+.page-content pre[class*="language-"] {
+    background: var(--surface-muted, #f6f8fa);
+    text-shadow: none;
+}
+.post-content code[class*="language-"],
+.page-content code[class*="language-"] {
+    text-shadow: none;
 }

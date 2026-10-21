@@ -202,6 +202,7 @@
 
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/code-highlight.js') ?>" defer></script>
 <script>
 const guestModal = document.getElementById('guestModal');
 guestModal.addEventListener('show.bs.modal', function(e) {
