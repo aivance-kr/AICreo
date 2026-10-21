@@ -6,6 +6,7 @@ namespace App\Libraries;
 
 use HTMLPurifier;
 use HTMLPurifier_Config;
+use Throwable;
 
 /**
  * 에디터 HTML 허용목록(allowlist) 정화.
@@ -48,14 +49,16 @@ final class HtmlSanitizer
             return self::$purifier;
         }
 
-        $cacheDir = WRITEPATH . 'cache/htmlpurifier';
-        if (! is_dir($cacheDir)) {
-            mkdir($cacheDir, 0775, true);
-        }
-
         $config = HTMLPurifier_Config::createDefault();
         $config->set('Core.Encoding', 'UTF-8');
-        $config->set('Cache.SerializerPath', $cacheDir);
+
+        // 캐시 디렉터리를 쓸 수 없는 서버(웹 서버 사용자 ≠ 배포 사용자)에서도 500 이 나지 않도록 캐시 없이 동작한다
+        $cacheDir = self::writableCacheDir();
+        if ($cacheDir !== null) {
+            $config->set('Cache.SerializerPath', $cacheDir);
+        } else {
+            $config->set('Cache.DefinitionImpl', null);
+        }
         $config->set('HTML.Allowed', self::ALLOWED);
         $config->set('Attr.AllowedClasses', self::CODE_CLASSES);
         $config->set('Attr.AllowedFrameTargets', ['_blank']);
@@ -65,5 +68,20 @@ final class HtmlSanitizer
         $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'tel' => true]);
 
         return self::$purifier = new HTMLPurifier($config);
+    }
+
+    private static function writableCacheDir(): ?string
+    {
+        $dir = WRITEPATH . 'cache/htmlpurifier';
+
+        try {
+            if (! is_dir($dir)) {
+                mkdir($dir, 0775, true);
+            }
+        } catch (Throwable) {
+            return null;
+        }
+
+        return is_dir($dir) && is_writable($dir) ? $dir : null;
     }
 }
