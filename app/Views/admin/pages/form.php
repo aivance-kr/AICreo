@@ -73,8 +73,8 @@ tinymce.init({
     language: 'ko_KR',
     language_url: 'https://cdn.jsdelivr.net/npm/tinymce-i18n@latest/langs6/ko_KR.js',
     height: 400,
-    plugins: 'lists link image table code',
-    toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image | code',
+    plugins: 'lists link image table code codesample',
+    toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image | codesample code',
     images_upload_url: '/admin/media/upload',
     automatic_uploads: true,
 });

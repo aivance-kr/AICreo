@@ -47,3 +47,17 @@
     vertical-align: middle;
     border: 1px solid var(--border-subtle, #dee2e6);
 }
+.post-content pre {
+    margin-block: .75rem;
+    padding: .75rem 1rem;
+    overflow-x: auto;
+    font-size: .875rem;
+    line-height: 1.55;
+    background: var(--surface-muted, #f6f8fa);
+    border: 1px solid var(--border-subtle, #dee2e6);
+    border-radius: .375rem;
+}
+.post-content pre code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre;
+}
