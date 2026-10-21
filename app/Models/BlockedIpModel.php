@@ -23,11 +23,11 @@ class BlockedIpModel extends Model
 
     /**
      * IP 를 BLOCK_DAYS 일간 차단한다. 이미 등록된 IP 는 차단 기간만 새로 늘린다.
-     * Cloudflare 엣지 IP 는 정상 방문자까지 막으므로 차단하지 않고 false 를 돌려준다.
+     * Cloudflare 엣지 IP 와 화이트리스트 IP 는 차단하지 않고 false 를 돌려준다.
      */
     public function block(string $ipAddress, string $reason): bool
     {
-        if (CloudflareIps::contains($ipAddress)) {
+        if (CloudflareIps::contains($ipAddress) || self::isWhitelisted($ipAddress)) {
             return false;
         }
 
@@ -45,8 +45,22 @@ class BlockedIpModel extends Model
         return true;
     }
 
+    /**
+     * `.env` 의 `security.ipWhitelist`(쉼표 구분)에 든 IP 는 차단 대상에서 제외한다.
+     */
+    public static function isWhitelisted(string $ipAddress): bool
+    {
+        $list = array_map('trim', explode(',', (string) env('security.ipWhitelist', '')));
+
+        return in_array($ipAddress, $list, true);
+    }
+
     public function isBlocked(string $ipAddress): bool
     {
+        if (self::isWhitelisted($ipAddress)) {
+            return false;
+        }
+
         return $this->where('ip_address', $ipAddress)
             ->where('blocked_until >', Time::now()->toDateTimeString())
             ->countAllResults() > 0;
