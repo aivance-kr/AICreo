@@ -49,6 +49,11 @@ final class HtmlSanitizer
             return self::$purifier;
         }
 
+        // 운영 서버의 opcache 가 배포 전 composer 오토로더를 들고 있으면 새 패키지를 못 찾으므로 직접 불러온다
+        if (! class_exists(HTMLPurifier_Config::class)) {
+            require_once ROOTPATH . 'vendor/ezyang/htmlpurifier/library/HTMLPurifier.auto.php';
+        }
+
         $config = HTMLPurifier_Config::createDefault();
         $config->set('Core.Encoding', 'UTF-8');
 
