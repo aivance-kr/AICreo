@@ -88,7 +88,8 @@ class App extends BaseConfig
     | DO NOT CHANGE THIS UNLESS YOU FULLY UNDERSTAND THE REPERCUSSIONS!!
     |
     */
-    public string $permittedURIChars = 'a-z 0-9~%.:_\-';
+    // 한글 파일명(옛 업로드 썸네일 등) 요청이 400 으로 떨어지지 않게 한글을 허용한다.
+    public string $permittedURIChars = 'a-z 0-9~%.:_\-\p{Hangul}';
 
     /**
      * --------------------------------------------------------------------------
