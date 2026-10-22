@@ -220,6 +220,7 @@ class BoardController extends BaseController
             'user_id'     => session()->get('user_id'),
             'title'       => $this->request->getPost('title'),
             'content'     => $this->sanitizeContent($this->request->getPost('content')),
+            'tags'        => PostModel::normalizeTags($this->request->getPost('tags')),
             'author_name' => $isGuest
                             ? $this->request->getPost('author_name')
                             : session()->get('user_nickname'),
@@ -338,6 +339,7 @@ class BoardController extends BaseController
             'category_id' => $this->resolveCategoryId($board['id'], $this->request->getPost('category_id')),
             'title'       => $this->request->getPost('title'),
             'content'     => $this->sanitizeContent($this->request->getPost('content')),
+            'tags'        => PostModel::normalizeTags($this->request->getPost('tags')),
             'is_notice'   => $this->getUserRole() === 'admin' ? (int) $this->request->getPost('is_notice') : $post['is_notice'],
             'is_secret'   => (int) $this->request->getPost('is_secret'),
         ]);

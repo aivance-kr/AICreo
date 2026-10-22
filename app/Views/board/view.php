@@ -43,6 +43,13 @@ ob_start();
                 <?= $postActions ?>
             </div>
         </div>
+        <?php $postTags = \App\Models\PostModel::splitTags($post['tags'] ?? null); ?>
+        <?php if ($postTags !== []): ?>
+        <div class="mb-1">
+            <span class="visually-hidden">태그</span>
+            <?php foreach ($postTags as $tag): ?><a href="/board/<?= esc($board['slug']) ?>?type=tag&amp;keyword=<?= urlencode($tag) ?>" class="badge text-bg-light border text-decoration-none">#<?= esc($tag) ?></a> <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
         <div class="d-flex gap-3 text-muted small">
             <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span> <?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
             <span><i class="bi bi-clock" aria-hidden="true"></i><span class="visually-hidden">작성일 </span> <?= $post['created_at'] ?></span>

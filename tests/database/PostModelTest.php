@@ -207,6 +207,18 @@ final class PostModelTest extends DatabaseTestCase
         $this->assertSame(1, $result['total']);
     }
 
+    public function testSearchByTagMatchesExactTagOnly(): void
+    {
+        $this->makePost(['title' => '일치', 'tags' => 'php,CI4']);
+        $this->makePost(['title' => '부분일치', 'tags' => 'php8,ci45']);
+        $this->makePost(['title' => '없음']);
+
+        $result = $this->model->search($this->boardId, 'ci4', 'tag', 1, 10);
+
+        $this->assertSame(['일치'], array_column($result['posts'], 'title'));
+        $this->assertSame(1, $result['total']);
+    }
+
     public function testGetAdminListIncludesHiddenPosts(): void
     {
         $this->makePost(['title' => '노출 글']);

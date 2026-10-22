@@ -47,6 +47,7 @@
         <option value="title"   <?= $searchType === 'title'   ? 'selected' : '' ?>>제목</option>
         <option value="content" <?= $searchType === 'content' ? 'selected' : '' ?>>내용</option>
         <option value="all"     <?= $searchType === 'all'     ? 'selected' : '' ?>>제목+내용</option>
+        <option value="tag"     <?= $searchType === 'tag'     ? 'selected' : '' ?>>태그</option>
     </select>
     <label class="visually-hidden" for="search-keyword">검색어</label>
     <input type="text" name="keyword" id="search-keyword" class="form-control form-control-sm flex-grow-1 w-auto" value="<?= esc($keyword ?? '') ?>" placeholder="검색어">
