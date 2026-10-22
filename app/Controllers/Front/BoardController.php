@@ -228,6 +228,8 @@ class BoardController extends BaseController
             'ip_address' => $this->request->getIPAddress(),
         ];
 
+        $data['tags'] = $this->resolveTags($this->request->getPost('tags'), $data['title'], $data['content']);
+
         if ($isGuest) {
             $data['author_password'] = password_hash($this->request->getPost('author_password'), PASSWORD_DEFAULT);
         }
@@ -241,8 +243,6 @@ class BoardController extends BaseController
                 return redirect()->back()->withInput()->with('errors', $fileErrors);
             }
         }
-
-        $data['tags'] = $this->extractTags($data['title'], $data['content']);
 
         $postId = $this->postModel->insert($data);
 
@@ -343,7 +343,7 @@ class BoardController extends BaseController
             'category_id' => $this->resolveCategoryId($board['id'], $this->request->getPost('category_id')),
             'title'       => $title,
             'content'     => $content,
-            'tags'        => $this->extractTags($title, $content, $post['tags'] ?? null),
+            'tags'        => $this->resolveTags($this->request->getPost('tags'), $title, $content),
             'is_notice'   => $this->getUserRole() === 'admin' ? (int) $this->request->getPost('is_notice') : $post['is_notice'],
             'is_secret'   => (int) $this->request->getPost('is_secret'),
         ]);
@@ -577,14 +577,13 @@ class BoardController extends BaseController
 
     /** 게시글 저장용 category_id 정규화 — 해당 게시판 소속의 활성 카테고리가 아니면 null. */
     /**
-     * 제목·본문에서 AI 로 태그를 뽑아 쉼표 문자열로 돌려준다.
-     * 추출 실패(키 없음·API 오류)면 $fallback(수정 시 기존 태그)을 유지한다.
+     * 입력한 태그를 정리해 돌려주고, 비어 있으면 제목·본문에서 Groq 로 자동 추출한다.
+     * 추출 실패(키 없음·API 오류)면 null.
      */
-    private function extractTags(string $title, string $content, ?string $fallback = null): ?string
+    private function resolveTags(?string $input, string $title, string $content): ?string
     {
-        $tags = service('groqTags')->extract($title, $content);
-
-        return $tags === [] ? $fallback : implode(',', $tags);
+        return PostModel::normalizeTags($input)
+            ?? PostModel::normalizeTags(implode(',', service('groqTags')->extract($title, $content)));
     }
 
     private function resolveCategoryId(int $boardId, ?string $rawCategoryId): ?int
