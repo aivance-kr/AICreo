@@ -189,6 +189,39 @@ final class BoardControllerTest extends FeatureTestCase
         $this->assertSame(1, (int) $postModel->find($postId)['views']);
     }
 
+    public function testShortUrlRedirectsToPostView(): void
+    {
+        $postId = (int) (new PostModel())->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '짧은 주소 글',
+            'content'     => '본문',
+            'author_name' => '작성자',
+        ]);
+
+        $this->get((string) $postId)->assertRedirectTo("/board/qna/{$postId}");
+    }
+
+    public function testShortUrlForMissingPostThrowsNotFound(): void
+    {
+        $this->expectException(PageNotFoundException::class);
+        $this->get('99999999');
+    }
+
+    public function testViewShowsShortUrlShareButton(): void
+    {
+        $postId = (int) (new PostModel())->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '공유 글',
+            'content'     => '본문',
+            'author_name' => '작성자',
+        ]);
+
+        $result = $this->get("board/qna/{$postId}");
+
+        $result->assertStatus(200);
+        $result->assertSee('share-btn');
+    }
+
     public function testViewUsesDedicatedContentLayoutClass(): void
     {
         $postModel = new PostModel();
