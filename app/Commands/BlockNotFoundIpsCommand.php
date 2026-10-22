@@ -11,12 +11,12 @@ use CodeIgniter\CLI\CLI;
 use CodeIgniter\I18n\Time;
 
 /**
- * 최근 24시간 방문 로그에서 1시간 안에 존재하지 않는 주소로 3회 이상 접속한 IP 를 30일간 차단한다.
- * 만료된 차단도 함께 정리한다. 하루 한 번 크론으로 실행한다.
+ * 최근 2시간 방문 로그에서 1시간 안에 존재하지 않는 주소로 3회 이상 접속한 IP 를 30일간 차단한다.
+ * 만료된 차단도 함께 정리한다. 1시간에 한 번 크론으로 실행한다.
  */
 class BlockNotFoundIpsCommand extends BaseCommand
 {
-    private const LOOKBACK_HOURS = 24;
+    private const LOOKBACK_HOURS = 2;
     private const THRESHOLD      = 3;
     private const WINDOW_SECONDS = 3600;
 
