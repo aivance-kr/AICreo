@@ -228,7 +228,7 @@ class BoardController extends BaseController
             'ip_address' => $this->request->getIPAddress(),
         ];
 
-        $data['tags'] = $this->resolveTags($this->request->getPost('tags'), $data['title'], $data['content']);
+        $data['tags'] = $this->resolveTags($this->request->getPost('tags'), $data['title'], $data['content'], $board, (bool) $data['is_secret']);
 
         if ($isGuest) {
             $data['author_password'] = password_hash($this->request->getPost('author_password'), PASSWORD_DEFAULT);
@@ -323,7 +323,7 @@ class BoardController extends BaseController
         $board = $this->boardModel->getBySlug($boardSlug);
         $post  = $this->postModel->find($postId);
 
-        if (! $board || ! $post || ! $this->canEditPost($post)) {
+        if (! $board || ! $post || (int) $post['board_id'] !== (int) $board['id'] || ! $this->canEditPost($post)) {
             return redirect()->back()->with('error', '권한이 없습니다.');
         }
 
@@ -343,7 +343,7 @@ class BoardController extends BaseController
             'category_id' => $this->resolveCategoryId($board['id'], $this->request->getPost('category_id')),
             'title'       => $title,
             'content'     => $content,
-            'tags'        => $this->resolveTags($this->request->getPost('tags'), $title, $content),
+            'tags'        => $this->resolveTags($this->request->getPost('tags'), $title, $content, $board, (bool) $this->request->getPost('is_secret')),
             'is_notice'   => $this->getUserRole() === 'admin' ? (int) $this->request->getPost('is_notice') : $post['is_notice'],
             'is_secret'   => (int) $this->request->getPost('is_secret'),
         ]);
@@ -575,17 +575,26 @@ class BoardController extends BaseController
 
     // ─── 내부 헬퍼 ──────────────────────────────────────────────────────────
 
-    /** 게시글 저장용 category_id 정규화 — 해당 게시판 소속의 활성 카테고리가 아니면 null. */
     /**
      * 입력한 태그를 정리해 돌려주고, 비어 있으면 제목·본문에서 Groq 로 자동 추출한다.
-     * 추출 실패(키 없음·API 오류)면 null.
+     * 외부 전송이므로 공개글(비밀글 아님 · guest 열람 게시판)을 로그인 사용자가 쓸 때만 호출한다
+     * (비회원 쓰기의 비용 증폭 방지). 추출 실패·미사용이면 null.
+     *
+     * @param array<string, mixed> $board
      */
-    private function resolveTags(?string $input, string $title, string $content): ?string
+    private function resolveTags(?string $input, string $title, string $content, array $board, bool $isSecret): ?string
     {
-        return PostModel::normalizeTags($input)
-            ?? PostModel::normalizeTags(implode(',', service('groqTags')->extract($title, $content)));
+        $tags = PostModel::normalizeTags($input);
+        if ($tags !== null || $isSecret || $board['read_permission'] !== 'guest' || ! session()->get('user_id')) {
+            return $tags;
+        }
+
+        return PostModel::normalizeTags(implode(',', service('groqTags')->extract($title, $content)));
     }
 
+    /**
+     * 게시글 저장용 category_id 정규화 — 해당 게시판 소속의 활성 카테고리가 아니면 null.
+     */
     private function resolveCategoryId(int $boardId, ?string $rawCategoryId): ?int
     {
         $categoryId = (int) $rawCategoryId;

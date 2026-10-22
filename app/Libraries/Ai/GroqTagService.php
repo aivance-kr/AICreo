@@ -20,6 +20,7 @@ class GroqTagService
     private const MAX_TAGS      = 5;
     private const MAX_TAG_LEN   = 30;
     private const MAX_INPUT_LEN = 3000;
+    private const MAX_TITLE_LEN = 255;
 
     private string $apiKey;
     private string $model;
@@ -32,7 +33,7 @@ class GroqTagService
     public function __construct(?string $apiKey = null, ?string $model = null, ?Closure $http = null)
     {
         $this->apiKey = $apiKey ?? (string) env('GROQ_API_KEY', '');
-        $this->model  = $model ?? (string) env('GROQ_MODEL', 'llama-3.3-70b-versatile');
+        $this->model  = $model ?? (string) env('GROQ_MODEL', 'openai/gpt-oss-120b');
         $this->http   = $http;
     }
 
@@ -48,7 +49,8 @@ class GroqTagService
      */
     public function extract(string $title, string $contentHtml): array
     {
-        $text = $this->plainText($contentHtml);
+        $title = mb_substr(trim($title), 0, self::MAX_TITLE_LEN);
+        $text  = $this->plainText($contentHtml);
         if (! $this->isEnabled() || ($title === '' && $text === '')) {
             return [];
         }
@@ -93,7 +95,7 @@ class GroqTagService
     {
         $response = service('curlrequest')->post(self::ENDPOINT, $options);
         if ($response->getStatusCode() !== 200) {
-            log_message('error', 'Groq 태그 추출 HTTP ' . $response->getStatusCode());
+            log_message('error', 'Groq 태그 추출 HTTP ' . $response->getStatusCode() . ' ' . mb_substr($response->getBody(), 0, 300));
 
             return '';
         }

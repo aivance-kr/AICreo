@@ -86,7 +86,7 @@
                 <input type="text" name="tags" id="post-tags" class="form-control"
                        maxlength="500" aria-describedby="post-tags-help"
                        value="<?= esc(old('tags', $post['tags'] ?? '')) ?>">
-                <div id="post-tags-help" class="form-text">쉼표(,)로 구분 · 최대 <?= \App\Models\PostModel::MAX_TAGS ?>개 · 비워두면 본문으로 AI가 자동 추출</div>
+                <div id="post-tags-help" class="form-text">쉼표(,)로 구분 · 최대 <?= \App\Models\PostModel::MAX_TAGS ?>개 · 로그인 후 공개글은 비워두면 본문으로 AI가 자동 추출</div>
             </div>
 
             <div class="mb-3">
