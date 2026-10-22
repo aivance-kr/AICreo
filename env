@@ -88,4 +88,4 @@ app.baseURL = 'http://creo.test/'
 
 # Groq 글 태그 자동 추출. 키 설정 시 글 작성/수정할 때 본문으로 태그를 뽑는다(미설정이면 비활성).
 # GROQ_API_KEY = ''
-# GROQ_MODEL = 'llama-3.3-70b-versatile'
+# GROQ_MODEL = 'openai/gpt-oss-120b'
