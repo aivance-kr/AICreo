@@ -57,6 +57,14 @@ ob_start();
             <?= post_content_html($post['content']) ?>
         </div>
 
+        <?php if (! empty($post['tags'])): ?>
+        <div class="mt-3 d-flex flex-wrap gap-1" aria-label="태그">
+            <?php foreach (explode(',', $post['tags']) as $tag): ?>
+            <span class="badge text-bg-light border">#<?= esc($tag) ?></span>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
         <!-- 본문 하단 광고 -->
         <?= view('components/ad_slot', ['ads' => $postBotAds]) ?>
 

@@ -242,6 +242,8 @@ class BoardController extends BaseController
             }
         }
 
+        $data['tags'] = $this->extractTags($data['title'], $data['content']);
+
         $postId = $this->postModel->insert($data);
 
         // 파일 저장 (검증 통과 후 디스크 오류 등 예외 대비 롤백)
@@ -334,10 +336,14 @@ class BoardController extends BaseController
             }
         }
 
+        $title   = (string) $this->request->getPost('title');
+        $content = $this->sanitizeContent($this->request->getPost('content'));
+
         $this->postModel->update($postId, [
             'category_id' => $this->resolveCategoryId($board['id'], $this->request->getPost('category_id')),
-            'title'       => $this->request->getPost('title'),
-            'content'     => $this->sanitizeContent($this->request->getPost('content')),
+            'title'       => $title,
+            'content'     => $content,
+            'tags'        => $this->extractTags($title, $content, $post['tags'] ?? null),
             'is_notice'   => $this->getUserRole() === 'admin' ? (int) $this->request->getPost('is_notice') : $post['is_notice'],
             'is_secret'   => (int) $this->request->getPost('is_secret'),
         ]);
@@ -569,9 +575,18 @@ class BoardController extends BaseController
 
     // ─── 내부 헬퍼 ──────────────────────────────────────────────────────────
 
+    /** 게시글 저장용 category_id 정규화 — 해당 게시판 소속의 활성 카테고리가 아니면 null. */
     /**
-     * 게시글 저장용 category_id 정규화 — 해당 게시판 소속의 활성 카테고리가 아니면 null.
+     * 제목·본문에서 AI 로 태그를 뽑아 쉼표 문자열로 돌려준다.
+     * 추출 실패(키 없음·API 오류)면 $fallback(수정 시 기존 태그)을 유지한다.
      */
+    private function extractTags(string $title, string $content, ?string $fallback = null): ?string
+    {
+        $tags = service('groqTags')->extract($title, $content);
+
+        return $tags === [] ? $fallback : implode(',', $tags);
+    }
+
     private function resolveCategoryId(int $boardId, ?string $rawCategoryId): ?int
     {
         $categoryId = (int) $rawCategoryId;
