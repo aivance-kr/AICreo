@@ -46,7 +46,7 @@ composer rector:dry  # preview code modernization (optional), apply with compose
 | During development | Run `composer analyse` + `composer test` as needed |
 | Before push (every branch except `main`) | `composer ci` is required — don't push if it fails. Enforced by the `pre-push` hook |
 | `feature → dev` PR | No CI. Code review only — the `composer ci` from the last push is the only safeguard |
-| `dev → main` PR | Full GitHub Actions (`quality` job: cs, analyse, test on PHP 8.5/MySQL 8.0 + `coverage` job: report in the job summary) |
+| `dev → main` PR | Full GitHub Actions (single `quality` job: cs, analyse, test with coverage on PHP 8.5/MySQL 8.0; coverage report goes to the job summary) |
 
 #### Deployment runs automatically on a `main` push
 
@@ -58,7 +58,7 @@ Since `feature → dev` goes through a GitHub Squash merge, neither the local ho
 
 #### Runs on a self-hosted runner
 
-Runs not on GitHub-hosted runners (`ubuntu-latest`) but on **a single self-hosted Linux (X64) runner belonging to the `aivance-kr` organization** (migrated to the org in 2026-09 · from a personal macOS runner to an org Linux runner). `quality`, `coverage`, `notify`, and `deploy` jobs all use `runs-on: [self-hosted, Linux, X64]`.
+Runs not on GitHub-hosted runners (`ubuntu-latest`) but on **a single self-hosted Linux (X64) runner belonging to the `aivance-kr` organization** (migrated to the org in 2026-09 · from a personal macOS runner to an org Linux runner). `quality`, `notify`, and `deploy` jobs all use `runs-on: [self-hosted, Linux, X64]`.
 
 > ⚠️ Actual infra details like the runner's registration location and service name aren't reflected in this doc yet — whoever set up the org runner should fill in this section with the real values (registration path, service management approach, etc.).
 
