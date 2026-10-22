@@ -4,8 +4,10 @@ namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
 use App\Libraries\Seo\JsonLdBuilder;
+use App\Models\BoardModel;
 use App\Models\InquiryModel;
 use App\Models\PageModel;
+use App\Models\PostModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
@@ -24,9 +26,21 @@ class PageController extends BaseController
      * 슬러그 기반 동적 페이지 라우팅
      * layout 값에 따라 다른 뷰 파일 렌더링
      */
-    public function show(string $slug): string
+    public function show(string $slug): ResponseInterface|string
     {
         $page = $this->pageModel->getBySlug($slug);
+
+        // 짧은 주소(/{게시글ID}) — 같은 슬러그의 페이지가 없을 때만 게시글로 보낸다.
+        // 게시글이 다른 게시판으로 옮겨져도 깨지지 않게 301이 아닌 302를 쓴다.
+        if (! $page && ctype_digit($slug)) {
+            $post  = (new PostModel())->find((int) $slug);
+            $board = $post ? (new BoardModel())->find($post['board_id']) : null;
+
+            // 비공개·비밀·숨김 글은 ID 존재 여부가 드러나지 않도록 리다이렉트하지 않고 404로 둔다.
+            if ($board && $board['is_active'] && $post['is_active'] && ! $post['is_secret'] && $board['read_permission'] === 'guest') {
+                return redirect()->to('/board/' . $board['slug'] . '/' . $post['id']);
+            }
+        }
 
         if (! $page) {
             throw PageNotFoundException::forPageNotFound();

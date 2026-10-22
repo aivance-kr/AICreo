@@ -161,6 +161,7 @@ class BoardController extends BaseController
             'postTopAds'          => $adModel->getActiveByPosition('post_top'),
             'postBotAds'          => $adModel->getActiveByPosition('post_bottom'),
             'guestCommentCaptcha' => $guestCommentCaptcha,
+            'shortUrl'            => base_url((string) $post['id']),
             'jsonLd'              => $jsonLd,
             'page'                => [
                 'title'     => $post['title'],
