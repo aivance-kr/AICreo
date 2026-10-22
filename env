@@ -89,3 +89,6 @@ app.baseURL = 'http://creo.test/'
 # Groq 글 태그 자동 추출. 키 설정 시 글 작성/수정할 때 본문으로 태그를 뽑는다(미설정이면 비활성).
 # GROQ_API_KEY = ''
 # GROQ_MODEL = 'openai/gpt-oss-120b'
+
+# 문의 접수 Slack 알림 (Incoming Webhook — 비워두면 알림만 건너뜀)
+SLACK_INQUIRY_WEBHOOK_URL = ''
