@@ -201,6 +201,20 @@ final class BoardControllerTest extends FeatureTestCase
         $this->get((string) $postId)->assertRedirectTo("/board/qna/{$postId}");
     }
 
+    public function testShortUrlForSecretPostThrowsNotFound(): void
+    {
+        $postId = (int) (new PostModel())->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '비밀 글',
+            'content'     => '본문',
+            'author_name' => '작성자',
+            'is_secret'   => 1,
+        ]);
+
+        $this->expectException(PageNotFoundException::class);
+        $this->get((string) $postId);
+    }
+
     public function testShortUrlForMissingPostThrowsNotFound(): void
     {
         $this->expectException(PageNotFoundException::class);

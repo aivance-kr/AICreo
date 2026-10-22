@@ -36,7 +36,8 @@ class PageController extends BaseController
             $post  = (new PostModel())->find((int) $slug);
             $board = $post ? (new BoardModel())->find($post['board_id']) : null;
 
-            if ($board && $board['is_active']) {
+            // 비공개·비밀·숨김 글은 ID 존재 여부가 드러나지 않도록 리다이렉트하지 않고 404로 둔다.
+            if ($board && $board['is_active'] && $post['is_active'] && ! $post['is_secret'] && $board['read_permission'] === 'guest') {
                 return redirect()->to('/board/' . $board['slug'] . '/' . $post['id']);
             }
         }
