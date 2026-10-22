@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Libraries\Ai\GroqTagService;
 use App\Libraries\Seo\IndexNowService;
 use App\Libraries\ThemeView;
 use CodeIgniter\Config\BaseService;
@@ -10,6 +11,15 @@ use Config\View as ViewConfig;
 
 class Services extends BaseService
 {
+    public static function groqTags(bool $getShared = true): GroqTagService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('groqTags');
+        }
+
+        return new GroqTagService();
+    }
+
     public static function indexnow(bool $getShared = true): IndexNowService
     {
         if ($getShared) {
