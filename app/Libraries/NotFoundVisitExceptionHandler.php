@@ -28,6 +28,21 @@ final class NotFoundVisitExceptionHandler implements ExceptionHandlerInterface
      */
     private const SCANNER_PATH_PATTERN = '~(\.(php\d?|phtml|phar|asp|aspx|jsp|cgi)$|(^|/)(wp-admin|wp-login|xmlrpc|\.env|\.git)(/|\.|$))~i';
 
+    /**
+     * 다른 사이트가 방문자 브라우저로 `<img src=".../x.php">` 를 불러 방문자 IP 를 차단시키는 걸 막는다.
+     * 브라우저 요청은 Referer 또는 Sec-Fetch-Site 헤더가 붙지만 스캐너 도구는 보내지 않는다.
+     * 관리자 경로는 대상에서 뺀다. 조건에서 빠진 요청은 일배치(3회 404)가 처리한다.
+     */
+    private static function shouldBlock(IncomingRequest $request): bool
+    {
+        $path = $request->getPath();
+
+        return self::isScannerPath($path)
+            && ! fnmatch('admin/*', trim($path, '/'))
+            && $request->getHeaderLine('Referer') === ''
+            && $request->getHeaderLine('Sec-Fetch-Site') === '';
+    }
+
     public static function isScannerPath(string $path): bool
     {
         return preg_match(self::SCANNER_PATH_PATTERN, trim($path, '/')) === 1;
@@ -45,7 +60,7 @@ final class NotFoundVisitExceptionHandler implements ExceptionHandlerInterface
         int $exitCode,
     ): void {
         if ($statusCode === 404 && $request instanceof IncomingRequest) {
-            if (self::isScannerPath($request->getPath())) {
+            if (self::shouldBlock($request)) {
                 (new BlockedIpModel())->block($request->getIPAddress(), BlockedIpModel::REASON_AUTO);
             }
 
