@@ -129,7 +129,7 @@ jobs:
         run: |
           php --version
           composer --version
-          php -r '$required = ["intl", "mbstring", "mysqli"]; foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
+          php -r '$required = ["intl", "mbstring", "mysqli"]; if (!extension_loaded("xdebug") && !extension_loaded("pcov")) { fwrite(STDERR, "커버리지 드라이버(xdebug/pcov)가 없습니다.\n"); exit(1); } foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3
@@ -140,134 +140,19 @@ jobs:
       - name: Static analysis (PHPStan)
         run: composer analyse
 
-      - name: Tests (PHPUnit)
-        run: composer test
-
-      - name: 컨테이너 정리
-        if: always()
-        # -v 를 빼면 컨테이너만 지워지고 /var/lib/mysql 익명 볼륨이 남는다.
-        # 매 실행마다 수백 MB 씩 쌓여 결국 러너의 Docker 디스크가 가득 차고,
-        # MySQL 이 "No space left on device" 로 기동조차 못 하게 된다.
-        run: |
-          docker rm -f -v ci-mysql-${{ github.run_id }} 2>/dev/null || true
-          docker network disconnect -f ci-net-${{ github.run_id }} "$(hostname)" 2>/dev/null || true
-          docker network rm ci-net-${{ github.run_id }} 2>/dev/null || true
-
-  coverage:
-    name: 커버리지 리포트
-    # quality 잡과 동일한 이유(포트 충돌 회피)로 MySQL을 직접 기동한다.
-    runs-on: [self-hosted, Linux, X64, docker]
-    # CI 자체가 dev → main 배포 PR 에서만 도므로 quality 잡과 함께 항상 실행된다.
-    # 커버리지 결과는 job summary에서 확인한다.
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: 테스트용 .env 작성
-        # quality 잡과 동일한 이유 (composer 스크립트 경유 시 점 포함 env 키 유실).
-        run: |
-          cat > .env <<'ENVEOF'
-          database.tests.hostname = ci-mysql-coverage-${{ github.run_id }}
-          database.tests.database = ci4_agency_test
-          database.tests.username = root
-          database.tests.password = root
-          database.tests.DBDriver = MySQLi
-          database.tests.port = 3306
-          ENVEOF
-
-      - name: MySQL 컨테이너 기동
-        run: |
-          docker rm -f ci-mysql-coverage-${{ github.run_id }} 2>/dev/null || true
-          # 러너가 도커 컨테이너라 호스트에 게시한 포트(127.0.0.1)에는 닿지 못한다
-          # ("Connection refused"). 실행별 전용 네트워크에 러너와 MySQL 을 같이 붙이고
-          # 컨테이너 이름으로 접속한다 — 호스트 포트를 쓰지 않아 잡끼리 겹치지 않는다.
-          docker network create ci-net-coverage-${{ github.run_id }}
-          docker network connect ci-net-coverage-${{ github.run_id }} "$(hostname)"
-          docker run -d --name ci-mysql-coverage-${{ github.run_id }} \
-            -e MYSQL_ROOT_PASSWORD=root \
-            -e MYSQL_DATABASE=ci4_agency_test \
-            --network ci-net-coverage-${{ github.run_id }} \
-            --tmpfs /var/lib/mysql \
-            mysql:8.0 \
-            --innodb-flush-log-at-trx-commit=0 \
-            --innodb-flush-method=nosync \
-            --sync-binlog=0 \
-            --innodb-redo-log-capacity=536870912
-          # 포트 바인딩 실패를 조용히 넘기지 않는다 — 컨테이너가 살아있는지 먼저 본다.
-          sleep 2
-          if [ "$(docker inspect -f '{{.State.Running}}' ci-mysql-coverage-${{ github.run_id }})" != "true" ]; then
-            echo "::error::MySQL 컨테이너가 기동 직후 종료됐습니다 (네트워크/이미지 문제 가능성)"
-            docker logs ci-mysql-coverage-${{ github.run_id }} 2>&1 | tail -20
-            exit 1
-          fi
-          # quality 잡과 동일한 이유 — 실제 인증 쿼리가 성공할 때까지 재시도.
-          ready=0
-          for i in $(seq 1 60); do
-            docker exec ci-mysql-coverage-${{ github.run_id }} mysql -uroot -proot -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && { ready=1; break; }
-            sleep 1
-          done
-          if [ "$ready" != "1" ]; then
-            echo "::error::MySQL 이 60초 안에 준비되지 않았습니다"
-            docker logs ci-mysql-coverage-${{ github.run_id }} 2>&1 | tail -20
-            exit 1
-          fi
-
-      - name: PHP 8.5+ 보장 (러너 이미지 편차 대응)
-        run: |
-          APT="sudo apt-get -o DPkg::Lock::Timeout=300"
-          php_ok() { command -v php >/dev/null && php -r 'exit(version_compare(PHP_VERSION, "8.5", ">=") ? 0 : 1);'; }
-          # 조직 러너 이미지가 제각각이다 — ondrej PPA 가 붙은 러너는 php-cli 가 8.5 지만,
-          # 네이티브 Ubuntu 24.04 러너(runner-03)는 8.3.6 이라 composer.json 요구를 못 채워
-          # composer install 이 실패했다. 8.5 미만이면 PPA 로 8.5 를 설치해 기본 php 로 지정한다.
-          # (Ubuntu 26.04 러너는 네이티브가 8.5 라 이 분기를 타지 않는다.)
-          if ! php_ok; then
-            $APT update -qq
-            command -v php >/dev/null || $APT install -y --no-install-recommends php-cli
-            if ! php_ok; then
-              $APT install -y --no-install-recommends software-properties-common
-              sudo add-apt-repository -y ppa:ondrej/php
-              $APT update -qq
-              $APT install -y --no-install-recommends php8.5-cli
-              sudo update-alternatives --set php /usr/bin/php8.5
-            fi
-          fi
-          # 확장은 지금 PATH 의 php 버전에 맞춰 버전 명시 패키지로, 없는 것만 설치한다
-          # (버전 없는 php-intl 등은 다른 버전을 끌어와 쓰는 php 에 안 붙을 수 있다).
-          V="$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')"
-          MISSING=""
-          for item in mbstring:mbstring intl:intl mysql:mysqli xml:dom curl:curl zip:zip sqlite3:sqlite3; do
-            php -m | grep -qix "${item#*:}" || MISSING="$MISSING php${V}-${item%%:*}"
-          done
-          # 커버리지 드라이버(pcov/xdebug)가 없으면 phpunit 이 경고 → failOnWarning 으로 실패한다.
-          php -m | grep -qiE '^(pcov|xdebug)$' || MISSING="$MISSING php${V}-xdebug"
-          if [ -n "$MISSING" ]; then
-            echo "설치 필요:$MISSING"
-            $APT update -qq
-            $APT install -y --no-install-recommends $MISSING
-          fi
-          command -v composer >/dev/null || $APT install -y --no-install-recommends composer
-          php -v
-          composer --version
-
-      - name: PHP 및 커버리지 확장 확인
-        run: |
-          php --version
-          composer --version
-          php -r '$required = ["intl", "mbstring", "mysqli", "xdebug"]; foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
-
-      - name: Install dependencies
-        uses: ramsey/composer-install@v3
-
-      - name: Tests with coverage
+      - name: Tests (PHPUnit + 커버리지)
+        # 테스트를 한 번만 돌리면서 커버리지도 같이 뽑는다 (예전엔 별도 coverage 잡이 스위트를 또 돌렸다).
+        # phpunit.xml 의 XDEBUG_MODE=coverage 는 확장 로딩 모드가 아니라 phpunit env 라서
+        # xdebug 가 러너 쉘에서 coverage 모드로 뜨도록 여기서도 지정한다.
         run: |
           mkdir -p build
-          XDEBUG_MODE=coverage vendor/bin/phpunit \
+          # xdebug 모드를 ini 인자로 직접 못 박는다 (env 만으로는 수집이 안 된 정황이 있었다).
+          php -d xdebug.mode=coverage vendor/bin/phpunit \
             --coverage-text=build/coverage.txt \
             --coverage-cobertura=build/cobertura.xml
+          # 원인 추적용 — 리포트 파일 상태와 앞부분을 로그에도 남긴다.
+          ls -la build
+          head -n 12 build/coverage.txt
 
       - name: Append coverage to job summary
         if: always()
@@ -289,14 +174,14 @@ jobs:
         # 매 실행마다 수백 MB 씩 쌓여 결국 러너의 Docker 디스크가 가득 차고,
         # MySQL 이 "No space left on device" 로 기동조차 못 하게 된다.
         run: |
-          docker rm -f -v ci-mysql-coverage-${{ github.run_id }} 2>/dev/null || true
-          docker network disconnect -f ci-net-coverage-${{ github.run_id }} "$(hostname)" 2>/dev/null || true
-          docker network rm ci-net-coverage-${{ github.run_id }} 2>/dev/null || true
+          docker rm -f -v ci-mysql-${{ github.run_id }} 2>/dev/null || true
+          docker network disconnect -f ci-net-${{ github.run_id }} "$(hostname)" 2>/dev/null || true
+          docker network rm ci-net-${{ github.run_id }} 2>/dev/null || true
 
   notify:
     name: Slack 알림
     runs-on: [self-hosted, Linux, X64, docker]
-    needs: [quality, coverage]
+    needs: [quality]
     if: always()
 
     steps:
@@ -306,6 +191,6 @@ jobs:
       - name: Slack 알림 전송
         uses: ./.github/actions/slack-notify
         with:
-          status: ${{ (needs.quality.result == 'success' && needs.coverage.result == 'success') && 'success' || 'failure' }}
+          status: ${{ needs.quality.result == 'success' && 'success' || 'failure' }}
           title: CI
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
