@@ -47,7 +47,7 @@ ob_start();
         <?php if ($postTags !== []): ?>
         <div class="mb-1">
             <span class="visually-hidden">태그</span>
-            <?php foreach ($postTags as $tag): ?><span class="badge text-bg-light border">#<?= esc($tag) ?></span> <?php endforeach; ?>
+            <?php foreach ($postTags as $tag): ?><a href="/board/<?= esc($board['slug']) ?>?type=tag&amp;keyword=<?= urlencode($tag) ?>" class="badge text-bg-light border text-decoration-none">#<?= esc($tag) ?></a> <?php endforeach; ?>
         </div>
         <?php endif; ?>
         <div class="d-flex gap-3 text-muted small">

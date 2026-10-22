@@ -277,6 +277,9 @@ class PostModel extends Model
 
         if ($type === 'title') {
             $builder->like('posts.title', $keyword);
+        } elseif ($type === 'tag') {
+            // 태그는 쉼표 구분 저장 — 정확히 일치하는 태그만 (태그 자체에는 쉼표가 없다)
+            $builder->where('FIND_IN_SET(' . $this->db->escape($keyword) . ', posts.tags) >', 0, false);
         } elseif ($type === 'content') {
             $builder->like('posts.content', $keyword);
         } else {
