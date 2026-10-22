@@ -6,12 +6,15 @@ use CodeIgniter\Model;
 
 class PostModel extends Model
 {
+    public const MAX_TAGS       = 10;
+    public const MAX_TAG_LENGTH = 30;
+
     protected $table          = 'posts';
     protected $primaryKey     = 'id';
     protected $useTimestamps  = true;
     protected $useSoftDeletes = true;
     protected $allowedFields  = [
-        'board_id', 'category_id', 'user_id', 'title', 'content',
+        'board_id', 'category_id', 'user_id', 'title', 'content', 'tags',
         'author_name', 'author_password',
         'is_notice', 'is_secret', 'is_active', 'ip_address',
         'views', 'wp_post_id', 'created_at', 'updated_at',
@@ -71,6 +74,34 @@ class PostModel extends Model
         }
 
         return $m[1] !== '' ? $m[1] : (($m[2] ?? '') !== '' ? $m[2] : ($m[3] ?? ''));
+    }
+
+    /**
+     * 입력 태그 문자열(쉼표 구분)을 정리한다 — 공백 정리·'#' 제거·중복 제거·개수/길이 제한.
+     * 결과가 없으면 null.
+     */
+    public static function normalizeTags(?string $raw): ?string
+    {
+        $tags = [];
+
+        foreach (explode(',', (string) $raw) as $part) {
+            $tag = mb_substr(trim(ltrim(trim($part), '#')), 0, self::MAX_TAG_LENGTH);
+            if ($tag !== '' && ! in_array(mb_strtolower($tag), array_map('mb_strtolower', $tags), true)) {
+                $tags[] = $tag;
+            }
+        }
+
+        return $tags === [] ? null : implode(',', array_slice($tags, 0, self::MAX_TAGS));
+    }
+
+    /**
+     * 저장된 태그 문자열을 배열로 푼다.
+     *
+     * @return list<string>
+     */
+    public static function splitTags(?string $tags): array
+    {
+        return $tags === null || $tags === '' ? [] : explode(',', $tags);
     }
 
     /**

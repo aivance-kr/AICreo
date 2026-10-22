@@ -82,6 +82,14 @@
             </div>
 
             <div class="mb-3">
+                <label class="form-label" for="post-tags">태그</label>
+                <input type="text" name="tags" id="post-tags" class="form-control"
+                       maxlength="500" aria-describedby="post-tags-help"
+                       value="<?= esc(old('tags', $post['tags'] ?? '')) ?>">
+                <div id="post-tags-help" class="form-text">쉼표(,)로 구분 · 최대 <?= \App\Models\PostModel::MAX_TAGS ?>개</div>
+            </div>
+
+            <div class="mb-3">
                 <label class="form-label" for="content-editor">내용</label>
                 <textarea name="content" id="content-editor" class="form-control" rows="12"><?= old('content', $post['content'] ?? '') ?></textarea>
             </div>

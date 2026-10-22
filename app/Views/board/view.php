@@ -14,6 +14,13 @@
             <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
             <?= esc($post['title']) ?>
         </h1>
+        <?php $postTags = \App\Models\PostModel::splitTags($post['tags'] ?? null); ?>
+        <?php if ($postTags !== []): ?>
+        <div class="mb-1">
+            <span class="visually-hidden">태그</span>
+            <?php foreach ($postTags as $tag): ?><span class="badge text-bg-light border">#<?= esc($tag) ?></span> <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
         <div class="d-flex gap-3 text-muted small">
             <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span> <?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
             <span><i class="bi bi-clock" aria-hidden="true"></i><span class="visually-hidden">작성일 </span> <?= $post['created_at'] ?></span>
