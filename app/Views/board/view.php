@@ -2,6 +2,27 @@
 <?= $this->section('content') ?>
 
 <div class="container py-4">
+<?php
+$userId  = session()->get('user_id');
+$role    = session()->get('user_role') ?? 'guest';
+$canEdit = $role === 'admin' || ($userId && $post['user_id'] == $userId);
+$postBase = '/board/' . esc($board['slug']) . '/' . $post['id'];
+ob_start();
+?>
+<?php if ($canEdit): ?>
+    <a href="<?= $postBase ?>/edit" class="btn btn-sm btn-outline-secondary">수정</a>
+    <form method="post" action="<?= $postBase ?>/delete"
+          onsubmit="return confirm('이 게시글을 삭제하시겠습니까? 되돌릴 수 없습니다.')">
+        <?= csrf_field() ?>
+        <button class="btn btn-sm btn-outline-danger">삭제</button>
+    </form>
+<?php elseif (! $userId && $post['author_password']): ?>
+    <!-- 비회원 수정/삭제: 비밀번호 입력 모달 -->
+    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#guestModal" data-action="edit">수정</button>
+    <button class="btn btn-sm btn-outline-danger"    data-bs-toggle="modal" data-bs-target="#guestModal" data-action="delete">삭제</button>
+<?php endif; ?>
+<?php $postActions = ob_get_clean(); ?>
+
 <div class="mb-2">
     <a href="/board/<?= esc($board['slug']) ?>" class="text-decoration-none text-muted small">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= esc($board['name']) ?> 목록
@@ -10,10 +31,18 @@
 
 <div class="card mb-4">
     <div class="card-header bg-white">
-        <h1 class="board-view-title fw-bold mb-1">
-            <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
-            <?= esc($post['title']) ?>
-        </h1>
+        <div class="d-flex justify-content-between align-items-start gap-3">
+            <h1 class="board-view-title fw-bold mb-1">
+                <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
+                <?= esc($post['title']) ?>
+            </h1>
+            <div class="d-flex gap-2 flex-shrink-0">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="share-btn" data-url="<?= esc($shortUrl, 'attr') ?>">
+                    <i class="bi bi-link-45deg" aria-hidden="true"></i> 주소 복사
+                </button>
+                <?= $postActions ?>
+            </div>
+        </div>
         <div class="d-flex gap-3 text-muted small">
             <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span> <?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
             <span><i class="bi bi-clock" aria-hidden="true"></i><span class="visually-hidden">작성일 </span> <?= $post['created_at'] ?></span>
@@ -70,23 +99,7 @@
 
     <!-- 수정/삭제 버튼 -->
     <div class="card-footer bg-white d-flex gap-2 justify-content-end">
-        <?php
-        $userId = session()->get('user_id');
-        $role   = session()->get('user_role') ?? 'guest';
-        $canEdit = $role === 'admin' || ($userId && $post['user_id'] == $userId);
-        ?>
-        <?php if ($canEdit): ?>
-            <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/edit" class="btn btn-sm btn-outline-secondary">수정</a>
-            <form method="post" action="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/delete"
-                  onsubmit="return confirm('이 게시글을 삭제하시겠습니까? 되돌릴 수 없습니다.')">
-                <?= csrf_field() ?>
-                <button class="btn btn-sm btn-outline-danger">삭제</button>
-            </form>
-        <?php elseif (!$userId && $post['author_password']): ?>
-            <!-- 비회원 수정/삭제: 비밀번호 입력 모달 -->
-            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#guestModal" data-action="edit">수정</button>
-            <button class="btn btn-sm btn-outline-danger"    data-bs-toggle="modal" data-bs-target="#guestModal" data-action="delete">삭제</button>
-        <?php endif; ?>
+        <?= $postActions ?>
     </div>
 </div>
 
@@ -204,6 +217,15 @@
 <?= $this->section('scripts') ?>
 <script src="<?= asset_url('js/code-highlight.js') ?>" defer></script>
 <script>
+document.getElementById('share-btn').addEventListener('click', async function() {
+    const btn = this;
+    try {
+        await navigator.clipboard.writeText(btn.dataset.url);
+        btn.textContent = '복사됨';
+    } catch (e) {
+        window.prompt('주소를 복사하세요', btn.dataset.url);
+    }
+});
 const guestModal = document.getElementById('guestModal');
 guestModal.addEventListener('show.bs.modal', function(e) {
     const action = e.relatedTarget.dataset.action;
