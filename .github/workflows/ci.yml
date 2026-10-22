@@ -146,9 +146,13 @@ jobs:
         # xdebug 가 러너 쉘에서 coverage 모드로 뜨도록 여기서도 지정한다.
         run: |
           mkdir -p build
-          XDEBUG_MODE=coverage vendor/bin/phpunit \
+          # xdebug 모드를 ini 인자로 직접 못 박는다 (env 만으로는 수집이 안 된 정황이 있었다).
+          php -d xdebug.mode=coverage vendor/bin/phpunit \
             --coverage-text=build/coverage.txt \
             --coverage-cobertura=build/cobertura.xml
+          # 원인 추적용 — 리포트 파일 상태와 앞부분을 로그에도 남긴다.
+          ls -la build
+          head -n 12 build/coverage.txt
 
       - name: Append coverage to job summary
         if: always()
