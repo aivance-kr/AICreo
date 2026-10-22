@@ -127,4 +127,12 @@ class SeoHelper
             </script>
             HTML;
     }
+
+    /**
+     * 관리자가 등록한 <head> 삽입 코드(애드센스 자동광고 등). 관리자 입력이므로 그대로 출력한다.
+     */
+    public function headScript(): string
+    {
+        return trim((string) ($this->settings['head_code'] ?? ''));
+    }
 }

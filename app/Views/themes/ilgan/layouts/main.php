@@ -7,6 +7,7 @@
     $seo = new \App\Libraries\SeoHelper($settings);
     echo $seo->render($page ?? null);
     echo $seo->gaScript();
+    echo $seo->headScript();
 
     // JSON-LD (GEO): 전 페이지 공통 Organization·WebSite + 페이지별 그래프
     $ld     = new \App\Libraries\Seo\JsonLdBuilder();
