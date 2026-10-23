@@ -4,6 +4,7 @@ namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
 use App\Libraries\Seo\JsonLdBuilder;
+use App\Libraries\SlackInquiryNotifier;
 use App\Models\BoardModel;
 use App\Models\InquiryModel;
 use App\Models\PageModel;
@@ -75,7 +76,7 @@ class PageController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        (new InquiryModel())->insert([
+        $inquiryId = (int) (new InquiryModel())->insert([
             'name'       => $this->request->getPost('name'),
             'email'      => $this->request->getPost('email'),
             'phone'      => $this->request->getPost('phone'),
@@ -83,6 +84,16 @@ class PageController extends BaseController
             'message'    => $this->request->getPost('message'),
             'ip_address' => $this->request->getIPAddress(),
         ]);
+
+        // 운영 채널 Slack 알림 (실패해도 접수에는 영향 없음)
+        SlackInquiryNotifier::fromEnv('AiCreo')->notify($inquiryId, [
+            '이름'      => (string) $this->request->getPost('name'),
+            '이메일'    => (string) $this->request->getPost('email'),
+            '연락처'    => (string) $this->request->getPost('phone'),
+            '제목'      => (string) $this->request->getPost('subject'),
+            '접수 시각' => date('Y-m-d H:i:s'),
+            '요청 IP'   => $this->request->getIPAddress(),
+        ], (string) $this->request->getPost('message'), base_url('admin/inquiries/' . $inquiryId));
 
         // 클라이언트 이메일 발송 (설정에서 수신 이메일 읽기)
         $this->sendInquiryEmail();
