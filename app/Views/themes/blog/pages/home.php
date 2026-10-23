@@ -1,6 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
+<?= view('components/search_form', ['keyword' => '']) ?>
+
 <!-- 홈 상단 광고 -->
 <?= view('components/ad_slot', ['ads' => $homeTopAds]) ?>
 

@@ -16,6 +16,7 @@ $routes->get('llms.txt', 'Front\LlmsController::index');
 $routes->get('indexnow-key.txt', 'Front\IndexNowController::key');
 $routes->get('feed', 'Front\FeedController::index');
 $routes->get('rss', 'Front\FeedController::index');
+$routes->get('search', 'Front\SearchController::index');
 
 // ─── 인증 ────────────────────────────────────────────────────────────────────
 $routes->get('auth/login', 'Front\AuthController::login');

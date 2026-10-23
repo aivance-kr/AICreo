@@ -60,6 +60,31 @@ class PostModel extends Model
     }
 
     /**
+     * 사이트 전체 공개 글 검색 (제목·본문) — getLatestPublic 과 같은 공개 조건을 적용한다.
+     *
+     * @return array{posts: list<array<string, mixed>>, total: int}
+     */
+    public function searchPublic(string $keyword, int $page, int $perPage): array
+    {
+        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->join('users', 'users.id = posts.user_id', 'left')
+            ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest')
+            ->groupStart()
+            ->like('posts.title', $keyword)
+            ->orLike('posts.content', $keyword)
+            ->groupEnd();
+
+        $total = (clone $builder)->countAllResults(false);
+        $posts = $builder->orderBy('posts.id', 'DESC')->findAll($perPage, ($page - 1) * $perPage);
+
+        return ['posts' => $posts, 'total' => $total];
+    }
+
+    /**
      * 게시글 본문 HTML에서 첫 번째 이미지 src 를 추출한다 (블로그형/갤러리형 목록 썸네일용).
      */
     public static function extractThumbnail(?string $content): ?string
