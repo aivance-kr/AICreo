@@ -190,4 +190,16 @@ final class SeoHelperTest extends CIUnitTestCase
         $this->assertStringContainsString('G-ABC123', $html);
         $this->assertStringContainsString('gtag', $html);
     }
+
+    public function testHeadScriptEmptyWithoutCode(): void
+    {
+        $this->assertSame('', $this->helper()->headScript());
+    }
+
+    public function testHeadScriptOutputsRegisteredCodeRaw(): void
+    {
+        $code = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1"></script>';
+
+        $this->assertSame($code, $this->helper(['head_code' => " {$code}\n"])->headScript());
+    }
 }

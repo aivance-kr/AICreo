@@ -7,6 +7,7 @@
     $seo = new \App\Libraries\SeoHelper($settings);
     echo $seo->render($page ?? null);
     echo $seo->gaScript();
+    echo $seo->headScript();
 
     $ld     = new \App\Libraries\Seo\JsonLdBuilder();
     $graphs = [$ld->organization($settings), $ld->website($settings)];
