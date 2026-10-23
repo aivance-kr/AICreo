@@ -1,6 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
+<?= view('components/search_form', ['keyword' => '']) ?>
+
 <?php
 /** 홈 인피드 광고를 넣을 위치(목록 n번째 뒤) */
 $feedAfter = [2, 5];

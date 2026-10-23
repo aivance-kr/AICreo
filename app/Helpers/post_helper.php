@@ -9,7 +9,9 @@ if (! function_exists('post_excerpt')) {
      */
     function post_excerpt(?string $html, int $length = 120): string
     {
-        $text = html_entity_decode(strip_tags((string) $html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // 엔티티를 푼 뒤 다시 태그를 걷어낸다 — &lt;script&gt; 가 풀려 마크업으로 되살아나면
+        // RSS 처럼 설명을 HTML 로 해석하는 소비자에서 XSS 가 된다
+        $text = strip_tags(html_entity_decode(strip_tags((string) $html), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         $text = trim((string) preg_replace('/\s+/u', ' ', $text));
 
         return mb_strlen($text) <= $length ? $text : rtrim(mb_substr($text, 0, $length)) . '…';

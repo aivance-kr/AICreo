@@ -16,6 +16,8 @@ $routes->get('llms.txt', 'Front\LlmsController::index');
 $routes->get('indexnow-key.txt', 'Front\IndexNowController::key');
 $routes->get('feed', 'Front\FeedController::index');
 $routes->get('rss', 'Front\FeedController::index');
+$routes->get('og/(:num)\\.png', 'Front\OgImageController::post/$1');
+$routes->get('search', 'Front\SearchController::index');
 
 // ─── 인증 ────────────────────────────────────────────────────────────────────
 $routes->get('auth/login', 'Front\AuthController::login');
@@ -36,6 +38,7 @@ $routes->get('board/(:segment)', 'Front\BoardController::index/$1');
 $routes->get('board/(:segment)/write', 'Front\BoardController::write/$1');
 $routes->post('board/(:segment)/write', 'Front\BoardController::store/$1');
 $routes->get('board/(:segment)/(:num)', 'Front\BoardController::view/$1/$2');
+$routes->post('board/(:segment)/(:num)/like', 'Front\BoardController::like/$1/$2');
 $routes->get('board/(:segment)/(:num)/edit', 'Front\BoardController::edit/$1/$2');
 $routes->post('board/(:segment)/(:num)/edit', 'Front\BoardController::update/$1/$2');
 $routes->post('board/(:segment)/(:num)/delete', 'Front\BoardController::delete/$1/$2');

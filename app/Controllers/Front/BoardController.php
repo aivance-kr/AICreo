@@ -5,12 +5,14 @@ namespace App\Controllers\Front;
 use App\Controllers\BaseController;
 use App\Libraries\FileUploader;
 use App\Libraries\HtmlSanitizer;
+use App\Libraries\OgImageGenerator;
 use App\Libraries\Seo\JsonLdBuilder;
 use App\Models\AdModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostCommentModel;
 use App\Models\PostFileModel;
+use App\Models\PostLikeModel;
 use App\Models\PostModel;
 use App\Models\SignatureModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
@@ -98,9 +100,12 @@ class BoardController extends BaseController
         ]);
     }
 
-    // ─── 상세 ───────────────────────────────────────────────────────────────
-
-    public function view(string $boardSlug, int $postId): ResponseInterface|string
+    /**
+     * 읽기 권한이 있는 게시글을 불러온다. 없거나 숨김이면 404, 권한이 없으면 리다이렉트 응답을 돌려준다.
+     *
+     * @return array{board: array<string, mixed>, post: array<string, mixed>}|ResponseInterface
+     */
+    private function loadReadablePost(string $boardSlug, int $postId): array|ResponseInterface
     {
         $board = $this->boardModel->getBySlug($boardSlug);
         $post  = $this->postModel->getDetail($postId);
@@ -122,7 +127,45 @@ class BoardController extends BaseController
             return redirect()->back()->with('error', '비밀글입니다.');
         }
 
+        return ['board' => $board, 'post' => $post];
+    }
+
+    // ─── 좋아요 ─────────────────────────────────────────────────────────────
+
+    public function like(string $boardSlug, int $postId): ResponseInterface
+    {
+        $loaded = $this->loadReadablePost($boardSlug, $postId);
+        if ($loaded instanceof ResponseInterface) {
+            return $loaded;
+        }
+
+        (new PostLikeModel())->toggle($postId, $this->likeVoterKey());
+
+        return redirect()->to("/board/{$boardSlug}/{$postId}#post-like");
+    }
+
+    /**
+     * 회원은 user_id, 비회원은 IP 해시로 중복 좋아요를 구분한다.
+     */
+    private function likeVoterKey(): string
+    {
+        $userId = session()->get('user_id');
+
+        return $userId ? 'u:' . $userId : 'ip:' . hash_hmac('sha256', $this->request->getIPAddress(), (string) config('Encryption')->key);
+    }
+
+    // ─── 상세 ───────────────────────────────────────────────────────────────
+
+    public function view(string $boardSlug, int $postId): ResponseInterface|string
+    {
+        $loaded = $this->loadReadablePost($boardSlug, $postId);
+        if ($loaded instanceof ResponseInterface) {
+            return $loaded;
+        }
+        ['board' => $board, 'post' => $post] = $loaded;
+
         $this->postModel->incrementView($postId);
+        $likeModel = new PostLikeModel();
 
         $files               = $this->fileModel->getByPost($postId);
         $comments            = $this->commentModel->getByPost($postId);
@@ -152,11 +195,25 @@ class BoardController extends BaseController
 
         $adModel = new AdModel();
 
+        // 공개 글은 제목을 얹은 OG 썸네일 사용 (폰트가 없으면 사이트 공통 OG 이미지로 폴백)
+        $ogPage = [];
+        if (! $noindex && OgImageGenerator::findFont() !== null) {
+            $ogVersion = OgImageController::version($post['title'], (string) ($this->viewData['settings']['site_name'] ?? ''));
+            $ogPage    = [
+                'og_type'         => 'article',
+                'og_image'        => 'og/' . $post['id'] . '.png?v=' . $ogVersion,
+                'og_image_width'  => OgImageGenerator::WIDTH,
+                'og_image_height' => OgImageGenerator::HEIGHT,
+            ];
+        }
+
         return $this->render('board/view', [
             'board'               => $board,
             'post'                => $post,
             'files'               => $files,
             'comments'            => $comments,
+            'likeCount'           => $likeModel->countByPost($postId),
+            'liked'               => $likeModel->hasLiked($postId, $this->likeVoterKey()),
             'prevPost'            => $prevPost,
             'nextPost'            => $nextPost,
             'postTopAds'          => $adModel->getActiveByPosition('post_top'),
@@ -169,7 +226,7 @@ class BoardController extends BaseController
                 'meta_desc' => post_excerpt($post['content'], 150),
                 'canonical' => $canonical,
                 'noindex'   => $noindex,
-            ],
+            ] + $ogPage,
         ]);
     }
 

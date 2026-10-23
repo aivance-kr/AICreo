@@ -73,3 +73,48 @@
 .page-content code[class*="language-"] {
     text-shadow: none;
 }
+
+/* ─── 게시글 목차·읽기 진행바 (public/js/post-toc.js) ─────── */
+.post-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 3px;
+    z-index: 1040;
+    background: transparent;
+}
+.post-progress__bar {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--bs-primary, #0d6efd);
+}
+.post-toc {
+    margin-bottom: 1rem;
+    padding: .75rem 1rem;
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: .5rem;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    font-size: .9rem;
+}
+.post-toc summary { cursor: pointer; font-weight: 600; }
+.post-toc ol { margin: .5rem 0 0; padding-left: 1.25rem; }
+.post-toc__h3 { margin-left: 1rem; list-style-type: circle; }
+.post-toc__h4 { margin-left: 2rem; list-style-type: square; }
+.post-toc a { color: inherit; text-decoration: none; }
+.post-toc a:hover,
+.post-toc a[aria-current] { color: var(--bs-primary, #0d6efd); text-decoration: underline; }
+.board-post-content h2,
+.board-post-content h3,
+.board-post-content h4 { scroll-margin-top: 1rem; }
+/* 넓은 화면: 본문 오른쪽 여백에 고정 */
+@media (min-width: 1400px) {
+    .post-toc {
+        position: fixed;
+        top: 6rem;
+        right: max(1rem, calc((100vw - 1320px) / 2 - 17rem));
+        width: 16rem;
+        max-height: calc(100vh - 8rem);
+        overflow-y: auto;
+        margin: 0;
+    }
+}

@@ -171,4 +171,40 @@ final class PageVisitModelTest extends DatabaseTestCase
             'created_at' => $createdAt,
         ]);
     }
+
+    public function testExtractSearchKeywordParsesKnownEngines(): void
+    {
+        $this->assertSame(['engine' => '네이버', 'keyword' => '코드 이그나이터'], PageVisitModel::extractSearchKeyword('https://search.naver.com/search.naver?where=nexearch&query=%EC%BD%94%EB%93%9C+%EC%9D%B4%EA%B7%B8%EB%82%98%EC%9D%B4%ED%84%B0'));
+        $this->assertSame(['engine' => '구글', 'keyword' => 'ci4 tips'], PageVisitModel::extractSearchKeyword('https://www.google.com/search?q=ci4+tips'));
+        $this->assertSame(['engine' => '다음', 'keyword' => '블로그'], PageVisitModel::extractSearchKeyword('https://search.daum.net/search?w=tot&q=%EB%B8%94%EB%A1%9C%EA%B7%B8'));
+    }
+
+    public function testExtractSearchKeywordIgnoresNonSearchOrEmptyKeyword(): void
+    {
+        $this->assertNull(PageVisitModel::extractSearchKeyword('https://www.google.com/'));
+        $this->assertNull(PageVisitModel::extractSearchKeyword('https://example.com/?q=abc'));
+        $this->assertNull(PageVisitModel::extractSearchKeyword('https://search.naver.com/search.naver?query='));
+        $this->assertNull(PageVisitModel::extractSearchKeyword(''));
+        $this->assertNull(PageVisitModel::extractSearchKeyword('https://search.naver.com/search.naver?query[]=x'));
+    }
+
+    public function testTopSearchKeywordsAggregatesWithinRange(): void
+    {
+        foreach ([
+            ['https://search.naver.com/search.naver?query=ci4', '2026-10-03 10:00:00'],
+            ['https://search.naver.com/search.naver?query=ci4', '2026-10-04 10:00:00'],
+            ['https://www.google.com/search?q=other', '2026-10-04 11:00:00'],
+            ['https://search.naver.com/search.naver?query=ci4', '2026-09-01 10:00:00'],
+            ['https://www.google.com/', '2026-10-05 10:00:00'],
+        ] as [$referer, $at]) {
+            $this->db->table('page_visits')->insert(['uri' => '/', 'ip_address' => '1.1.1.1', 'referer' => $referer, 'created_at' => $at]);
+        }
+
+        $rows = $this->visitModel->topSearchKeywords(Time::parse('2026-10-01'), Time::parse('2026-11-01'));
+
+        $this->assertSame([
+            ['engine' => '네이버', 'keyword' => 'ci4', 'count' => 2],
+            ['engine' => '구글', 'keyword' => 'other', 'count' => 1],
+        ], $rows);
+    }
 }
