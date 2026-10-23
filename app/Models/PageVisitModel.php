@@ -295,7 +295,8 @@ class PageVisitModel extends Model
         foreach (self::SEARCH_ENGINES as $suffix => [$engine, $param]) {
             if ($host === $suffix || str_ends_with($host, '.' . $suffix)) {
                 parse_str((string) ($parts['query'] ?? ''), $query);
-                $keyword = trim((string) ($query[$param] ?? ''));
+                $raw     = $query[$param] ?? null;
+                $keyword = is_string($raw) ? trim($raw) : ''; // query[]=x 같은 배열 값은 무시
 
                 return $keyword === '' ? null : ['engine' => $engine, 'keyword' => mb_substr($keyword, 0, 100)];
             }
@@ -320,7 +321,7 @@ class PageVisitModel extends Model
         foreach (array_keys(self::SEARCH_ENGINES) as $i => $suffix) {
             $i === 0 ? $builder->like('referer', $suffix) : $builder->orLike('referer', $suffix);
         }
-        $rows = $builder->groupEnd()->groupBy('referer')->limit(5000)->get()->getResultArray();
+        $rows = $builder->groupEnd()->groupBy('referer')->orderBy('count', 'DESC')->limit(5000)->get()->getResultArray();
 
         $counts = [];
 

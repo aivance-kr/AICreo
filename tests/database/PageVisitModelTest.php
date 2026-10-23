@@ -185,6 +185,7 @@ final class PageVisitModelTest extends DatabaseTestCase
         $this->assertNull(PageVisitModel::extractSearchKeyword('https://example.com/?q=abc'));
         $this->assertNull(PageVisitModel::extractSearchKeyword('https://search.naver.com/search.naver?query='));
         $this->assertNull(PageVisitModel::extractSearchKeyword(''));
+        $this->assertNull(PageVisitModel::extractSearchKeyword('https://search.naver.com/search.naver?query[]=x'));
     }
 
     public function testTopSearchKeywordsAggregatesWithinRange(): void
