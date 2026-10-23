@@ -150,7 +150,7 @@ class BoardController extends BaseController
     {
         $userId = session()->get('user_id');
 
-        return $userId ? 'u:' . $userId : 'ip:' . hash('sha256', $this->request->getIPAddress());
+        return $userId ? 'u:' . $userId : 'ip:' . hash_hmac('sha256', $this->request->getIPAddress(), (string) config('Encryption')->key);
     }
 
     // ─── 상세 ───────────────────────────────────────────────────────────────

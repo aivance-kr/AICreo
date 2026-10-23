@@ -32,13 +32,17 @@ class PostLikeModel extends Model
      */
     public function toggle(int $postId, string $voterKey): bool
     {
-        if ($this->hasLiked($postId, $voterKey)) {
-            $this->where('post_id', $postId)->where('voter_key', $voterKey)->delete();
-
+        $this->where('post_id', $postId)->where('voter_key', $voterKey)->delete();
+        if ($this->db->affectedRows() > 0) {
             return false;
         }
 
-        $this->insert(['post_id' => $postId, 'voter_key' => $voterKey]);
+        // 동시 요청이 같은 행을 먼저 넣어도 유니크 키 충돌 없이 넘어간다
+        $this->db->table($this->table)->ignore(true)->insert([
+            'post_id'    => $postId,
+            'voter_key'  => $voterKey,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
 
         return true;
     }

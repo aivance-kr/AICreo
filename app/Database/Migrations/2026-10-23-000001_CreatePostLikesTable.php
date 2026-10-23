@@ -13,7 +13,7 @@ class CreatePostLikesTable extends Migration
         $this->forge->addField([
             'id'      => ['type' => 'INT', 'unsigned' => true, 'auto_increment' => true],
             'post_id' => ['type' => 'INT', 'unsigned' => true],
-            // 회원은 "u:{id}", 비회원은 "ip:{IP 해시}" — 원본 IP 는 저장하지 않는다
+            // 회원은 "u:{id}", 비회원은 "ip:{서버 키 HMAC}" — 원본 IP 는 저장하지 않고 키 없이는 역산할 수 없다
             'voter_key'  => ['type' => 'VARCHAR', 'constraint' => 80],
             'created_at' => ['type' => 'TIMESTAMP', 'null' => true],
         ]);
