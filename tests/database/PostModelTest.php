@@ -240,4 +240,31 @@ final class PostModelTest extends DatabaseTestCase
         $this->model->toggleActive($id);
         $this->assertSame(1, (int) $this->model->find($id)['is_active']);
     }
+
+    public function testSearchPublicMatchesTitleOrContentAndExcludesHidden(): void
+    {
+        $this->makePost(['title' => '라라벨 입문', 'content' => '본문']);
+        $this->makePost(['title' => '기타', 'content' => '라라벨 팁']);
+        $this->makePost(['title' => '라라벨 비밀', 'is_secret' => 1]);
+        $this->makePost(['title' => '라라벨 숨김', 'is_active' => 0]);
+        $this->makePost(['title' => '무관']);
+
+        $result = $this->model->searchPublic('라라벨', 1, 10);
+
+        $this->assertSame(2, $result['total']);
+        $this->assertCount(2, $result['posts']);
+        $this->assertSame('notice', $result['posts'][0]['board_slug']);
+    }
+
+    public function testSearchPublicPaginates(): void
+    {
+        foreach (range(1, 3) as $n) {
+            $this->makePost(['title' => "페이지 글 {$n}"]);
+        }
+
+        $result = $this->model->searchPublic('페이지', 2, 2);
+
+        $this->assertSame(3, $result['total']);
+        $this->assertCount(1, $result['posts']);
+    }
 }
