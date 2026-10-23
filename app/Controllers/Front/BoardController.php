@@ -5,6 +5,7 @@ namespace App\Controllers\Front;
 use App\Controllers\BaseController;
 use App\Libraries\FileUploader;
 use App\Libraries\HtmlSanitizer;
+use App\Libraries\OgImageGenerator;
 use App\Libraries\Seo\JsonLdBuilder;
 use App\Models\AdModel;
 use App\Models\BoardCategoryModel;
@@ -193,6 +194,18 @@ class BoardController extends BaseController
 
         $adModel = new AdModel();
 
+        // 공개 글은 제목을 얹은 OG 썸네일 사용 (폰트가 없으면 사이트 공통 OG 이미지로 폴백)
+        $ogPage = [];
+        if (! $noindex && OgImageGenerator::findFont() !== null) {
+            $ogVersion = OgImageController::version($post['title'], (string) ($this->viewData['settings']['site_name'] ?? ''));
+            $ogPage    = [
+                'og_type'         => 'article',
+                'og_image'        => 'og/' . $post['id'] . '.png?v=' . $ogVersion,
+                'og_image_width'  => OgImageGenerator::WIDTH,
+                'og_image_height' => OgImageGenerator::HEIGHT,
+            ];
+        }
+
         return $this->render('board/view', [
             'board'               => $board,
             'post'                => $post,
@@ -212,7 +225,7 @@ class BoardController extends BaseController
                 'meta_desc' => post_excerpt($post['content'], 150),
                 'canonical' => $canonical,
                 'noindex'   => $noindex,
-            ],
+            ] + $ogPage,
         ]);
     }
 

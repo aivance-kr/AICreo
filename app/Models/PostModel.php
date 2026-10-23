@@ -60,6 +60,25 @@ class PostModel extends Model
     }
 
     /**
+     * OG 이미지를 만들 수 있는 공개 글(제목만) — 비밀글·비활성·비공개 게시판 글은 null.
+     *
+     * @return array{title: string}|null
+     */
+    public function getPublicOgSource(int $postId): ?array
+    {
+        $row = $this->select('posts.title')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->where('posts.id', $postId)
+            ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest')
+            ->first();
+
+        return $row === null ? null : ['title' => (string) $row['title']];
+    }
+
+    /**
      * 사이트 전체 공개 글 검색 (제목·본문) — getLatestPublic 과 같은 공개 조건을 적용한다.
      *
      * @return array{posts: list<array<string, mixed>>, total: int}
