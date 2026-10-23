@@ -21,7 +21,7 @@ class VisitLogFilter implements FilterInterface
     /**
      * 방문 로그에서 제외하는 경로 (Config\Filters 의 except 와 record() 가 함께 쓴다)
      */
-    public const EXCLUDED_PATHS = ['admin/*', 'sitemap.xml', 'robots.txt', 'llms.txt', 'indexnow-key.txt'];
+    public const EXCLUDED_PATHS = ['admin/*', 'sitemap.xml', 'robots.txt', 'llms.txt', 'indexnow-key.txt', 'og/*'];
 
     private const BOT_PATTERN = '/bot|crawl|spider|slurp/i';
 
