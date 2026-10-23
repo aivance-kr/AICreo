@@ -66,6 +66,12 @@ ob_start();
             <?= post_content_html($post['content']) ?>
         </div>
 
+        <?php if (! empty($post['signature'])): ?>
+        <div class="post-signature post-content board-post-content mt-4 pt-3 border-top">
+            <?= post_content_html($post['signature']) ?>
+        </div>
+        <?php endif; ?>
+
         <!-- 공감(좋아요) -->
         <form id="post-like" method="post" action="<?= $postBase ?>/like" class="text-center my-4">
             <?= csrf_field() ?>

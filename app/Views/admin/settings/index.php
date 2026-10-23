@@ -12,6 +12,9 @@
     <li class="nav-item">
         <a class="nav-link" href="/admin/settings/oauth">소셜 로그인</a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/admin/settings/signatures">글 서명</a>
+    </li>
 </ul>
 
 <div class="card border-0 shadow-sm" style="max-width:600px">
@@ -35,6 +38,7 @@
                 'bing_verify'       => '<a href="https://www.bing.com/webmasters" target="_blank" rel="noopener noreferrer">Bing Webmaster Tools</a>에서 사이트 추가 → "메타 태그" 인증 방식을 선택하면 나오는 content 값을 입력하세요.',
                 'daum_verify'       => '<a href="https://webmaster.daum.net" target="_blank" rel="noopener noreferrer">Daum 검색등록</a>에서 사이트 등록 → "HTML 태그" 인증 방식을 선택하면 나오는 content 값을 입력하세요.',
                 'org_type'          => '검색엔진이 사이트를 어떤 조직으로 이해할지 정하는 schema.org 타입입니다. 업종에 맞는 항목을 선택하세요.',
+                'head_code'         => '모든 페이지 &lt;head&gt;에 그대로 출력됩니다. 구글 애드센스 자동광고는 발급받은 &lt;script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-…"&gt;&lt;/script&gt; 한 줄을 붙여넣으세요.',
                 'ai_crawlers_allow' => 'ChatGPT·Claude 등 AI 크롤러의 사이트 수집(GEO)을 허용할지 여부입니다. robots.txt·llms.txt에 반영됩니다.',
             ];
             ?>

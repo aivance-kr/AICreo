@@ -7,6 +7,7 @@
     $seo = new \App\Libraries\SeoHelper($settings);
     echo $seo->render($page ?? null);
     echo $seo->gaScript();
+    echo $seo->headScript();
 
     // JSON-LD (GEO): 전 페이지 공통 Organization·WebSite + 페이지별 그래프
     $ld     = new \App\Libraries\Seo\JsonLdBuilder();
@@ -32,6 +33,7 @@
           integrity="sha384-QuGBSgV5Im3DzL2z+8Ko9/hqNy/N0O7zwvXAtfd1MvPKWa/UbeLV65cfm4BV5Wgq" crossorigin="anonymous">
     <link rel="stylesheet" href="<?= asset_url('css/tokens.css') ?>">
     <link rel="stylesheet" href="<?= asset_url('css/post-content.css') ?>">
+    <link rel="stylesheet" href="<?= asset_url('assets/css/about.css') ?>">
     <link rel="stylesheet" href="<?= asset_url('themes/devnotes/css/style.css') ?>">
     <?= $this->renderSection('head') ?>
 </head>

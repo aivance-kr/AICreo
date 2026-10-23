@@ -1,0 +1,93 @@
+/* =========================================================
+   미단재 About 페이지 전용 스타일 (.wp-about 범위에서만 적용)
+   위치 예: public/assets/css/about.css
+   ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@600;700&display=swap');
+
+.wp-about{
+  --o1:#FF8C42; --o2:#D4582C; --brown:#5A3A28;
+  --bg:#FFFAF5; --card:#FFFFFF; --ink:#2B2420; --sub:#6F6259; --line:#F0E3D8; --chip:#FFF1E6;
+  font-family:'Noto Sans KR',system-ui,sans-serif; color:var(--ink); background:var(--bg);
+  line-height:1.75; word-break:keep-all; -webkit-font-smoothing:antialiased;
+  border-radius:16px; overflow:hidden;
+  container-type:inline-size; container-name:about;   /* 본문 폭 기준 반응형 */
+}
+.wp-about *{box-sizing:border-box}
+.wp-about .wrap{max-width:960px;margin:0 auto;padding:0 24px}
+.wp-about h2{font-family:'Noto Serif KR',serif;font-size:1.4rem;margin:0 0 18px;color:var(--brown);display:flex;align-items:center;gap:10px;border:0;padding:0}
+.wp-about h2::before{content:"";flex:0 0 6px;height:22px;border-radius:3px;background:linear-gradient(var(--o1),var(--o2))}
+.wp-about h3{color:var(--ink)}
+.wp-about section{padding:44px 0;border-bottom:1px solid var(--line);margin:0}
+.wp-about section:last-child{border-bottom:0}
+.wp-about p{margin:0 0 14px;color:var(--ink)}
+.wp-about .muted{color:var(--sub)}
+.wp-about a{text-decoration:none}
+
+/* Hero */
+.wp-about .hero{background:linear-gradient(135deg,var(--o1),var(--o2));color:#fff;padding:52px 0 60px;border:0;position:relative;overflow:hidden}
+.wp-about .hero::after{content:"{ }";position:absolute;right:-20px;bottom:-60px;font-size:220px;font-weight:900;opacity:.08;line-height:1;color:#fff}
+.wp-about .hero .wrap{display:flex;gap:32px;align-items:center;position:relative;z-index:1}
+.wp-about .photo{flex:0 0 170px;width:170px;height:170px;border-radius:50%;overflow:hidden;border:5px solid rgba(255,255,255,.85);box-shadow:0 12px 30px rgba(0,0,0,.2);background:#F7C9A6}
+.wp-about .photo img{width:100%!important;height:100%!important;max-width:none!important;object-fit:cover;display:block;margin:0!important;border-radius:0}
+.wp-about .eyebrow{font-size:.8rem;letter-spacing:.15em;opacity:.85;margin-bottom:4px;color:#fff}
+.wp-about .hero h1{font-family:'Noto Serif KR',serif;font-size:2.2rem;margin:0 0 4px;line-height:1.3;color:#fff;border:0;padding:0}
+.wp-about .hero h1 small{font-size:1rem;font-weight:600;opacity:.85;margin-left:8px;color:#fff}
+.wp-about .hero .lead{font-size:1.05rem;margin:10px 0 16px;color:#fff}
+.wp-about .tags{display:flex;flex-wrap:wrap;gap:8px}
+.wp-about .tags .tag{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);padding:3px 12px;border-radius:999px;font-size:.82rem;color:#fff}
+
+/* Stats */
+.wp-about .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:-32px;position:relative;z-index:2}
+.wp-about .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 10px;text-align:center;box-shadow:0 6px 18px rgba(212,88,44,.08)}
+.wp-about .stat .num{display:block;font-weight:900;font-size:1.7rem;font-weight:900;background:linear-gradient(var(--o1),var(--o2));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.2}
+.wp-about .stat .lb{font-size:.8rem;color:var(--sub);line-height:1.4;display:block}
+
+/* Cards */
+.wp-about .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.wp-about .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.wp-about .card .ic{font-size:1.5rem;margin-bottom:6px}
+.wp-about .card h3{margin:0 0 8px;font-size:1.02rem;font-weight:700}
+.wp-about .card p{font-size:.9rem;color:var(--sub);margin:0}
+
+/* Chips */
+.wp-about .chips{display:flex;flex-wrap:wrap;gap:8px}
+.wp-about .chips .chip{background:var(--chip);color:var(--brown);border:1px solid var(--line);padding:4px 11px;border-radius:8px;font-size:.85rem;font-weight:500}
+.wp-about .stack-row{display:grid;grid-template-columns:100px 1fr;gap:12px;margin-bottom:14px;align-items:start}
+.wp-about .stack-row > .lbl{font-size:.88rem;color:var(--sub);padding-top:4px}
+
+/* Timeline */
+.wp-about .tl{list-style:none;margin:0;padding:0 0 0 22px;border-left:2px solid var(--line)}
+.wp-about .tl li{position:relative;padding:0 0 20px 18px;list-style:none}
+.wp-about .tl li::before{content:"";position:absolute;left:-30px;top:7px;width:14px;height:14px;border-radius:50%;background:linear-gradient(var(--o1),var(--o2));box-shadow:0 0 0 4px var(--bg)}
+.wp-about .tl .yr{font-weight:700;color:var(--o2);font-size:.88rem;display:block}
+.wp-about .tl .tx{display:block}
+
+/* Products */
+.wp-about .prod{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.wp-about .prod .item{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;color:var(--ink);transition:border-color .2s,transform .2s}
+.wp-about .prod a.item:hover{border-color:var(--o1);transform:translateY(-2px)}
+.wp-about .prod .nm{flex:0 0 84px;color:var(--o2)}
+.wp-about .prod .ds{font-size:.88rem;color:var(--sub)}
+
+/* Contact */
+.wp-about .contact{text-align:center}
+.wp-about .contact h2{justify-content:center}
+.wp-about .btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px}
+.wp-about .btn{display:inline-block;padding:11px 20px;border-radius:999px;font-weight:700;font-size:.92rem}
+.wp-about .btn.pri{background:linear-gradient(135deg,var(--o1),var(--o2));color:#fff;border:0}
+.wp-about .btn.sec{border:1.5px solid var(--o2);color:var(--o2);background:transparent}
+
+/* 본문 폭 기준 반응형 (col-lg-8 안에서도 적절히 접힘) */
+@container about (max-width:720px){
+  .wp-about .grid{grid-template-columns:1fr}
+  .wp-about .stats{grid-template-columns:repeat(2,1fr)}
+}
+@container about (max-width:600px){
+  .wp-about .hero .wrap{flex-direction:column;text-align:center;gap:20px}
+  .wp-about .photo{flex-basis:auto;width:150px;height:150px}
+  .wp-about .hero h1{font-size:1.9rem}
+  .wp-about .tags{justify-content:center}
+  .wp-about .prod{grid-template-columns:1fr}
+  .wp-about .stack-row{grid-template-columns:1fr;gap:6px}
+  .wp-about .wrap{padding:0 18px}
+}

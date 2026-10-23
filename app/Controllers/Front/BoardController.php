@@ -14,6 +14,7 @@ use App\Models\PostCommentModel;
 use App\Models\PostFileModel;
 use App\Models\PostLikeModel;
 use App\Models\PostModel;
+use App\Models\SignatureModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -247,6 +248,7 @@ class BoardController extends BaseController
         return $this->render('board/write', [
             'board'              => $board,
             'post'               => null,
+            'signature'          => $this->selectedSignature(),
             'categories'         => $this->categoryModel->getByBoard($board['id']),
             'selectedCategoryId' => $this->resolveCategoryId($board['id'], $this->request->getGet('category')),
         ]);
@@ -284,6 +286,11 @@ class BoardController extends BaseController
             'is_secret'  => (int) $this->request->getPost('is_secret'),
             'ip_address' => $this->request->getIPAddress(),
         ];
+
+        // 선택된 서명을 글 작성 시점 내용 그대로 복사해 둔다 (이후 서명이 바뀌어도 기존 글은 유지)
+        if ($this->request->getPost('use_signature')) {
+            $data['signature'] = $this->selectedSignature()['content'] ?? null;
+        }
 
         $data['tags'] = $this->resolveTags($this->request->getPost('tags'), $data['title'], $data['content'], $board, (bool) $data['is_secret']);
 
@@ -704,6 +711,20 @@ class BoardController extends BaseController
         $userId = session()->get('user_id');
 
         return $role === 'admin' || ($userId && $post['user_id'] === $userId);
+    }
+
+    /**
+     * 로그인한 운영자의 선택 서명 (운영자가 아니거나 없으면 null)
+     *
+     * @return array<string, mixed>|null
+     */
+    private function selectedSignature(): ?array
+    {
+        if ($this->getUserRole() !== 'admin') {
+            return null;
+        }
+
+        return (new SignatureModel())->selectedByUser((int) session()->get('user_id'));
     }
 
     /**
