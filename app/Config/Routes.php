@@ -106,6 +106,12 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
 
     // 사이트 설정
     $routes->get('settings', 'Admin\SettingController::index');
+    // 글 서명 (settings/(:segment) 보다 먼저 와야 한다)
+    $routes->get('settings/signatures', 'Admin\SignatureController::index');
+    $routes->post('settings/signatures', 'Admin\SignatureController::store');
+    $routes->post('settings/signatures/(:num)', 'Admin\SignatureController::update/$1');
+    $routes->post('settings/signatures/(:num)/select', 'Admin\SignatureController::select/$1');
+    $routes->post('settings/signatures/(:num)/delete', 'Admin\SignatureController::delete/$1');
     $routes->get('settings/(:segment)', 'Admin\SettingController::index/$1');
     $routes->post('settings/theme/upload', 'Admin\SettingController::uploadTheme');
     $routes->post('settings/(:segment)', 'Admin\SettingController::update/$1');
