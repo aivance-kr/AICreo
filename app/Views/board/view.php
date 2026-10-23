@@ -64,6 +64,12 @@ ob_start();
             <?= post_content_html($post['content']) ?>
         </div>
 
+        <?php if (! empty($post['signature'])): ?>
+        <div class="post-signature post-content board-post-content mt-4 pt-3 border-top">
+            <?= post_content_html($post['signature']) ?>
+        </div>
+        <?php endif; ?>
+
         <!-- 본문 하단 광고 -->
         <?= view('components/ad_slot', ['ads' => $postBotAds]) ?>
 
