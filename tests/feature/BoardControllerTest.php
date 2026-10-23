@@ -236,6 +236,21 @@ final class BoardControllerTest extends FeatureTestCase
         $result->assertSee('share-btn');
     }
 
+    public function testViewIncludesReadingProgressAndTocScript(): void
+    {
+        $postId = (int) (new PostModel())->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '목차 글',
+            'content'     => '<h2>첫째</h2><p>본문</p><h2>둘째</h2><p>본문</p>',
+            'author_name' => '작성자',
+        ]);
+
+        $body = $this->get("board/qna/{$postId}")->getBody();
+
+        $this->assertStringContainsString('class="post-progress"', $body);
+        $this->assertStringContainsString('js/post-toc.js', $body);
+    }
+
     public function testViewUsesDedicatedContentLayoutClass(): void
     {
         $postModel = new PostModel();

@@ -1,6 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
+<div class="post-progress" role="progressbar" aria-label="읽기 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="post-progress__bar"></span></div>
+
 <div class="container py-4">
 <?php
 $userId  = session()->get('user_id');
@@ -222,6 +224,7 @@ ob_start();
 
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/post-toc.js') ?>" defer></script>
 <script src="<?= asset_url('js/code-highlight.js') ?>" defer></script>
 <script>
 document.getElementById('share-btn').addEventListener('click', async function() {
