@@ -44,6 +44,19 @@ final class StatsControllerTest extends AdminTestCase
         $result->assertSee('admin/stats/day/2026-10-03');
     }
 
+    public function testStatsShowsSearchKeywords(): void
+    {
+        $this->db->table('page_visits')->insert([
+            'uri'     => '/hello', 'ip_address' => '9.9.9.9', 'user_agent' => 'UA-X',
+            'referer' => 'https://search.naver.com/search.naver?query=%ED%82%A4%EC%9B%8C%EB%93%9C', 'created_at' => '2026-10-03 12:00:00',
+        ]);
+
+        $body = html_entity_decode($this->withSession($this->adminSession)->get('admin/stats?period=month&value=2026-10')->getBody(), ENT_QUOTES, 'UTF-8');
+
+        $this->assertStringContainsString('유입 검색어', $body);
+        $this->assertStringContainsString('키워드', $body);
+    }
+
     public function testInvalidPeriodFallsBackToDefaultView(): void
     {
         $this->withSession($this->adminSession)->get('admin/stats?period=month&value=zzz')->assertStatus(200);

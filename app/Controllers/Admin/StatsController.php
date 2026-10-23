@@ -54,6 +54,7 @@ class StatsController extends BaseController
             'topPages'  => $this->visitModel->topPages(30, 10),
             'topTitle'  => '인기 페이지 (최근 30일)',
             'referrers' => $this->visitModel->topReferrers($monthStart, $now->addDays(1)->setTime(0, 0, 0), $this->request->getUri()->getHost()),
+            'keywords'  => $this->visitModel->topSearchKeywords($monthStart, $now->addDays(1)->setTime(0, 0, 0)),
             'period'    => '',
             'value'     => '',
         ]);
@@ -118,6 +119,7 @@ class StatsController extends BaseController
             'topPages'   => $this->visitModel->topPagesBetween($start, $end),
             'topTitle'   => '인기 페이지 (' . $range['label'] . ')',
             'referrers'  => $this->visitModel->topReferrers($start, $end, $this->request->getUri()->getHost()),
+            'keywords'   => $this->visitModel->topSearchKeywords($start, $end),
             'period'     => $period,
             'value'      => $value,
         ]);

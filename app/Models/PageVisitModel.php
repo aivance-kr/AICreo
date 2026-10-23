@@ -10,6 +10,17 @@ use Throwable;
 
 class PageVisitModel extends Model
 {
+    /**
+     * 검색엔진 호스트 끝부분 → [표시명, 검색어 쿼리 파라미터]
+     */
+    private const SEARCH_ENGINES = [
+        'naver.com'    => ['네이버', 'query'],
+        'google.com'   => ['구글', 'q'],
+        'google.co.kr' => ['구글', 'q'],
+        'daum.net'     => ['다음', 'q'],
+        'bing.com'     => ['빙', 'q'],
+    ];
+
     protected $table         = 'page_visits';
     protected $primaryKey    = 'id';
     protected $useTimestamps = true;
@@ -268,6 +279,64 @@ class PageVisitModel extends Model
             ],
             $rows,
         );
+    }
+
+    /**
+     * 검색엔진 referer 에서 검색어를 뽑는다. 검색엔진이 아니거나 검색어가 없으면 null.
+     * (구글은 보통 검색어를 넘기지 않아 대부분 null 이다.)
+     *
+     * @return array{engine: string, keyword: string}|null
+     */
+    public static function extractSearchKeyword(string $referer): ?array
+    {
+        $parts = parse_url($referer);
+        $host  = strtolower((string) ($parts['host'] ?? ''));
+
+        foreach (self::SEARCH_ENGINES as $suffix => [$engine, $param]) {
+            if ($host === $suffix || str_ends_with($host, '.' . $suffix)) {
+                parse_str((string) ($parts['query'] ?? ''), $query);
+                $keyword = trim((string) ($query[$param] ?? ''));
+
+                return $keyword === '' ? null : ['engine' => $engine, 'keyword' => mb_substr($keyword, 0, 100)];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 기간 내 검색엔진 유입 검색어 상위 $limit건.
+     *
+     * @return list<array{engine: string, keyword: string, count: int}>
+     */
+    public function topSearchKeywords(Time $start, Time $end, int $limit = 10): array
+    {
+        $builder = $this->db->table($this->table)
+            ->select('referer, COUNT(*) as count')
+            ->where('created_at >=', $start->toDateTimeString())
+            ->where('created_at <', $end->toDateTimeString())
+            ->groupStart();
+
+        foreach (array_keys(self::SEARCH_ENGINES) as $i => $suffix) {
+            $i === 0 ? $builder->like('referer', $suffix) : $builder->orLike('referer', $suffix);
+        }
+        $rows = $builder->groupEnd()->groupBy('referer')->limit(5000)->get()->getResultArray();
+
+        $counts = [];
+
+        foreach ($rows as $row) {
+            $found = self::extractSearchKeyword((string) $row['referer']);
+            if ($found === null) {
+                continue;
+            }
+            $key          = $found['engine'] . "\0" . mb_strtolower($found['keyword']);
+            $counts[$key] = ($counts[$key] ?? ['engine' => $found['engine'], 'keyword' => $found['keyword'], 'count' => 0]);
+            $counts[$key]['count'] += (int) $row['count'];
+        }
+
+        usort($counts, static fn (array $a, array $b): int => $b['count'] <=> $a['count']);
+
+        return array_slice($counts, 0, $limit);
     }
 
     public function countOnDate(string $date): int

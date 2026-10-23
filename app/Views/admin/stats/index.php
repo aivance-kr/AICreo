@@ -125,4 +125,20 @@
     </div>
 </div>
 
+<!-- 유입 검색어 -->
+<div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-white"><strong>유입 검색어</strong> <span class="small text-muted">(네이버·다음·빙 — 구글은 검색어를 넘기지 않아 대부분 집계되지 않습니다)</span></div>
+    <div class="list-group list-group-flush">
+        <?php if (empty($keywords)): ?>
+        <div class="list-group-item text-muted small text-center py-3">검색어 유입 기록이 없습니다</div>
+        <?php endif; ?>
+        <?php foreach ($keywords as $kw): ?>
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+            <span class="text-truncate small text-dark"><?= esc($kw['keyword']) ?> <span class="text-muted">· <?= esc($kw['engine']) ?></span></span>
+            <span class="badge bg-light text-dark border flex-shrink-0 ms-2"><?= number_format($kw['count']) ?></span>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+
 <?= $this->endSection() ?>
