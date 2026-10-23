@@ -94,6 +94,16 @@
                 <textarea name="content" id="content-editor" class="form-control" rows="12"><?= old('content', $post['content'] ?? '') ?></textarea>
             </div>
 
+            <?php if (! empty($signature)): ?>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input type="checkbox" name="use_signature" value="1" id="use_signature" class="form-check-input"
+                           <?= old('title') === null || old('use_signature') ? 'checked' : '' ?>>
+                    <label for="use_signature" class="form-check-label small">글 하단에 서명 넣기 (<?= esc($signature['name']) ?>)</label>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- 기존 파일 목록 (수정 시) -->
             <?php if (! empty($files)): ?>
             <fieldset class="mb-3">

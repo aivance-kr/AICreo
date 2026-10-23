@@ -12,6 +12,9 @@
     <li class="nav-item">
         <a class="nav-link" href="/admin/settings/oauth">소셜 로그인</a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/admin/settings/signatures">글 서명</a>
+    </li>
 </ul>
 
 <div class="card border-0 shadow-sm" style="max-width:600px">

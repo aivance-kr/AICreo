@@ -14,7 +14,7 @@ class PostModel extends Model
     protected $useTimestamps  = true;
     protected $useSoftDeletes = true;
     protected $allowedFields  = [
-        'board_id', 'category_id', 'user_id', 'title', 'content', 'tags',
+        'board_id', 'category_id', 'user_id', 'title', 'content', 'signature', 'tags',
         'author_name', 'author_password',
         'is_notice', 'is_secret', 'is_active', 'ip_address',
         'views', 'wp_post_id', 'created_at', 'updated_at',
