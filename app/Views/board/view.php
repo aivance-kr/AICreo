@@ -66,6 +66,15 @@ ob_start();
             <?= post_content_html($post['content']) ?>
         </div>
 
+        <!-- 공감(좋아요) -->
+        <form id="post-like" method="post" action="<?= $postBase ?>/like" class="text-center my-4">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn <?= $liked ? 'btn-danger' : 'btn-outline-danger' ?>" aria-pressed="<?= $liked ? 'true' : 'false' ?>">
+                <i class="bi <?= $liked ? 'bi-heart-fill' : 'bi-heart' ?>" aria-hidden="true"></i>
+                공감 <span class="fw-bold"><?= number_format($likeCount) ?></span>
+            </button>
+        </form>
+
         <!-- 본문 하단 광고 -->
         <?= view('components/ad_slot', ['ads' => $postBotAds]) ?>
 

@@ -11,6 +11,7 @@ use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostCommentModel;
 use App\Models\PostFileModel;
+use App\Models\PostLikeModel;
 use App\Models\PostModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -97,9 +98,12 @@ class BoardController extends BaseController
         ]);
     }
 
-    // ─── 상세 ───────────────────────────────────────────────────────────────
-
-    public function view(string $boardSlug, int $postId): ResponseInterface|string
+    /**
+     * 읽기 권한이 있는 게시글을 불러온다. 없거나 숨김이면 404, 권한이 없으면 리다이렉트 응답을 돌려준다.
+     *
+     * @return array{board: array<string, mixed>, post: array<string, mixed>}|ResponseInterface
+     */
+    private function loadReadablePost(string $boardSlug, int $postId): array|ResponseInterface
     {
         $board = $this->boardModel->getBySlug($boardSlug);
         $post  = $this->postModel->getDetail($postId);
@@ -121,7 +125,45 @@ class BoardController extends BaseController
             return redirect()->back()->with('error', '비밀글입니다.');
         }
 
+        return ['board' => $board, 'post' => $post];
+    }
+
+    // ─── 좋아요 ─────────────────────────────────────────────────────────────
+
+    public function like(string $boardSlug, int $postId): ResponseInterface
+    {
+        $loaded = $this->loadReadablePost($boardSlug, $postId);
+        if ($loaded instanceof ResponseInterface) {
+            return $loaded;
+        }
+
+        (new PostLikeModel())->toggle($postId, $this->likeVoterKey());
+
+        return redirect()->to("/board/{$boardSlug}/{$postId}#post-like");
+    }
+
+    /**
+     * 회원은 user_id, 비회원은 IP 해시로 중복 좋아요를 구분한다.
+     */
+    private function likeVoterKey(): string
+    {
+        $userId = session()->get('user_id');
+
+        return $userId ? 'u:' . $userId : 'ip:' . hash('sha256', $this->request->getIPAddress());
+    }
+
+    // ─── 상세 ───────────────────────────────────────────────────────────────
+
+    public function view(string $boardSlug, int $postId): ResponseInterface|string
+    {
+        $loaded = $this->loadReadablePost($boardSlug, $postId);
+        if ($loaded instanceof ResponseInterface) {
+            return $loaded;
+        }
+        ['board' => $board, 'post' => $post] = $loaded;
+
         $this->postModel->incrementView($postId);
+        $likeModel = new PostLikeModel();
 
         $files               = $this->fileModel->getByPost($postId);
         $comments            = $this->commentModel->getByPost($postId);
@@ -156,6 +198,8 @@ class BoardController extends BaseController
             'post'                => $post,
             'files'               => $files,
             'comments'            => $comments,
+            'likeCount'           => $likeModel->countByPost($postId),
+            'liked'               => $likeModel->hasLiked($postId, $this->likeVoterKey()),
             'prevPost'            => $prevPost,
             'nextPost'            => $nextPost,
             'postTopAds'          => $adModel->getActiveByPosition('post_top'),

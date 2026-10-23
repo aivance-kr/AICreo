@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostCommentModel;
+use App\Models\PostLikeModel;
 use App\Models\PostModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use Tests\Support\FeatureTestCase;
@@ -249,6 +250,37 @@ final class BoardControllerTest extends FeatureTestCase
 
         $this->assertStringContainsString('class="post-progress"', $body);
         $this->assertStringContainsString('js/post-toc.js', $body);
+    }
+
+    public function testLikeTogglesAndViewShowsCount(): void
+    {
+        $postId = (int) (new PostModel())->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '좋아요 글',
+            'content'     => '본문',
+            'author_name' => '작성자',
+        ]);
+
+        $this->post("board/qna/{$postId}/like")->assertRedirect();
+        $this->assertSame(1, (new PostLikeModel())->countByPost($postId));
+        $this->assertStringContainsString('aria-pressed="true"', $this->get("board/qna/{$postId}")->getBody());
+
+        $this->post("board/qna/{$postId}/like");
+        $this->assertSame(0, (new PostLikeModel())->countByPost($postId));
+    }
+
+    public function testLikeOnHiddenPostIsNotFound(): void
+    {
+        $postId = (int) (new PostModel())->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '숨김 글',
+            'content'     => '본문',
+            'author_name' => '작성자',
+            'is_active'   => 0,
+        ]);
+
+        $this->expectException(PageNotFoundException::class);
+        $this->post("board/qna/{$postId}/like");
     }
 
     public function testViewUsesDedicatedContentLayoutClass(): void
