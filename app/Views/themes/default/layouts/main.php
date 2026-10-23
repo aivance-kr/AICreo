@@ -33,6 +33,7 @@
           integrity="sha384-QuGBSgV5Im3DzL2z+8Ko9/hqNy/N0O7zwvXAtfd1MvPKWa/UbeLV65cfm4BV5Wgq" crossorigin="anonymous">
     <link rel="stylesheet" href="<?= asset_url('css/tokens.css') ?>">
     <link rel="stylesheet" href="<?= asset_url('css/post-content.css') ?>">
+    <link rel="stylesheet" href="<?= asset_url('assets/css/about.css') ?>">
     <link rel="stylesheet" href="<?= asset_url('themes/default/css/style.css') ?>">
     <?= $this->renderSection('head') ?>
 </head>
