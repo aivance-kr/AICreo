@@ -25,6 +25,7 @@ $socialLinks = [
             <li><a href="<?= esc($settings[$sns['key']]) ?>" target="_blank" rel="noopener"><i class="bi <?= esc($sns['icon']) ?>" aria-hidden="true"></i><span class="visually-hidden"><?= esc($sns['label']) ?> (새 창 열림)</span></a></li>
             <?php endif; ?>
         <?php endforeach; ?>
+        <li><a href="<?= esc(site_url('rss'), 'attr') ?>"><i class="bi bi-rss-fill" aria-hidden="true"></i><span class="visually-hidden">RSS 구독</span></a></li>
     </ul>
     <p class="site-footer__copy">
         <?= esc($settings['copyright'] ?? '') ?>

@@ -9,6 +9,12 @@ class PostModel extends Model
     public const MAX_TAGS       = 10;
     public const MAX_TAG_LENGTH = 30;
 
+    /**
+     * 목록용 공감수·댓글수(활성 댓글만) 서브쿼리
+     */
+    private const COUNT_SUBQUERIES = '(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS like_count, '
+        . '(SELECT COUNT(*) FROM post_comments WHERE post_comments.post_id = posts.id AND post_comments.is_active = 1) AS comment_count';
+
     protected $table          = 'posts';
     protected $primaryKey     = 'id';
     protected $useTimestamps  = true;
@@ -167,7 +173,7 @@ class PostModel extends Model
     {
         $offset = ($page - 1) * $perPage;
 
-        $noticeBuilder = $this->select('posts.*, board_categories.name as category_name')
+        $noticeBuilder = $this->select('posts.*, board_categories.name as category_name, ' . self::COUNT_SUBQUERIES)
             ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId)
             ->where('posts.is_notice', 1)
@@ -177,7 +183,7 @@ class PostModel extends Model
         }
         $notices = $noticeBuilder->orderBy('posts.id', 'DESC')->findAll(5);
 
-        $postBuilder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name')
+        $postBuilder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name, ' . self::COUNT_SUBQUERIES)
             ->join('users', 'users.id = posts.user_id', 'left')
             ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId)
@@ -317,7 +323,7 @@ class PostModel extends Model
     public function search(int $boardId, string $keyword, string $type, int $page, int $perPage, ?int $categoryId = null): array
     {
         $offset  = ($page - 1) * $perPage;
-        $builder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name')
+        $builder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name, ' . self::COUNT_SUBQUERIES)
             ->join('users', 'users.id = posts.user_id', 'left')
             ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId)

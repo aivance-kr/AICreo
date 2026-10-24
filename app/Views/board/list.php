@@ -80,6 +80,8 @@
                     <span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
                     · <span><?= substr($post['created_at'], 0, 10) ?></span>
                     · <span>조회 <?= number_format($post['views']) ?></span>
+                    · <span>공감 <?= number_format((int) $post['like_count']) ?></span>
+                    · <span>댓글 <?= number_format((int) $post['comment_count']) ?></span>
                 </div>
             </div>
         </div>
@@ -105,6 +107,7 @@
                 <?php endif; ?>
             </div>
             <div class="small text-truncate"><?php if ($post['is_notice']): ?><span class="badge text-bg-warning">공지</span> <?php endif; ?><?= esc($post['title']) ?></div>
+            <div class="text-muted small"><i class="bi bi-heart" aria-hidden="true"></i> <span class="visually-hidden">공감</span> <?= number_format((int) $post['like_count']) ?> · <i class="bi bi-chat" aria-hidden="true"></i> <span class="visually-hidden">댓글</span> <?= number_format((int) $post['comment_count']) ?></div>
         </a>
     </div>
     <?php endforeach; ?>
@@ -125,6 +128,8 @@
             <th scope="col" style="width:100px" class="text-center">작성자</th>
             <th scope="col" style="width:90px"  class="text-center">날짜</th>
             <th scope="col" style="width:60px"  class="text-center">조회</th>
+            <th scope="col" style="width:60px"  class="text-center">공감</th>
+            <th scope="col" style="width:60px"  class="text-center">댓글</th>
         </tr>
     </thead>
     <tbody>
@@ -142,12 +147,14 @@
             <td class="text-center text-muted small" data-label="작성자"><?= esc(mask_name($post['author_name'])) ?></td>
             <td class="text-center text-muted small" data-label="날짜"><?= substr($post['created_at'], 0, 10) ?></td>
             <td class="text-center text-muted small" data-label="조회"><?= number_format($post['views']) ?></td>
+            <td class="text-center text-muted small" data-label="공감"><?= number_format((int) $post['like_count']) ?></td>
+            <td class="text-center text-muted small" data-label="댓글"><?= number_format((int) $post['comment_count']) ?></td>
         </tr>
         <?php endforeach; ?>
 
         <!-- 일반글 -->
         <?php if (empty($posts)): ?>
-        <tr><td colspan="5" class="text-center py-5 text-muted">게시글이 없습니다.</td></tr>
+        <tr><td colspan="7" class="text-center py-5 text-muted">게시글이 없습니다.</td></tr>
         <?php endif; ?>
         <?php foreach ($posts as $i => $post): ?>
         <tr>
@@ -164,6 +171,8 @@
             <td class="text-center text-muted small" data-label="작성자"><?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></td>
             <td class="text-center text-muted small" data-label="날짜"><?= substr($post['created_at'], 0, 10) ?></td>
             <td class="text-center text-muted small" data-label="조회"><?= number_format($post['views']) ?></td>
+            <td class="text-center text-muted small" data-label="공감"><?= number_format((int) $post['like_count']) ?></td>
+            <td class="text-center text-muted small" data-label="댓글"><?= number_format((int) $post['comment_count']) ?></td>
         </tr>
         <?php endforeach; ?>
     </tbody>
