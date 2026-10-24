@@ -37,6 +37,10 @@ $socialLinks = [
                             </a>
                         <?php endif; ?>
                     <?php endforeach; ?>
+                    <a href="<?= esc(site_url('rss'), 'attr') ?>" class="text-secondary fs-5">
+                        <i class="bi bi-rss-fill" aria-hidden="true"></i>
+                        <span class="visually-hidden">RSS 구독</span>
+                    </a>
                 </div>
             </div>
         </div>
