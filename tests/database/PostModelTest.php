@@ -55,6 +55,24 @@ final class PostModelTest extends DatabaseTestCase
         $this->assertSame('공지글', $result['notices'][0]['title']);
     }
 
+    public function testGetListIncludesLikeAndActiveCommentCounts(): void
+    {
+        $id = $this->makePost();
+        $this->db->table('post_likes')->insertBatch([
+            ['post_id' => $id, 'voter_key' => 'a', 'created_at' => date('Y-m-d H:i:s')],
+            ['post_id' => $id, 'voter_key' => 'b', 'created_at' => date('Y-m-d H:i:s')],
+        ]);
+        $this->db->table('post_comments')->insertBatch([
+            ['post_id' => $id, 'content' => '댓글1', 'author_name' => '갑', 'is_active' => 1],
+            ['post_id' => $id, 'content' => '숨김', 'author_name' => '을', 'is_active' => 0],
+        ]);
+
+        $post = $this->model->getList($this->boardId, 1, 10)['posts'][0];
+
+        $this->assertSame(2, (int) $post['like_count']);
+        $this->assertSame(1, (int) $post['comment_count']);
+    }
+
     public function testGetTotalCountExcludesNotices(): void
     {
         $this->makePost(['is_notice' => 1]);
