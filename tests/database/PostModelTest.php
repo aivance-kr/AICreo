@@ -65,6 +65,7 @@ final class PostModelTest extends DatabaseTestCase
         $this->db->table('post_comments')->insertBatch([
             ['post_id' => $id, 'content' => '댓글1', 'author_name' => '갑', 'is_active' => 1],
             ['post_id' => $id, 'content' => '숨김', 'author_name' => '을', 'is_active' => 0],
+            ['post_id' => $id, 'content' => '삭제됨', 'author_name' => '병', 'is_active' => 1, 'deleted_at' => date('Y-m-d H:i:s')],
         ]);
 
         $post = $this->model->getList($this->boardId, 1, 10)['posts'][0];

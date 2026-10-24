@@ -10,10 +10,10 @@ class PostModel extends Model
     public const MAX_TAG_LENGTH = 30;
 
     /**
-     * 목록용 공감수·댓글수(활성 댓글만) 서브쿼리
+     * 목록용 공감수·댓글수(활성·미삭제 댓글만) 서브쿼리
      */
     private const COUNT_SUBQUERIES = '(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS like_count, '
-        . '(SELECT COUNT(*) FROM post_comments WHERE post_comments.post_id = posts.id AND post_comments.is_active = 1) AS comment_count';
+        . '(SELECT COUNT(*) FROM post_comments WHERE post_comments.post_id = posts.id AND post_comments.is_active = 1 AND post_comments.deleted_at IS NULL) AS comment_count';
 
     protected $table          = 'posts';
     protected $primaryKey     = 'id';
