@@ -396,6 +396,32 @@ final class BoardControllerTest extends FeatureTestCase
         $this->assertStringContainsString('다음 글입니다', $body);
     }
 
+    public function testViewPrevNextStaysInSelectedCategory(): void
+    {
+        $postModel = new PostModel();
+        $boardId   = $this->boardId('free');
+        $catModel  = new BoardCategoryModel();
+        $catA      = (int) $catModel->insert(['board_id' => $boardId, 'slug' => 'cat-a', 'name' => '가'], true);
+        $catB      = (int) $catModel->insert(['board_id' => $boardId, 'slug' => 'cat-b', 'name' => '나'], true);
+
+        $base   = ['board_id' => $boardId, 'content' => '본문', 'is_notice' => 0];
+        $prevA  = (int) $postModel->insert($base + ['title' => '가 이전글', 'category_id' => $catA]);
+        $otherB = (int) $postModel->insert($base + ['title' => '나 끼어든글', 'category_id' => $catB]);
+        $postA  = (int) $postModel->insert($base + ['title' => '가 현재글', 'category_id' => $catA]);
+        $nextA  = (int) $postModel->insert($base + ['title' => '가 다음글', 'category_id' => $catA]);
+
+        $filtered = html_entity_decode((string) $this->get("board/free/{$postA}?category={$catA}")->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $this->assertStringContainsString("/board/free/{$prevA}?category={$catA}", $filtered);
+        $this->assertStringContainsString("/board/free/{$nextA}?category={$catA}", $filtered);
+
+        $beforeNext = html_entity_decode((string) $this->get("board/free/{$prevA}?category={$catA}")->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $this->assertStringContainsString("/board/free/{$postA}?category={$catA}", $beforeNext);
+        $this->assertStringNotContainsString("/board/free/{$otherB}", $beforeNext);
+
+        $all = html_entity_decode((string) $this->get("board/free/{$postA}")->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $this->assertStringContainsString("/board/free/{$otherB}", $all);
+    }
+
     public function testViewHidesPrevNextBlockWhenNoAdjacentPosts(): void
     {
         $postModel = new PostModel();
@@ -449,7 +475,7 @@ final class BoardControllerTest extends FeatureTestCase
 
         $body = $this->get("board/free?category={$categoryId}")->getBody();
 
-        $this->assertStringContainsString("/board/free/{$matchId}\"", $body);
-        $this->assertStringNotContainsString("/board/free/{$otherId}\"", $body);
+        $this->assertStringContainsString("/board/free/{$matchId}?category={$categoryId}\"", $body);
+        $this->assertStringNotContainsString("/board/free/{$otherId}", $body);
     }
 }
