@@ -475,7 +475,7 @@ final class BoardControllerTest extends FeatureTestCase
 
         $body = $this->get("board/free?category={$categoryId}")->getBody();
 
-        $this->assertStringContainsString("/board/free/{$matchId}\"", $body);
-        $this->assertStringNotContainsString("/board/free/{$otherId}\"", $body);
+        $this->assertStringContainsString("/board/free/{$matchId}?category={$categoryId}\"", $body);
+        $this->assertStringNotContainsString("/board/free/{$otherId}", $body);
     }
 }
