@@ -66,7 +66,7 @@
 <div class="board-list-blog list-group list-group-flush border-top">
     <?php foreach (array_merge($notices, $posts) as $post): ?>
     <?php $thumb = \App\Models\PostModel::extractThumbnail($post['content'] ?? null); ?>
-    <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>" class="list-group-item list-group-item-action py-4">
+    <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?><?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="list-group-item list-group-item-action py-4">
         <div class="d-flex gap-3">
             <?php if ($thumb): ?>
             <img src="<?= esc($thumb, 'attr') ?>" alt="" class="rounded flex-shrink-0" style="width:120px;height:90px;object-fit:cover">
@@ -96,7 +96,7 @@
     <?php foreach (array_merge($notices, $posts) as $post): ?>
     <?php $thumb = \App\Models\PostModel::extractThumbnail($post['content'] ?? null); ?>
     <div class="col">
-        <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>" class="text-decoration-none text-dark">
+        <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?><?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="text-decoration-none text-dark">
             <div class="ratio ratio-1x1 bg-light rounded mb-2 overflow-hidden">
                 <?php if ($thumb): ?>
                 <img src="<?= esc($thumb, 'attr') ?>" alt="" style="object-fit:cover">
@@ -133,7 +133,7 @@
         <tr class="table-warning">
             <td class="text-center" data-label=""><span class="badge text-bg-warning">공지</span></td>
             <td data-label="제목">
-                <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>" class="text-decoration-none text-dark fw-semibold">
+                <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?><?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="text-decoration-none text-dark fw-semibold">
                     <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
                     <?= esc($post['title']) ?>
                     <?php if ($post['is_secret']): ?> <i class="bi bi-lock-fill text-muted small" aria-hidden="true"></i><span class="visually-hidden">비밀글</span><?php endif; ?>
@@ -155,7 +155,7 @@
                 <?= $total - (($currentPage - 1) * $board['posts_per_page']) - $i ?>
             </td>
             <td data-label="제목">
-                <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>" class="text-decoration-none text-dark">
+                <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?><?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="text-decoration-none text-dark">
                     <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
                     <?= esc($post['title']) ?>
                     <?php if ($post['is_secret']): ?> <i class="bi bi-lock-fill text-muted small" aria-hidden="true"></i><span class="visually-hidden">비밀글</span><?php endif; ?>

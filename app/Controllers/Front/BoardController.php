@@ -167,10 +167,15 @@ class BoardController extends BaseController
         $this->postModel->incrementView($postId);
         $likeModel = new PostLikeModel();
 
-        $files               = $this->fileModel->getByPost($postId);
-        $comments            = $this->commentModel->getByPost($postId);
-        $prevPost            = $this->postModel->getPrevious($board['id'], $postId);
-        $nextPost            = $this->postModel->getNext($board['id'], $postId);
+        $files    = $this->fileModel->getByPost($postId);
+        $comments = $this->commentModel->getByPost($postId);
+        // 목록에서 카테고리를 고른 채 들어온 경우 이전/다음 글도 같은 카테고리 안에서만 찾는다
+        $categoryId = (int) ($this->request->getGet('category') ?? 0) ?: null;
+        if ($categoryId !== null && ! in_array($categoryId, array_map('intval', array_column($this->categoryModel->getByBoard($board['id']), 'id')), true)) {
+            $categoryId = null;
+        }
+        $prevPost            = $this->postModel->getPrevious($board['id'], $postId, $categoryId);
+        $nextPost            = $this->postModel->getNext($board['id'], $postId, $categoryId);
         $guestCommentCaptcha = session()->get('user_id') ? null : $this->guestCommentCaptcha($postId);
 
         // 비밀글·비공개 게시판 글은 색인 제외
@@ -214,6 +219,7 @@ class BoardController extends BaseController
             'comments'            => $comments,
             'likeCount'           => $likeModel->countByPost($postId),
             'liked'               => $likeModel->hasLiked($postId, $this->likeVoterKey()),
+            'currentCategory'     => $categoryId,
             'prevPost'            => $prevPost,
             'nextPost'            => $nextPost,
             'postTopAds'          => $adModel->getActiveByPosition('post_top'),
