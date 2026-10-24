@@ -62,11 +62,15 @@ final class PostModelTest extends DatabaseTestCase
             ['post_id' => $id, 'voter_key' => 'a', 'created_at' => date('Y-m-d H:i:s')],
             ['post_id' => $id, 'voter_key' => 'b', 'created_at' => date('Y-m-d H:i:s')],
         ]);
-        $this->db->table('post_comments')->insertBatch([
-            ['post_id' => $id, 'content' => '댓글1', 'author_name' => '갑', 'is_active' => 1],
-            ['post_id' => $id, 'content' => '숨김', 'author_name' => '을', 'is_active' => 0],
-            ['post_id' => $id, 'content' => '삭제됨', 'author_name' => '병', 'is_active' => 1, 'deleted_at' => date('Y-m-d H:i:s')],
-        ]);
+        $deletedAt = date('Y-m-d H:i:s');
+
+        foreach ([
+            ['content' => '댓글1', 'author_name' => '갑', 'is_active' => 1, 'deleted_at' => null],
+            ['content' => '숨김', 'author_name' => '을', 'is_active' => 0, 'deleted_at' => null],
+            ['content' => '삭제됨', 'author_name' => '병', 'is_active' => 1, 'deleted_at' => $deletedAt],
+        ] as $comment) {
+            $this->db->table('post_comments')->insert(['post_id' => $id] + $comment);
+        }
 
         $post = $this->model->getList($this->boardId, 1, 10)['posts'][0];
 
