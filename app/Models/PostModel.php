@@ -218,37 +218,45 @@ class PostModel extends Model
     }
 
     /**
-     * 같은 게시판의 이전 글(더 오래된 글) — 공지·비밀글·숨김글 제외.
+     * 같은 게시판의 이전 글(더 오래된 글) — 공지·비밀글·숨김글 제외. $categoryId 지정 시 그 카테고리 안에서만 찾는다.
      *
      * @return array<string, mixed>|null
      */
-    public function getPrevious(int $boardId, int $postId): ?array
+    public function getPrevious(int $boardId, int $postId, ?int $categoryId = null): ?array
     {
-        return $this->select('id, title')
+        $builder = $this->select('id, title')
             ->where('board_id', $boardId)
             ->where('is_notice', 0)
             ->where('is_secret', 0)
             ->where('is_active', 1)
-            ->where('id <', $postId)
-            ->orderBy('id', 'DESC')
-            ->first();
+            ->where('id <', $postId);
+
+        if ($categoryId !== null) {
+            $builder->where('category_id', $categoryId);
+        }
+
+        return $builder->orderBy('id', 'DESC')->first();
     }
 
     /**
-     * 같은 게시판의 다음 글(더 최근 글) — 공지·비밀글·숨김글 제외.
+     * 같은 게시판의 다음 글(더 최근 글) — 공지·비밀글·숨김글 제외. $categoryId 지정 시 그 카테고리 안에서만 찾는다.
      *
      * @return array<string, mixed>|null
      */
-    public function getNext(int $boardId, int $postId): ?array
+    public function getNext(int $boardId, int $postId, ?int $categoryId = null): ?array
     {
-        return $this->select('id, title')
+        $builder = $this->select('id, title')
             ->where('board_id', $boardId)
             ->where('is_notice', 0)
             ->where('is_secret', 0)
             ->where('is_active', 1)
-            ->where('id >', $postId)
-            ->orderBy('id', 'ASC')
-            ->first();
+            ->where('id >', $postId);
+
+        if ($categoryId !== null) {
+            $builder->where('category_id', $categoryId);
+        }
+
+        return $builder->orderBy('id', 'ASC')->first();
     }
 
     /**
