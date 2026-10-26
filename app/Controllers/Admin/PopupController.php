@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Libraries\ImageUploader;
+use App\Libraries\Thumbnail;
 use App\Models\MenuModel;
 use App\Models\PopupModel;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -100,6 +101,7 @@ class PopupController extends BaseController
                 if (file_exists($oldPath)) {
                     unlink($oldPath);
                 }
+                Thumbnail::remove($imagePath);
             }
             $imagePath = $result['path'];
         }

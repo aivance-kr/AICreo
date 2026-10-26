@@ -164,6 +164,10 @@ class FileUploader
 
         $relativePath = "uploads/board/{$subDir}/" . date('Y/m') . "/{$storedName}";
 
+        if ($isImage) {
+            Thumbnail::create($relativePath);
+        }
+
         $this->fileModel->insert([
             'post_id'       => $postId,
             'original_name' => $file->getName(),
@@ -186,6 +190,7 @@ class FileUploader
         if (file_exists($fullPath)) {
             unlink($fullPath);
         }
+        Thumbnail::remove($fileRecord['file_path']);
         $this->fileModel->delete($fileRecord['id']);
     }
 }

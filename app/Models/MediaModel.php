@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\Thumbnail;
 use CodeIgniter\Model;
 
 class MediaModel extends Model
@@ -34,6 +35,7 @@ class MediaModel extends Model
         if (file_exists($fullPath)) {
             unlink($fullPath);
         }
+        Thumbnail::remove($media['file_path']);
 
         return (bool) $this->delete($id);
     }

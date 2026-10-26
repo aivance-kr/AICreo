@@ -58,6 +58,13 @@ Consists of an `AbstractOAuthProvider` base class and `GoogleProvider`, `NaverPr
 | `ImageUploader` | Banner / popup images — images only, max 2 MB |
 | `MediaUploader` | Admin media library — drag and drop, stores paths in the `media` table |
 
+### 썸네일
+
+- `App\Libraries\Thumbnail` 이 업로드 시 GD 로 썸네일(긴 변 400px)을 `원본폴더/thumbs/원본파일명` 에 만든다 (jpg·png·webp. gif·svg 제외). 세 업로더가 모두 호출한다.
+- 긴 변이 400px 이하이거나 썸네일이 원본보다 작지 않으면 만들지 않는다. 화면에서는 `thumb_url($path)` (`image_helper.php`)가 썸네일이 있으면 썸네일, 없으면 원본 주소를 돌려준다. 목록·미리보기(게시글 첨부, 관리자 미디어·배너·팝업 목록)에 쓰고, 본문·클릭 시 보기는 원본이다.
+- 원본 삭제 시 `Thumbnail::remove()` 로 썸네일도 지운다.
+- 기존 파일 일괄 생성: `php spark thumbnails:generate [--force]` (`public/uploads` 전체, 이미 있으면 건너뜀).
+
 ## DB schema summary
 
 ```

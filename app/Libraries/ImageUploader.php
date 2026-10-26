@@ -42,6 +42,7 @@ class ImageUploader
         $relativePath = "uploads/{$this->folder}/{$subDir}/{$storedName}";
 
         $file->move($uploadPath, $storedName);
+        Thumbnail::create($relativePath);
 
         return ['success' => true, 'path' => $relativePath];
     }

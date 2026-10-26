@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Libraries\ImageUploader;
+use App\Libraries\Thumbnail;
 use App\Models\BannerModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -90,6 +91,7 @@ class BannerController extends BaseController
             if (file_exists($oldPath)) {
                 unlink($oldPath);
             }
+            Thumbnail::remove($banner['image_path']);
             $imagePath = $result['path'];
         }
 
