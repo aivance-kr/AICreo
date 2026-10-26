@@ -16,7 +16,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
     <?php $thumb = \App\Models\PostModel::extractThumbnail($post['content']); ?>
     <article class="cb-card<?= $i === 0 ? ' cb-card--lead' : '' ?>">
         <a href="<?= esc($postUrl($post)) ?>">
-            <?php if ($thumb): ?><img class="cb-card__img" src="<?= esc($thumb, 'attr') ?>" alt="" loading="<?= $i === 0 ? 'eager' : 'lazy' ?>"><?php else: ?><div class="cb-card__img cb-card__img--blank cb-tone-<?= $i % 3 ?>" aria-hidden="true"><?= esc(mb_substr($post['title'], 0, 1)) ?></div><?php endif; ?>
+            <?php if ($thumb): ?><img class="cb-card__img" src="<?= esc(content_thumb_url($thumb), 'attr') ?>" alt="" loading="<?= $i === 0 ? 'eager' : 'lazy' ?>"><?php else: ?><div class="cb-card__img cb-card__img--blank cb-tone-<?= $i % 3 ?>" aria-hidden="true"><?= esc(mb_substr($post['title'], 0, 1)) ?></div><?php endif; ?>
             <div class="cb-card__body">
                 <span class="cb-tag"><?= esc($post['board_name']) ?></span>
                 <h2><?= esc($post['title']) ?></h2>
