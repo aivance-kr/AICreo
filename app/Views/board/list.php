@@ -69,7 +69,7 @@
     <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?><?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="list-group-item list-group-item-action py-4">
         <div class="d-flex gap-3">
             <?php if ($thumb): ?>
-            <img src="<?= esc($thumb, 'attr') ?>" alt="" class="rounded flex-shrink-0" style="width:120px;height:90px;object-fit:cover">
+            <img src="<?= esc(content_thumb_url($thumb), 'attr') ?>" alt="" class="rounded flex-shrink-0" style="width:120px;height:90px;object-fit:cover">
             <?php endif; ?>
             <div class="flex-grow-1">
                 <?php if ($post['is_notice']): ?><span class="badge text-bg-warning mb-1">공지</span><?php endif; ?>
@@ -101,7 +101,7 @@
         <a href="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?><?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="text-decoration-none text-dark">
             <div class="ratio ratio-1x1 bg-light rounded mb-2 overflow-hidden">
                 <?php if ($thumb): ?>
-                <img src="<?= esc($thumb, 'attr') ?>" alt="" style="object-fit:cover">
+                <img src="<?= esc(content_thumb_url($thumb), 'attr') ?>" alt="" style="object-fit:cover">
                 <?php else: ?>
                 <div class="d-flex align-items-center justify-content-center text-muted"><i class="bi bi-image" style="font-size:2rem" aria-hidden="true"></i></div>
                 <?php endif; ?>
