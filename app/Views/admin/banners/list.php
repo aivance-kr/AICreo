@@ -32,7 +32,7 @@
                 <?php foreach ($banners as $b): ?>
                 <tr>
                     <td data-label="썸네일">
-                        <img loading="lazy" src="/<?= esc($b['image_path']) ?>" alt=""
+                        <img loading="lazy" src="<?= esc(thumb_url($b['image_path'])) ?>" alt=""
                              style="width:70px;height:40px;object-fit:cover;border-radius:4px">
                     </td>
                     <td data-label="위치"><span class="badge bg-secondary"><?= esc($positions[$b['position']] ?? $b['position']) ?></span></td>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\Thumbnail;
 use CodeIgniter\Model;
 
 class BannerModel extends Model
@@ -74,6 +75,7 @@ class BannerModel extends Model
         if (file_exists($fullPath)) {
             unlink($fullPath);
         }
+        Thumbnail::remove($banner['image_path']);
 
         return (bool) $this->delete($id);
     }

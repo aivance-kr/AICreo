@@ -42,6 +42,7 @@ class MediaUploader
         $relativePath = "uploads/media/{$subDir}/{$storedName}";
 
         $file->move($uploadPath, $storedName);
+        Thumbnail::create($relativePath);
 
         $id = $this->model->insert([
             'original_name' => $file->getName(),

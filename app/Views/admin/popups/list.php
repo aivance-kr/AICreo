@@ -34,7 +34,7 @@
                 <tr>
                     <td data-label="미리보기">
                         <?php if ($p['image_path']): ?>
-                        <img loading="lazy" src="/<?= esc($p['image_path']) ?>" alt=""
+                        <img loading="lazy" src="<?= esc(thumb_url($p['image_path'])) ?>" alt=""
                              style="width:70px;height:40px;object-fit:cover;border-radius:4px">
                         <?php else: ?>
                         <span class="text-muted small">텍스트</span>

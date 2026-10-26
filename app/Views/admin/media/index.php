@@ -22,7 +22,7 @@
     <div class="col-6 col-sm-4 col-md-3 col-xl-2" id="media-<?= $m['id'] ?>">
         <div class="card border-0 shadow-sm h-100">
             <div class="ratio ratio-1x1">
-                <img loading="lazy" src="/<?= esc($m['file_path']) ?>" class="img-fluid object-fit-cover rounded-top" alt="<?= esc($m['alt']) ?>">
+                <img loading="lazy" src="<?= esc(thumb_url($m['file_path'])) ?>" class="img-fluid object-fit-cover rounded-top" alt="<?= esc($m['alt']) ?>">
             </div>
             <div class="card-body p-2">
                 <div class="small text-truncate text-muted mb-1" title="<?= esc($m['original_name']) ?>"><?= esc($m['original_name']) ?></div>

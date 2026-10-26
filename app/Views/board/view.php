@@ -92,7 +92,7 @@ ob_start();
             <?php foreach ($images as $img): ?>
             <div class="col-auto">
                 <a href="/<?= esc($img['file_path']) ?>" target="_blank" rel="noopener">
-                    <img loading="lazy" src="/<?= esc($img['file_path']) ?>" alt="<?= esc($img['original_name']) ?>"
+                    <img loading="lazy" src="<?= esc(thumb_url($img['file_path'])) ?>" alt="<?= esc($img['original_name']) ?>"
                          class="img-thumbnail" style="max-height:200px;">
                     <span class="visually-hidden">원본 이미지 보기 (새 창 열림)</span>
                 </a>
