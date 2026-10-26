@@ -84,4 +84,17 @@ final class ThumbnailTest extends CIUnitTestCase
         $this->assertFalse(Thumbnail::create('uploads/none/anim.gif'));
         $this->assertFalse(Thumbnail::supports('uploads/logo.svg'));
     }
+
+    public function testContentThumbUrlSwapsLocalUploadsOnly(): void
+    {
+        $rel = $this->makeImage('c.jpg', 1000, 700);
+        Thumbnail::create($rel);
+
+        $thumb = '/' . self::DIR . '/thumbs/c.jpg';
+        $this->assertSame($thumb, content_thumb_url('/' . $rel));
+        $this->assertSame('../../' . self::DIR . '/thumbs/c.jpg', content_thumb_url('../../' . $rel));
+        $this->assertSame('/' . self::DIR . '/none.jpg', content_thumb_url('/' . self::DIR . '/none.jpg'));
+        $this->assertSame('https://other.example/' . $rel, content_thumb_url('https://other.example/' . $rel));
+        $this->assertSame('/' . $rel . '?v=1', content_thumb_url('/' . $rel . '?v=1'));
+    }
 }

@@ -50,9 +50,19 @@ final class Thumbnail
     public static function remove(string $relativePath): void
     {
         $thumb = FCPATH . self::pathFor($relativePath);
-        if (is_file($thumb)) {
+        if (is_file($thumb) && is_writable(dirname($thumb))) {
             unlink($thumb);
         }
+    }
+
+    /**
+     * 썸네일 폴더(없으면 원본 폴더)에 쓸 수 있는지. 웹서버 계정이 만든 폴더를 다른 계정으로 CLI 실행하면 false.
+     */
+    public static function canWrite(string $relativePath): bool
+    {
+        $dir = dirname(FCPATH . self::pathFor($relativePath));
+
+        return is_dir($dir) ? is_writable($dir) : is_writable(dirname($dir));
     }
 
     public static function supports(string $relativePath): bool
@@ -94,8 +104,12 @@ final class Thumbnail
             return false;
         }
 
+        if (! self::canWrite($relativePath)) {
+            return false;
+        }
+
         $target = FCPATH . self::pathFor($relativePath);
-        if (! is_dir(dirname($target)) && ! mkdir(dirname($target), 0755, true) && ! is_dir(dirname($target))) {
+        if (! is_dir(dirname($target)) && ! mkdir(dirname($target), 0755, true)) {
             return false;
         }
 

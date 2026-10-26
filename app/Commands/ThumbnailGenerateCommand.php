@@ -29,7 +29,7 @@ class ThumbnailGenerateCommand extends BaseCommand
     {
         $force   = CLI::getOption('force') !== null;
         $root    = rtrim(FCPATH, '/') . '/';
-        $created = $skipped = 0;
+        $created = $skipped = $failed = 0;
 
         if (! is_dir($root . 'uploads')) {
             CLI::write('uploads 디렉터리가 없습니다.', 'yellow');
@@ -53,9 +53,19 @@ class ThumbnailGenerateCommand extends BaseCommand
                 continue;
             }
 
-            Thumbnail::create($relative) ? $created++ : $skipped++;
+            if (Thumbnail::create($relative)) {
+                $created++;
+            } elseif (! Thumbnail::canWrite($relative)) {
+                $failed++;
+                CLI::error("쓰기 권한 없음: {$relative}");
+            } else {
+                $skipped++;
+            }
         }
 
-        CLI::write("완료: 생성 {$created} / 건너뜀 {$skipped}", 'green');
+        CLI::write("완료: 생성 {$created} / 건너뜀 {$skipped} / 실패 {$failed}", $failed > 0 ? 'yellow' : 'green');
+        if ($failed > 0) {
+            CLI::write('웹서버 계정으로 실행하세요. 예: sudo -u www-data php spark thumbnails:generate', 'yellow');
+        }
     }
 }
