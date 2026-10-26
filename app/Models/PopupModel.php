@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\Thumbnail;
 use CodeIgniter\Model;
 use Config\Database;
 
@@ -140,6 +141,7 @@ class PopupModel extends Model
             if (file_exists($fullPath)) {
                 unlink($fullPath);
             }
+            Thumbnail::remove($popup['image_path']);
         }
 
         Database::connect()->table('popup_pages')->where('popup_id', $id)->delete();
