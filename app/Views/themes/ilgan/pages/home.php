@@ -35,7 +35,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
                     <p><?= esc(post_excerpt($post['content'], 90)) ?></p>
                     <span class="il-meta"><?= esc($author($post)) ?> · <time datetime="<?= esc($post['created_at']) ?>"><?= esc(substr((string) $post['created_at'], 0, 10)) ?></time> · <?= post_read_minutes($post['content']) ?>분</span>
                 </div>
-                <?php if ($thumb): ?><img class="il-row__img" src="<?= esc($thumb, 'attr') ?>" alt="" loading="lazy"><?php endif; ?>
+                <?php if ($thumb): ?><img class="il-row__img" src="<?= esc(content_thumb_url($thumb), 'attr') ?>" alt="" loading="lazy"><?php endif; ?>
             </a>
         </article>
         <?php if (in_array($i + 1, $feedAfter, true)): ?>
