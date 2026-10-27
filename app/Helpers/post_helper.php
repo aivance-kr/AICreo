@@ -67,7 +67,13 @@ if (! function_exists('post_markdown_bold')) {
             if (preg_match('~^<(/?)(?:pre|code)[\s>]~i', $part, $m) === 1) {
                 $codeDepth += $m[1] === '/' ? -1 : 1;
             } elseif ($codeDepth <= 0 && ($part === '' || $part[0] !== '<')) {
-                $parts[$i] = (string) preg_replace('/\*\*(?=\S)(.+?)(?<=\S)\*\*/u', '<strong>$1</strong>', $part);
+                // PCRE 한도 초과로 null 이 오면 원문을 그대로 둔다 (본문이 지워지지 않게)
+                $replaced = str_contains($part, '**')
+                    ? preg_replace('/\*\*(?=\S)([^*]+?)(?<=\S)\*\*/u', '<strong>$1</strong>', $part)
+                    : null;
+                if ($replaced !== null) {
+                    $parts[$i] = $replaced;
+                }
             }
         }
 
