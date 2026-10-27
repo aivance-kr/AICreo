@@ -56,4 +56,22 @@ final class PostContentHtmlTest extends CIUnitTestCase
         $this->assertStringNotContainsString('javascript:', $out);
         $this->assertStringNotContainsString('<script', $out);
     }
+
+    public function testConvertsMarkdownBoldInTextNodes(): void
+    {
+        $out = post_content_html('<p>**90분짜리 「AI 여행강의」 PPT(17장)**</p><p>a **b** c **d**</p>');
+
+        $this->assertStringContainsString('<p><strong>90분짜리 「AI 여행강의」 PPT(17장)</strong></p>', $out);
+        $this->assertStringContainsString('<p>a <strong>b</strong> c <strong>d</strong></p>', $out);
+    }
+
+    public function testKeepsMarkdownBoldInCodeAndAttributes(): void
+    {
+        $out = post_content_html('<pre class="language-php">$a **b** c</pre><p><code>**x**</code> <a href="/a" title="**t**">l</a></p><p>2 ** 3 ** 4 **</p>');
+
+        $this->assertStringContainsString('$a **b** c', $out);
+        $this->assertStringContainsString('<code>**x**</code>', $out);
+        $this->assertStringContainsString('title="**t**"', $out);
+        $this->assertStringNotContainsString('<strong>', $out);
+    }
 }

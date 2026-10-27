@@ -37,13 +37,46 @@ if (! function_exists('post_content_html')) {
      * 에디터가 이미지를 상대 경로(../../uploads/...)로 저장하던 시절의 글은 /index.php/ 주소에서
      * 열면 /index.php/uploads/... 로 해석돼 이미지가 깨진다. src·href 속성만 대상으로 한다.
      * 출력 직전에 허용목록 정화도 해, 과거에 저장된 위험한 HTML 도 무력화한다.
+     * 마크다운 굵게(**글**)로 쓴 글자는 <strong> 으로 바꾼다.
      */
     function post_content_html(?string $html): string
     {
         return (string) preg_replace(
             '~(\s(?:src|href)=["\']?)(?:/?(?:\.\./|\./)*)(?:index\.php/)?(uploads/)~i',
             '$1/$2',
-            HtmlSanitizer::clean($html),
+            post_markdown_bold(HtmlSanitizer::clean($html)),
         );
+    }
+}
+
+if (! function_exists('post_markdown_bold')) {
+    /**
+     * 정화된 HTML 의 본문 텍스트에서 마크다운 굵게(**글**)를 <strong> 으로 바꾼다.
+     * 태그 속성과 pre·code 안(코드 예시)은 건드리지 않는다.
+     */
+    function post_markdown_bold(string $html): string
+    {
+        $parts = preg_split('/(<[^>]*>)/', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+        if ($parts === false) {
+            return $html;
+        }
+
+        $codeDepth = 0;
+
+        foreach ($parts as $i => $part) {
+            if (preg_match('~^<(/?)(?:pre|code)[\s>]~i', $part, $m) === 1) {
+                $codeDepth += $m[1] === '/' ? -1 : 1;
+            } elseif ($codeDepth <= 0 && ($part === '' || $part[0] !== '<')) {
+                // PCRE 한도 초과로 null 이 오면 원문을 그대로 둔다 (본문이 지워지지 않게)
+                $replaced = str_contains($part, '**')
+                    ? preg_replace('/\*\*(?=\S)([^*]+?)(?<=\S)\*\*/u', '<strong>$1</strong>', $part)
+                    : null;
+                if ($replaced !== null) {
+                    $parts[$i] = $replaced;
+                }
+            }
+        }
+
+        return implode('', $parts);
     }
 }
