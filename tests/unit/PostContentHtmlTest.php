@@ -74,4 +74,21 @@ final class PostContentHtmlTest extends CIUnitTestCase
         $this->assertStringContainsString('title="**t**"', $out);
         $this->assertStringNotContainsString('<strong>', $out);
     }
+
+    public function testConvertsMarkdownHeadingParagraphs(): void
+    {
+        $out = post_content_html('<p>## 설치 정보</p><p>본문</p><p>### **굵은** 제목</p><p>#해시태그</p><p>####### 일곱</p>');
+
+        $this->assertStringContainsString('<h2>설치 정보</h2><p>본문</p>', $out);
+        $this->assertStringContainsString('<h3><strong>굵은</strong> 제목</h3>', $out);
+        $this->assertStringContainsString('<p>#해시태그</p>', $out);
+        $this->assertStringContainsString('<p>####### 일곱</p>', $out);
+    }
+
+    public function testKeepsMarkdownHeadingInCode(): void
+    {
+        $out = post_content_html('<pre class="language-bash"># 주석\n## 두번째</pre>');
+
+        $this->assertStringNotContainsString('<h', $out);
+    }
 }
