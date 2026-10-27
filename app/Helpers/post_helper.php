@@ -44,8 +44,23 @@ if (! function_exists('post_content_html')) {
         return (string) preg_replace(
             '~(\s(?:src|href)=["\']?)(?:/?(?:\.\./|\./)*)(?:index\.php/)?(uploads/)~i',
             '$1/$2',
-            post_markdown_bold(HtmlSanitizer::clean($html)),
+            post_markdown_bold(post_markdown_headings(HtmlSanitizer::clean($html))),
         );
+    }
+}
+
+if (! function_exists('post_markdown_headings')) {
+    /**
+     * 정화된 HTML 에서 "## 제목" 한 줄짜리 문단(<p>)을 <h2> 등 제목 태그로 바꾼다 (# 1~6개 + 공백).
+     * 문단 전체가 제목 한 줄인 경우만 대상이라 pre·code 안이나 문장 중간의 #은 건드리지 않는다.
+     */
+    function post_markdown_headings(string $html): string
+    {
+        return preg_replace_callback(
+            '~<p>\s*(#{1,6})\s+([^<\s][^<]*?)\s*</p>~u',
+            static fn (array $m): string => '<h' . strlen($m[1]) . '>' . $m[2] . '</h' . strlen($m[1]) . '>',
+            $html,
+        ) ?? $html;
     }
 }
 
