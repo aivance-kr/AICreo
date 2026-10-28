@@ -139,4 +139,40 @@ final class PostContentHtmlTest extends CIUnitTestCase
         $this->assertStringNotContainsString('<hr', $out);
         $this->assertStringNotContainsString('<code>', $out);
     }
+
+    public function testConvertsFencedCodeBlockAcrossParagraphs(): void
+    {
+        $out = post_content_html('<p>```bash<br># 접속 후 실행<br>php bin/diagnose scan --path /var/www/myapp</p><p>&nbsp;</p><p>- 줄<br>```</p><p>뒤 본문</p>');
+
+        $this->assertStringContainsString('<pre class="language-bash"><code class="language-bash"># 접속 후 실행' . "\nphp bin/diagnose scan --path /var/www/myapp\n\n- 줄</code></pre>", $out);
+        $this->assertStringContainsString('<p>뒤 본문</p>', $out);
+        $this->assertStringNotContainsString('<h1>', $out);
+        $this->assertStringNotContainsString('<ul>', $out);
+    }
+
+    public function testConvertsFencedCodeBlockWithoutLanguage(): void
+    {
+        $out = post_content_html('<p>```<br>a &lt;b&gt; **c**<br>```</p>');
+
+        $this->assertStringContainsString('<pre><code>a &lt;b&gt; **c**</code></pre>', $out);
+    }
+
+    public function testConvertsMarkdownTable(): void
+    {
+        $expected = '<table><thead><tr><th>조항</th><th>벌칙</th></tr></thead><tbody><tr><td>제48조 <strong>제1항</strong></td><td>5년 이하</td></tr><tr><td>제2항</td><td></td></tr></tbody></table>';
+
+        $perParagraph = post_content_html('<p>| 조항 | 벌칙 |</p><p>|------|------|</p><p>| 제48조 **제1항** | 5년 이하 |</p><p>| 제2항 |</p>');
+        $withBreaks   = post_content_html('<p>| 조항 | 벌칙 |<br>|:---|---:|<br>| 제48조 **제1항** | 5년 이하 |<br>| 제2항 |</p>');
+
+        $this->assertSame($expected, $perParagraph);
+        $this->assertSame($expected, $withBreaks);
+    }
+
+    public function testKeepsNonTablePipes(): void
+    {
+        $out = post_content_html('<p>| 하나 |</p><p>| 둘 |</p><p>a | b</p>');
+
+        $this->assertStringNotContainsString('<table', $out);
+        $this->assertStringContainsString('<p>a | b</p>', $out);
+    }
 }
