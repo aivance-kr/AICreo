@@ -37,14 +37,14 @@ if (! function_exists('post_content_html')) {
      * 에디터가 이미지를 상대 경로(../../uploads/...)로 저장하던 시절의 글은 /index.php/ 주소에서
      * 열면 /index.php/uploads/... 로 해석돼 이미지가 깨진다. src·href 속성만 대상으로 한다.
      * 출력 직전에 허용목록 정화도 해, 과거에 저장된 위험한 HTML 도 무력화한다.
-     * 마크다운으로 쓴 글(코드 블록·제목·목록·인용·구분선·굵게·기울임·코드·링크)은 HTML 태그로 바꾼다.
+     * 마크다운으로 쓴 글(코드 블록·표·제목·목록·인용·구분선·굵게·기울임·코드·링크)은 HTML 태그로 바꾼다.
      */
     function post_content_html(?string $html): string
     {
         return (string) preg_replace(
             '~(\s(?:src|href)=["\']?)(?:/?(?:\.\./|\./)*)(?:index\.php/)?(uploads/)~i',
             '$1/$2',
-            post_markdown_inline(post_markdown_blocks(post_markdown_headings(post_markdown_fences(HtmlSanitizer::clean($html))))),
+            post_markdown_inline(post_markdown_blocks(post_markdown_headings(post_markdown_tables(post_markdown_fences(HtmlSanitizer::clean($html)))))),
         );
     }
 }
@@ -66,6 +66,50 @@ if (! function_exists('post_markdown_fences')) {
                 $class = $m[1] === '' ? '' : ' class="language-' . strtolower($m[1]) . '"';
 
                 return "<pre{$class}><code{$class}>{$code}</code></pre>";
+            },
+            $html,
+        ) ?? $html;
+    }
+}
+
+if (! function_exists('post_markdown_tables')) {
+    /**
+     * 정화된 HTML 에서 마크다운 표(| 로 시작·끝나는 줄 + 둘째 줄 |---|---|)를 <table> 로 바꾼다.
+     * 줄은 한 <p> 안의 <br> 이든 연속한 <p> 이든 모아서 본다. 첫 줄은 <th>, 나머지는 <td> 이며
+     * 열 수는 머리글에 맞춘다. 형식이 어긋나면 원문을 그대로 둔다. pre·code 안은 <p> 가 아니라 건드리지 않는다.
+     */
+    function post_markdown_tables(string $html): string
+    {
+        return preg_replace_callback(
+            '~(?:<p>\s*\|(?:(?!</p>).)*\|\s*</p>\s*)+~su',
+            static function (array $m): string {
+                $lines = [];
+                foreach (preg_split('~\s*</p>\s*<p>\s*|\s*<br\s*/?>\s*~i', trim((string) preg_replace('~^<p>|</p>$~i', '', trim($m[0])))) ?: [] as $line) {
+                    $lines[] = trim(str_replace('&nbsp;', ' ', $line));
+                }
+
+                $sep = '/^\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)*\|$/';
+                if (count($lines) < 2 || preg_match($sep, $lines[1]) !== 1) {
+                    return $m[0];
+                }
+
+                $rows = [];
+                foreach (array_merge([$lines[0]], array_slice($lines, 2)) as $line) {
+                    if (preg_match('/^\|.*\|$/su', $line) !== 1) {
+                        return $m[0];
+                    }
+                    $rows[] = array_map('trim', explode('|', substr($line, 1, -1)));
+                }
+
+                $cols  = count($rows[0]);
+                $cells = static fn (array $row, string $tag): string => '<tr>' . implode('', array_map(
+                    static fn (string $c): string => "<{$tag}>{$c}</{$tag}>",
+                    array_slice(array_pad($row, $cols, ''), 0, $cols),
+                )) . '</tr>';
+
+                $body = implode('', array_map(static fn (array $r): string => $cells($r, 'td'), array_slice($rows, 1)));
+
+                return '<table><thead>' . $cells($rows[0], 'th') . '</thead>' . ($body === '' ? '' : "<tbody>{$body}</tbody>") . '</table>';
             },
             $html,
         ) ?? $html;
