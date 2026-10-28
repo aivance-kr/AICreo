@@ -91,4 +91,52 @@ final class PostContentHtmlTest extends CIUnitTestCase
 
         $this->assertStringNotContainsString('<h', $out);
     }
+
+    public function testConvertsMarkdownInlineCodeItalicAndLinks(): void
+    {
+        $out = post_content_html('<p>`a **b**` 와 *기울임* 과 [링크](https://example.com/x?a=1&b=2) 와 [내부](/board/1)</p>');
+
+        $this->assertStringContainsString('<code>a **b**</code>', $out);
+        $this->assertStringContainsString('<em>기울임</em>', $out);
+        $this->assertStringContainsString('<a href="https://example.com/x?a=1&amp;b=2">링크</a>', $out);
+        $this->assertStringContainsString('<a href="/board/1">내부</a>', $out);
+    }
+
+    public function testRejectsUnsafeMarkdownLinkAndKeepsPlainAsterisks(): void
+    {
+        $out = post_content_html('<p>[x](javascript:alert(1)) 2 * 3 * 4 <a href="/a">[y](/z)</a></p>');
+
+        $this->assertStringNotContainsString('<a href="javascript', $out);
+        $this->assertStringContainsString('[x](javascript:alert(1))', $out);
+        $this->assertStringContainsString('2 * 3 * 4', $out);
+        $this->assertStringContainsString('<a href="/a">[y](/z)</a>', $out);
+    }
+
+    public function testConvertsMarkdownLists(): void
+    {
+        $out = post_content_html('<p>- 하나</p><p>- **둘**</p><p>본문</p><p>1. 가<br>2. 나</p><p>-하이픈</p>');
+
+        $this->assertStringContainsString('<ul><li>하나</li><li><strong>둘</strong></li></ul><p>본문</p>', $out);
+        $this->assertStringContainsString('<ol><li>가</li><li>나</li></ol>', $out);
+        $this->assertStringContainsString('<p>-하이픈</p>', $out);
+    }
+
+    public function testConvertsMarkdownQuoteAndRule(): void
+    {
+        $out = post_content_html('<p>&gt; 인용문<br>&gt; 둘째 줄</p><p>---</p><p>a --- b</p>');
+
+        $this->assertStringContainsString('<blockquote><p>인용문<br />둘째 줄</p></blockquote>', $out);
+        $this->assertStringContainsString('<hr />', $out);
+        $this->assertStringContainsString('<p>a --- b</p>', $out);
+    }
+
+    public function testKeepsMarkdownBlocksInCode(): void
+    {
+        $out = post_content_html('<pre class="language-bash">- a\n&gt; b\n---\n`c`</pre>');
+
+        $this->assertStringNotContainsString('<ul', $out);
+        $this->assertStringNotContainsString('<blockquote', $out);
+        $this->assertStringNotContainsString('<hr', $out);
+        $this->assertStringNotContainsString('<code>', $out);
+    }
 }
