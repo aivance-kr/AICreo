@@ -139,4 +139,21 @@ final class PostContentHtmlTest extends CIUnitTestCase
         $this->assertStringNotContainsString('<hr', $out);
         $this->assertStringNotContainsString('<code>', $out);
     }
+
+    public function testConvertsFencedCodeBlockAcrossParagraphs(): void
+    {
+        $out = post_content_html('<p>```bash<br># 접속 후 실행<br>php bin/diagnose scan --path /var/www/myapp</p><p>&nbsp;</p><p>- 줄<br>```</p><p>뒤 본문</p>');
+
+        $this->assertStringContainsString('<pre class="language-bash"><code class="language-bash"># 접속 후 실행' . "\n" . 'php bin/diagnose scan --path /var/www/myapp' . "\n\n" . '- 줄</code></pre>', $out);
+        $this->assertStringContainsString('<p>뒤 본문</p>', $out);
+        $this->assertStringNotContainsString('<h1>', $out);
+        $this->assertStringNotContainsString('<ul>', $out);
+    }
+
+    public function testConvertsFencedCodeBlockWithoutLanguage(): void
+    {
+        $out = post_content_html('<p>```<br>a &lt;b&gt; **c**<br>```</p>');
+
+        $this->assertStringContainsString('<pre><code>a &lt;b&gt; **c**</code></pre>', $out);
+    }
 }

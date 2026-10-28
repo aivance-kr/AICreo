@@ -37,15 +37,38 @@ if (! function_exists('post_content_html')) {
      * 에디터가 이미지를 상대 경로(../../uploads/...)로 저장하던 시절의 글은 /index.php/ 주소에서
      * 열면 /index.php/uploads/... 로 해석돼 이미지가 깨진다. src·href 속성만 대상으로 한다.
      * 출력 직전에 허용목록 정화도 해, 과거에 저장된 위험한 HTML 도 무력화한다.
-     * 마크다운으로 쓴 글(제목·목록·인용·구분선·굵게·기울임·코드·링크)은 HTML 태그로 바꾼다.
+     * 마크다운으로 쓴 글(코드 블록·제목·목록·인용·구분선·굵게·기울임·코드·링크)은 HTML 태그로 바꾼다.
      */
     function post_content_html(?string $html): string
     {
         return (string) preg_replace(
             '~(\s(?:src|href)=["\']?)(?:/?(?:\.\./|\./)*)(?:index\.php/)?(uploads/)~i',
             '$1/$2',
-            post_markdown_inline(post_markdown_blocks(post_markdown_headings(HtmlSanitizer::clean($html)))),
+            post_markdown_inline(post_markdown_blocks(post_markdown_headings(post_markdown_fences(HtmlSanitizer::clean($html))))),
         );
+    }
+}
+
+if (! function_exists('post_markdown_fences')) {
+    /**
+     * 정화된 HTML 에서 ``` 로 감싼 코드 블록(여러 <p> 에 걸쳐도 됨)을 <pre><code> 로 바꾼다.
+     * 여는 ``` 는 문단 시작, 닫는 ``` 는 문단 끝이어야 하며, 언어(```bash)는 class 로 남긴다.
+     * 다른 마크다운 변환이 코드 안을 건드리지 않도록 가장 먼저 실행한다.
+     */
+    function post_markdown_fences(string $html): string
+    {
+        return preg_replace_callback(
+            '~<p>\s*```([A-Za-z0-9+-]*)(?:\s*<br\s*/?>|\s|(?=</p>))(.*?)\s*```\s*</p>~su',
+            static function (array $m): string {
+                $code = preg_replace(['~\s*<br\s*/?>\s*~i', '~</p>\s*<p>~i'], "\n", $m[2]) ?? $m[2];
+                $code = strip_tags(str_replace('&nbsp;', ' ', $code));
+                $code = trim((string) preg_replace('/[ \t\x{A0}]+$/mu', '', $code), "\n");
+                $class = $m[1] === '' ? '' : ' class="language-' . strtolower($m[1]) . '"';
+
+                return "<pre{$class}><code{$class}>{$code}</code></pre>";
+            },
+            $html,
+        ) ?? $html;
     }
 }
 
