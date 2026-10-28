@@ -60,9 +60,9 @@ if (! function_exists('post_markdown_fences')) {
         return preg_replace_callback(
             '~<p>\s*```([A-Za-z0-9+-]*)(?:\s*<br\s*/?>|\s|(?=</p>))(.*?)\s*```\s*</p>~su',
             static function (array $m): string {
-                $code = preg_replace(['~\s*<br\s*/?>\s*~i', '~</p>\s*<p>~i'], "\n", $m[2]) ?? $m[2];
-                $code = strip_tags(str_replace('&nbsp;', ' ', $code));
-                $code = trim((string) preg_replace('/[ \t\x{A0}]+$/mu', '', $code), "\n");
+                $code  = preg_replace(['~\s*<br\s*/?>\s*~i', '~</p>\s*<p>~i'], "\n", $m[2]) ?? $m[2];
+                $code  = strip_tags(str_replace('&nbsp;', ' ', $code));
+                $code  = trim((string) preg_replace('/[ \t\x{A0}]+$/mu', '', $code), "\n");
                 $class = $m[1] === '' ? '' : ' class="language-' . strtolower($m[1]) . '"';
 
                 return "<pre{$class}><code{$class}>{$code}</code></pre>";
@@ -84,6 +84,7 @@ if (! function_exists('post_markdown_tables')) {
             '~(?:<p>\s*\|(?:(?!</p>).)*\|\s*</p>\s*)+~su',
             static function (array $m): string {
                 $lines = [];
+
                 foreach (preg_split('~\s*</p>\s*<p>\s*|\s*<br\s*/?>\s*~i', trim((string) preg_replace('~^<p>|</p>$~i', '', trim($m[0])))) ?: [] as $line) {
                     $lines[] = trim(str_replace('&nbsp;', ' ', $line));
                 }
@@ -94,6 +95,7 @@ if (! function_exists('post_markdown_tables')) {
                 }
 
                 $rows = [];
+
                 foreach (array_merge([$lines[0]], array_slice($lines, 2)) as $line) {
                     if (preg_match('/^\|.*\|$/su', $line) !== 1) {
                         return $m[0];

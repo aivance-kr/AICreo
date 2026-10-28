@@ -144,7 +144,7 @@ final class PostContentHtmlTest extends CIUnitTestCase
     {
         $out = post_content_html('<p>```bash<br># 접속 후 실행<br>php bin/diagnose scan --path /var/www/myapp</p><p>&nbsp;</p><p>- 줄<br>```</p><p>뒤 본문</p>');
 
-        $this->assertStringContainsString('<pre class="language-bash"><code class="language-bash"># 접속 후 실행' . "\n" . 'php bin/diagnose scan --path /var/www/myapp' . "\n\n" . '- 줄</code></pre>', $out);
+        $this->assertStringContainsString('<pre class="language-bash"><code class="language-bash"># 접속 후 실행' . "\nphp bin/diagnose scan --path /var/www/myapp\n\n- 줄</code></pre>", $out);
         $this->assertStringContainsString('<p>뒤 본문</p>', $out);
         $this->assertStringNotContainsString('<h1>', $out);
         $this->assertStringNotContainsString('<ul>', $out);
