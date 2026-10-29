@@ -71,6 +71,7 @@
             <?php if (! empty($seriesList)): ?>
             <?php $checkedSeries = array_map('intval', (array) (old('series_ids') ?? array_keys($postSeries))); ?>
             <fieldset class="mb-3">
+                <input type="hidden" name="series_form" value="1">
                 <legend class="form-label small">
                     시리즈 <span class="text-muted">(여러 개 선택 가능)</span>
                     <button type="button" id="series-suggest-btn" class="btn btn-outline-secondary btn-sm ms-2 py-0">
@@ -78,7 +79,6 @@
                     </button>
                     <span id="series-suggest-status" class="small text-muted ms-2" role="status" aria-live="polite"></span>
                 </legend>
-                <input type="hidden" name="series_form" value="1">
                 <?php foreach ($seriesList as $item): ?>
                 <?php $sid = (int) $item['id']; ?>
                 <div class="d-flex align-items-center gap-2 mb-1">
