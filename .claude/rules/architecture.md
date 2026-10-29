@@ -86,6 +86,7 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 글 상세 상단의 시리즈 상자(`board/_series_nav.php`)는 속한 시리즈마다 하나씩 `SeriesModel::navigationsForPost()` 가 만든다. 캐시 키는 시리즈 단위 `series_nav_{id}` 하나이고 현재 위치·이전·다음은 매번 계산한다. `PostModel` 의 update/delete 훅과 `SeriesModel` 의 소속 변경 메서드가 해당 시리즈 캐시를 지운다.
 - 하단의 글 번호 기준 이전/다음 글(`getPrevious`/`getNext`)은 시리즈와 무관하게 그대로 둔다 — 두 내비게이션은 역할이 다르다.
 - 시리즈 관리는 `/admin/series`(수정 화면에서 글 검색·번호 일괄 입력으로 글 추가), 글에 지정은 운영자만 글쓰기·수정 화면에서 체크박스+순서(비우면 맨 뒤), 공개 목록은 `/series`, 소개 페이지는 `/series/{slug}`.
+- 글쓰기·수정 화면의 "AI 추천" 버튼은 `POST board/series-suggest`(운영자 전용)로 `GroqSeriesService`(`service('groqSeries')`, `GROQ_API_KEY` 공유)에 제목·본문과 `SeriesModel::suggestionCandidates()` 를 보내 어울리는 시리즈를 체크해 준다. 저장은 하지 않으며 후보에 없는 번호는 걸러낸다.
 
 ## IP 차단
 
