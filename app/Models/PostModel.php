@@ -15,6 +15,14 @@ class PostModel extends Model
     private const COUNT_SUBQUERIES = '(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS like_count, '
         . '(SELECT COUNT(*) FROM post_comments WHERE post_comments.post_id = posts.id AND post_comments.is_active = 1) AS comment_count';
 
+    /**
+     * "많이 본 글" 기간 키 → 표시명. all 은 누적 조회수.
+     */
+    public const POPULAR_PERIODS = ['all' => '전체', '7d' => '7일', '30d' => '30일'];
+
+    private const POPULAR_DAYS      = ['7d' => 7, '30d' => 30];
+    private const POPULAR_CACHE_TTL = 600;
+
     protected $table          = 'posts';
     protected $primaryKey     = 'id';
     protected $useTimestamps  = true;
@@ -63,6 +71,58 @@ class PostModel extends Model
             ->where('boards.read_permission', 'guest')
             ->orderBy('posts.id', 'DESC')
             ->findAll($limit);
+    }
+
+    /**
+     * 공개 글 중 많이 본 글 — getLatestPublic 과 같은 공개 조건.
+     * all 은 posts.views 누적, 7d/30d 는 page_visits 의 해당 글 주소 방문 수 기준이다.
+     * 모르는 기간 값은 all 로 취급한다.
+     *
+     * @return list<array<string, mixed>> 기간 집계일 때는 visit_count 가 함께 담긴다
+     */
+    public function getPopular(string $period, int $limit): array
+    {
+        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest');
+
+        $days = self::POPULAR_DAYS[$period] ?? null;
+
+        if ($days === null) {
+            return $builder->orderBy('posts.views', 'DESC')->orderBy('posts.id', 'DESC')->findAll($limit);
+        }
+
+        $since = date('Y-m-d 00:00:00', strtotime("-{$days} days"));
+
+        return $builder->select('COUNT(v.id) AS visit_count', false)
+            ->join(
+                'page_visits v',
+                "v.uri = CONCAT('/board/', boards.slug, '/', posts.id) AND v.created_at >= " . $this->db->escape($since),
+                'inner',
+            )
+            ->groupBy('posts.id, boards.name, boards.slug')
+            ->orderBy('visit_count', 'DESC')
+            ->orderBy('posts.id', 'DESC')
+            ->findAll($limit);
+    }
+
+    /**
+     * getPopular 결과를 캐시한다(10분). 글 수정 시 무효화하지 않고 TTL 만료에 맡긴다.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getPopularCached(string $period, int $limit): array
+    {
+        $period = isset(self::POPULAR_PERIODS[$period]) ? $period : 'all';
+
+        return cache()->remember(
+            "popular_posts_{$period}_{$limit}",
+            self::POPULAR_CACHE_TTL,
+            fn (): array => $this->getPopular($period, $limit),
+        );
     }
 
     /**

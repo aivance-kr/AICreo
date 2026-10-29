@@ -112,6 +112,57 @@ final class PostModelTest extends DatabaseTestCase
         $this->assertSame('notice', $posts[0]['board_slug']);
     }
 
+    private function visit(int $postId, string $createdAt, string $slug = 'notice'): void
+    {
+        $this->db->table('page_visits')->insert([
+            'uri'        => "/board/{$slug}/{$postId}",
+            'ip_address' => '127.0.0.1',
+            'created_at' => $createdAt,
+        ]);
+    }
+
+    public function testGetPopularAllOrdersByViewsAndExcludesNonPublic(): void
+    {
+        $low  = $this->makePost(['title' => '적게', 'views' => 3]);
+        $high = $this->makePost(['title' => '많이', 'views' => 50]);
+        $this->makePost(['title' => '비밀', 'is_secret' => 1, 'views' => 999]);
+        $this->makePost(['title' => '비활성', 'is_active' => 0, 'views' => 999]);
+
+        $posts = $this->model->getPopular('all', 10);
+
+        $this->assertSame([$high, $low], array_map(static fn (array $p): int => (int) $p['id'], $posts));
+        $this->assertSame('notice', $posts[0]['board_slug']);
+    }
+
+    public function testGetPopularByPeriodCountsOnlyVisitsInsideWindow(): void
+    {
+        $recent = $this->makePost(['title' => '최근 인기', 'views' => 1]);
+        $old    = $this->makePost(['title' => '옛 인기', 'views' => 500]);
+        $secret = $this->makePost(['title' => '비밀', 'is_secret' => 1]);
+
+        $now = date('Y-m-d H:i:s');
+        $this->visit($recent, $now);
+        $this->visit($recent, $now);
+        $this->visit($old, date('Y-m-d H:i:s', strtotime('-10 days')));
+        $this->visit($secret, $now);
+
+        $week  = $this->model->getPopular('7d', 10);
+        $month = $this->model->getPopular('30d', 10);
+
+        $this->assertSame([$recent], array_map(static fn (array $p): int => (int) $p['id'], $week));
+        $this->assertSame([$recent, $old], array_map(static fn (array $p): int => (int) $p['id'], $month));
+        $this->assertSame(2, (int) $week[0]['visit_count']);
+    }
+
+    public function testGetPopularRespectsLimitAndRejectsUnknownPeriod(): void
+    {
+        $this->makePost(['views' => 1]);
+        $this->makePost(['views' => 2]);
+
+        $this->assertCount(1, $this->model->getPopular('all', 1));
+        $this->assertSame($this->model->getPopular('all', 10), $this->model->getPopular('bogus', 10));
+    }
+
     public function testGetPreviousReturnsOlderPostInSameBoard(): void
     {
         $older  = $this->makePost(['title' => '이전 글']);
