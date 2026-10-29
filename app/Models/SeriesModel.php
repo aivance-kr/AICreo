@@ -216,6 +216,28 @@ class SeriesModel extends Model
     }
 
     /**
+     * 주어진 글 번호 순서대로 이 시리즈 소속 글의 순서를 1부터 다시 매긴다 (소속이 아닌 번호는 무시).
+     *
+     * @param list<int> $postIds
+     */
+    public function reorderPosts(int $seriesId, array $postIds): void
+    {
+        $this->db->transStart();
+        $order = 1;
+
+        foreach (array_unique($postIds) as $postId) {
+            $this->db->table('post_series')->where('series_id', $seriesId)->where('post_id', $postId)
+                ->update(['series_order' => min($order, 65535)]);
+            if ($this->db->affectedRows() > 0) {
+                $order++;
+            }
+        }
+        $this->db->transComplete();
+
+        self::clearCache($seriesId);
+    }
+
+    /**
      * 글이 속한 시리즈 번호 → 순서 (글쓰기 화면의 현재 선택값).
      *
      * @return array<int, int|null>

@@ -139,23 +139,32 @@
                 <?php if ($members === []): ?>
                     <p class="text-muted small mb-0">아직 글이 없습니다.</p>
                 <?php else: ?>
-                <ol class="list-group list-group-flush">
-                    <?php foreach ($members as $post): ?>
-                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
-                        <span class="small">
-                            <?= $post['series_order'] !== null ? (int) $post['series_order'] . '.' : '-' ?>
-                            #<?= (int) $post['id'] ?> <?= esc($post['title']) ?>
-                            <?php if (! (int) $post['is_active'] || (int) $post['is_secret']): ?>
-                                <span class="badge text-bg-light">비공개</span>
-                            <?php endif; ?>
-                        </span>
-                        <form method="post" action="/admin/series/<?= (int) $editing['id'] ?>/posts/<?= (int) $post['id'] ?>/remove">
-                            <?= csrf_field() ?>
-                            <button type="submit" class="btn btn-outline-danger btn-sm text-nowrap">빼기</button>
-                        </form>
-                    </li>
-                    <?php endforeach; ?>
-                </ol>
+                <form method="post" action="/admin/series/<?= (int) $editing['id'] ?>/posts/order" id="series-order-form">
+                    <?= csrf_field() ?>
+                    <p class="form-text mt-0">손잡이(<i class="bi bi-grip-vertical" aria-hidden="true"></i>)를 끌어 순서를 바꾸고 "순서 저장"을 누르세요. 위쪽이 1편입니다.</p>
+                    <ol class="list-group list-group-flush" id="series-members">
+                        <?php foreach ($members as $post): ?>
+                        <li class="list-group-item px-0 d-flex align-items-center gap-2">
+                            <input type="hidden" name="post_ids[]" value="<?= (int) $post['id'] ?>">
+                            <span class="series-handle text-muted" style="cursor:grab" title="끌어서 순서 변경"><i class="bi bi-grip-vertical" aria-hidden="true"></i><span class="visually-hidden">끌어서 순서 변경</span></span>
+                            <span class="small flex-grow-1">
+                                <span class="series-no fw-semibold"></span>
+                                #<?= (int) $post['id'] ?> <?= esc($post['title']) ?>
+                                <?php if (! (int) $post['is_active'] || (int) $post['is_secret']): ?>
+                                    <span class="badge text-bg-light">비공개</span>
+                                <?php endif; ?>
+                            </span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm series-up" aria-label="위로">▲</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm series-down" aria-label="아래로">▼</button>
+                            <button type="submit" class="btn btn-outline-danger btn-sm text-nowrap"
+                                    formaction="/admin/series/<?= (int) $editing['id'] ?>/posts/<?= (int) $post['id'] ?>/remove">빼기</button>
+                        </li>
+                        <?php endforeach; ?>
+                    </ol>
+                    <div class="text-end mt-3">
+                        <button type="submit" class="btn btn-primary btn-sm px-4">순서 저장</button>
+                    </div>
+                </form>
                 <?php endif; ?>
             </div>
         </div>
@@ -164,3 +173,32 @@
 </div>
 
 <?= $this->endSection() ?>
+<?php if ($editing && $members !== []): ?>
+<?= $this->section('scripts') ?>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"
+        integrity="sha384-BSxuMLxX+FCbTdYec3TbXlnMGEEM2QXTFdtDaveen71o+jswm2J36+xFqp8k4VHM"
+        crossorigin="anonymous"></script>
+<script>
+(() => {
+    const list = document.getElementById('series-members');
+    const renumber = () => list.querySelectorAll('li').forEach((li, i) => {
+        li.querySelector('.series-no').textContent = (i + 1) + '.';
+    });
+    renumber();
+    new Sortable(list, { handle: '.series-handle', animation: 150, onEnd: renumber });
+    list.addEventListener('click', (e) => {
+        const btn = e.target.closest('.series-up, .series-down');
+        if (!btn) return;
+        const li = btn.closest('li');
+        if (btn.classList.contains('series-up') && li.previousElementSibling) {
+            list.insertBefore(li, li.previousElementSibling);
+        } else if (btn.classList.contains('series-down') && li.nextElementSibling) {
+            list.insertBefore(li.nextElementSibling, li);
+        }
+        renumber();
+        btn.focus();
+    });
+})();
+</script>
+<?= $this->endSection() ?>
+<?php endif; ?>

@@ -94,6 +94,18 @@ class SeriesController extends BaseController
         return redirect()->to($editUrl)->with($flash, $message);
     }
 
+    public function reorderPosts(int $id): ResponseInterface
+    {
+        if ($this->seriesModel->find($id) === null) {
+            return redirect()->to(self::LIST_URL)->with('error', '시리즈를 찾을 수 없습니다.');
+        }
+
+        $ids = array_map('intval', (array) $this->request->getPost('post_ids'));
+        $this->seriesModel->reorderPosts($id, $ids);
+
+        return redirect()->to(self::LIST_URL . '?edit=' . $id)->with('success', '순서를 저장했습니다.');
+    }
+
     public function removePost(int $id, int $postId): ResponseInterface
     {
         $this->seriesModel->detachPost($id, $postId);

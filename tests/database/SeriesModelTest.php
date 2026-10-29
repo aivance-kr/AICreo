@@ -211,4 +211,16 @@ final class SeriesModelTest extends DatabaseTestCase
         $this->assertContains($postId, array_map('intval', array_column($this->model->searchPosts($this->seriesId, (string) $postId), 'id')));
         $this->assertSame([], $this->model->searchPosts($this->seriesId, '  '));
     }
+
+    public function testReorderPostsRenumbersInGivenOrder(): void
+    {
+        $a = $this->makePost('A', 1);
+        $b = $this->makePost('B', 2);
+        $c = $this->makePost('C', 3);
+
+        $this->model->reorderPosts($this->seriesId, [$c, 99999, $a, $b]);
+
+        $this->assertSame([$c, $a, $b], array_map('intval', array_column($this->model->publicPosts($this->seriesId), 'id')));
+        $this->assertSame(2, $this->model->seriesOfPost($a)[$this->seriesId]);
+    }
 }
