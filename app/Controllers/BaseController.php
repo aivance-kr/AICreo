@@ -10,6 +10,7 @@ use App\Models\BoardModel;
 use App\Models\InquiryModel;
 use App\Models\MenuModel;
 use App\Models\PopupModel;
+use App\Models\PostModel;
 use App\Models\SettingModel;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\RequestInterface;
@@ -75,8 +76,16 @@ class BaseController extends Controller
         $adSafe     = ! $isAdmin && preg_match('#^auth(/|$)|(^|/)(write|edit|password|delete)(/|$)#', uri_string()) !== 1;
         $sidebarAds = ($isBlogTheme && $adSafe) ? (new AdModel())->getActiveByPosition('sidebar') : [];
 
+        // 사이드바 "많이 본 글" — 블로그형 테마에서만. 기간은 ?popular=all|7d|30d (기본 7d)
+        $popularPeriod = (string) $this->request->getGet('popular');
+        $popularPeriod = isset(PostModel::POPULAR_PERIODS[$popularPeriod]) ? $popularPeriod : '7d';
+        $popularPosts  = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getPopularCached($popularPeriod, 5) : [];
+
+        // 사이드바 태그 클라우드 — 블로그형 테마에서만, 상위 15개
+        $tagCloud = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getTagCloud(15) : [];
+
         // jsonLd 기본값을 항상 [] 로 명시 (Config\View::$saveData=true 공유 렌더러 누출 방지)
-        $this->viewData = ['settings' => $settings, 'menus' => $menus, 'boardCategories' => $boardCategories, 'authUser' => $authUser, 'unreadInquiries' => $unreadInquiries, 'subLeftBanners' => $subLeftBanners, 'activePopups' => $activePopups, 'sidebarAds' => $sidebarAds, 'jsonLd' => []];
+        $this->viewData = ['settings' => $settings, 'menus' => $menus, 'boardCategories' => $boardCategories, 'authUser' => $authUser, 'unreadInquiries' => $unreadInquiries, 'subLeftBanners' => $subLeftBanners, 'activePopups' => $activePopups, 'sidebarAds' => $sidebarAds, 'popularPosts' => $popularPosts, 'popularPeriod' => $popularPeriod, 'tagCloud' => $tagCloud, 'jsonLd' => []];
     }
 
     protected function getUserRole(): string

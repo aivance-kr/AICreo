@@ -229,6 +229,7 @@ class BoardController extends BaseController
             'prevPost'            => $prevPost,
             'nextPost'            => $nextPost,
             'seriesNavs'          => $seriesNavs,
+            'relatedPosts'        => $noindex ? [] : $this->postModel->getRelated($postId),
             'postTopAds'          => $adModel->getActiveByPosition('post_top'),
             'postBotAds'          => $adModel->getActiveByPosition('post_bottom'),
             'guestCommentCaptcha' => $guestCommentCaptcha,
@@ -302,6 +303,13 @@ class BoardController extends BaseController
             'ip_address' => $this->request->getIPAddress(),
         ];
 
+        // 예약 발행(운영자 전용) — 미래 시각이면 숨김으로 저장하고 posts:publish-scheduled 가 때가 되면 공개한다
+        $publishAt = $this->requestedPublishAt();
+        if ($publishAt !== null) {
+            $data['publish_at'] = $publishAt;
+            $data['is_active']  = 0;
+        }
+
         // 선택된 서명을 글 작성 시점 내용 그대로 복사해 둔다 (이후 서명이 바뀌어도 기존 글은 유지)
         if ($this->request->getPost('use_signature')) {
             $data['signature'] = $this->selectedSignature()['content'] ?? null;
@@ -337,7 +345,7 @@ class BoardController extends BaseController
         }
 
         // 공개(비밀글 아님 · guest 열람 게시판) 글만 IndexNow 즉시 제출
-        if (! $data['is_secret'] && $board['read_permission'] === 'guest') {
+        if ($publishAt === null && ! $data['is_secret'] && $board['read_permission'] === 'guest') {
             service('indexnow')->submit([base_url("board/{$boardSlug}/{$postId}")]);
         }
 
@@ -421,14 +429,28 @@ class BoardController extends BaseController
         $title   = (string) $this->request->getPost('title');
         $content = $this->sanitizeContent($this->request->getPost('content'));
 
-        $this->postModel->update($postId, [
+        $changes = [
             'category_id' => $this->resolveCategoryId($board['id'], $this->request->getPost('category_id')),
             'title'       => $title,
             'content'     => $content,
             'tags'        => $this->resolveTags($this->request->getPost('tags'), $title, $content, $board, (bool) $this->request->getPost('is_secret')),
             'is_notice'   => $this->getUserRole() === 'admin' ? (int) $this->request->getPost('is_notice') : $post['is_notice'],
             'is_secret'   => (int) $this->request->getPost('is_secret'),
-        ]);
+        ];
+
+        // 예약 입력(운영자 전용): 미래 시각이면 숨김 예약, 비우거나 지난 시각이면 예약 글은 즉시 공개
+        if ($this->getUserRole() === 'admin') {
+            $publishAt = $this->requestedPublishAt();
+            if ($publishAt !== null) {
+                $changes['publish_at'] = $publishAt;
+                $changes['is_active']  = 0;
+            } elseif ($post['publish_at'] !== null) {
+                $changes['publish_at'] = null;
+                $changes['is_active']  = 1;
+            }
+        }
+
+        $this->postModel->update($postId, $changes);
         $this->saveSeries($postId);
 
         // 파일 추가 업로드
@@ -683,6 +705,18 @@ class BoardController extends BaseController
     }
 
     // ─── 내부 헬퍼 ──────────────────────────────────────────────────────────
+
+    /**
+     * 운영자가 입력한 예약 발행 시각(미래일 때만 유효). 운영자가 아니거나 입력이 없으면 null.
+     */
+    private function requestedPublishAt(): ?string
+    {
+        if ($this->getUserRole() !== 'admin') {
+            return null;
+        }
+
+        return PostModel::normalizePublishAt($this->request->getPost('publish_at'));
+    }
 
     /**
      * 입력한 태그를 정리해 돌려주고, 비어 있으면 제목·본문에서 Groq 로 자동 추출한다.

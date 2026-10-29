@@ -28,6 +28,12 @@ a { color: inherit; }
 .qt-navbar .nav-link:hover, .qt-navbar .nav-link.active { color: var(--text-strong); }
 .qt-navbar .nav-link.active { box-shadow: inset 0 -2px 0 var(--primary); }
 .qt-toggler { border-color: var(--border-subtle); margin-left: auto; }
+/* 데스크톱: 마우스 오버·키보드 포커스로 하위 메뉴 표시 (간격 없애 오버 끊김 방지) */
+@media (min-width: 992px) and (hover: hover) {
+    .qt-navbar .dropdown-menu { margin-top: 0; }
+    .qt-navbar .dropdown:hover > .dropdown-menu,
+    .qt-navbar .dropdown:focus-within > .dropdown-menu { display: block; }
+}
 .qt-toggler-label { margin-left: .4rem; }
 .qt-account { align-items: center; display: flex; flex-wrap: wrap; font-size: .875rem; gap: .25rem .9rem; margin-left: auto; }
 .qt-account a { color: var(--primary); font-weight: 600; text-decoration: none; }

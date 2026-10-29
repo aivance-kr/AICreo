@@ -93,7 +93,9 @@
                     <td data-label="조회" class="small text-muted"><?= number_format($p['views']) ?></td>
                     <td data-label="작성일" class="small text-muted"><?= date('Y-m-d', strtotime($p['created_at'])) ?></td>
                     <td data-label="노출">
-                        <?php if ($p['is_active']): ?>
+                        <?php if ($p['publish_at'] !== null): ?>
+                            <span class="badge bg-info text-dark">예약 <?= date('Y-m-d H:i', strtotime($p['publish_at'])) ?></span>
+                        <?php elseif ($p['is_active']): ?>
                             <span class="badge bg-success">노출</span>
                         <?php else: ?>
                             <span class="badge bg-secondary">숨김</span>
