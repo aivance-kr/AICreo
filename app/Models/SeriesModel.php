@@ -8,8 +8,7 @@ use CodeIgniter\Model;
 
 class SeriesModel extends Model
 {
-    public const STATUSES = ['ongoing' => '연재중', 'completed' => '완결'];
-
+    public const STATUSES   = ['ongoing' => '연재중', 'completed' => '완결'];
     private const CACHE_TTL = 3600;
 
     protected $table         = 'series';

@@ -184,11 +184,11 @@ class PostModel extends Model
      */
     protected function rememberSeriesIds(array $data): array
     {
-        $ids = array_filter((array) ($data['id'] ?? []));
+        $ids                     = array_filter((array) ($data['id'] ?? []));
         $this->previousSeriesIds = [];
 
         if ($ids !== []) {
-            $rows = $this->db->table('posts')->select('series_id')->whereIn('id', $ids)->where('series_id IS NOT NULL', null, false)->get()->getResultArray();
+            $rows                    = $this->db->table('posts')->select('series_id')->whereIn('id', $ids)->where('series_id IS NOT NULL', null, false)->get()->getResultArray();
             $this->previousSeriesIds = array_map('intval', array_column($rows, 'series_id'));
         }
 
@@ -204,7 +204,7 @@ class PostModel extends Model
      */
     protected function clearSeriesCache(array $data): array
     {
-        $seriesIds = $this->previousSeriesIds;
+        $seriesIds               = $this->previousSeriesIds;
         $this->previousSeriesIds = [];
 
         $ids = array_filter((array) ($data['id'] ?? []));
