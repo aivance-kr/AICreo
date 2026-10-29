@@ -63,6 +63,17 @@ final class TagControllerTest extends FeatureTestCase
         $this->assertArrayHasKey('second', $counts);
     }
 
+    public function testCacheInvalidatedOnBoardVisibilityChange(): void
+    {
+        $this->makePost('board-tag');
+        $this->assertArrayHasKey('board-tag', (new PostModel())->getPublicTagCounts());
+
+        $boards = new BoardModel();
+        $boards->update((int) $boards->getBySlug('free')['id'], ['is_active' => 0]);
+
+        $this->assertArrayNotHasKey('board-tag', (new PostModel())->getPublicTagCounts());
+    }
+
     public function testTagCloudLimitsAndOrdersByCount(): void
     {
         $this->makePost('a,b');
