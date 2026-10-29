@@ -68,6 +68,27 @@
             </div>
             <?php endif; ?>
 
+            <?php if (! empty($seriesList)): ?>
+            <div class="row g-2 mb-3">
+                <div class="col-sm-8">
+                    <label class="form-label small" for="post-series">시리즈</label>
+                    <select name="series_id" id="post-series" class="form-select form-select-sm">
+                        <option value="">선택 안 함</option>
+                        <?php foreach ($seriesList as $item): ?>
+                        <option value="<?= (int) $item['id'] ?>" <?= (int) old('series_id', $post['series_id'] ?? 0) === (int) $item['id'] ? 'selected' : '' ?>><?= esc($item['title']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-sm-4">
+                    <label class="form-label small" for="post-series-order">순서</label>
+                    <input type="number" name="series_order" id="post-series-order" class="form-control form-control-sm"
+                           min="1" max="65535" aria-describedby="post-series-order-help"
+                           value="<?= esc(old('series_order', $post['series_order'] ?? '')) ?>">
+                </div>
+                <div id="post-series-order-help" class="form-text mt-0">순서를 비우면 시리즈의 맨 뒤에 붙습니다.</div>
+            </div>
+            <?php endif; ?>
+
             <div class="mb-3">
                 <div class="form-check mb-2">
                     <input type="checkbox" name="is_secret" value="1" id="is_secret" class="form-check-input"

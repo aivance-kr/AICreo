@@ -87,6 +87,25 @@ final class JsonLdBuilderTest extends CIUnitTestCase
         $this->assertSame('홍*동', $node['author']['name']);
     }
 
+    public function testBlogPostingIncludesSeriesAsIsPartOf(): void
+    {
+        $node = $this->ld->blogPosting(['title' => '글제목', 'content' => '본문'], 'https://x.test/board/free/9', '홍*동', [
+            'title' => '블로그 기능 연재',
+            'slug'  => 'blog-features',
+        ]);
+
+        $this->assertSame('CreativeWorkSeries', $node['isPartOf']['@type']);
+        $this->assertSame('블로그 기능 연재', $node['isPartOf']['name']);
+        $this->assertStringEndsWith('/series/blog-features', $node['isPartOf']['url']);
+    }
+
+    public function testBlogPostingOmitsIsPartOfWithoutSeries(): void
+    {
+        $node = $this->ld->blogPosting(['title' => '글제목', 'content' => '본문'], 'https://x.test/board/free/9', '홍*동');
+
+        $this->assertArrayNotHasKey('isPartOf', $node);
+    }
+
     public function testBreadcrumbNumbersPositions(): void
     {
         $node = $this->ld->breadcrumb([

@@ -14,6 +14,7 @@ use App\Models\PostCommentModel;
 use App\Models\PostFileModel;
 use App\Models\PostLikeModel;
 use App\Models\PostModel;
+use App\Models\SeriesModel;
 use App\Models\SignatureModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -25,6 +26,7 @@ class BoardController extends BaseController
     private readonly PostFileModel $fileModel;
     private readonly PostCommentModel $commentModel;
     private readonly BoardCategoryModel $categoryModel;
+    private readonly SeriesModel $seriesModel;
     private readonly FileUploader $uploader;
 
     public function __construct()
@@ -34,6 +36,7 @@ class BoardController extends BaseController
         $this->fileModel     = new PostFileModel();
         $this->commentModel  = new PostCommentModel();
         $this->categoryModel = new BoardCategoryModel();
+        $this->seriesModel   = new SeriesModel();
         $this->uploader      = new FileUploader();
     }
 
@@ -182,6 +185,9 @@ class BoardController extends BaseController
         $noindex   = (bool) $post['is_secret'] || $board['read_permission'] !== 'guest';
         $canonical = base_url('board/' . $board['slug'] . '/' . $post['id']);
 
+        // 시리즈(연재) 내비게이션 — 하단 글 번호 기준 이전/다음 글과는 별개로 얹는다
+        $seriesNav = $post['series_id'] ? $this->seriesModel->navigation((int) $post['series_id'], $postId) : null;
+
         // 공개 글에만 Article + BreadcrumbList JSON-LD 부착 (색인 제외 글은 생략)
         $jsonLd = [];
         if (! $noindex) {
@@ -189,7 +195,7 @@ class BoardController extends BaseController
             $ld     = new JsonLdBuilder();
             $author = $post['user_nickname'] ?? mask_name($post['author_name'] ?? '');
             $jsonLd = [
-                $ld->blogPosting($post, $canonical, (string) $author),
+                $ld->blogPosting($post, $canonical, (string) $author, $seriesNav['series'] ?? null),
                 $ld->breadcrumb([
                     ['name' => '홈', 'url' => base_url('/')],
                     ['name' => $board['name'], 'url' => base_url('board/' . $board['slug'])],
@@ -222,6 +228,7 @@ class BoardController extends BaseController
             'currentCategory'     => $categoryId,
             'prevPost'            => $prevPost,
             'nextPost'            => $nextPost,
+            'seriesNav'           => $seriesNav,
             'postTopAds'          => $adModel->getActiveByPosition('post_top'),
             'postBotAds'          => $adModel->getActiveByPosition('post_bottom'),
             'guestCommentCaptcha' => $guestCommentCaptcha,
@@ -257,6 +264,7 @@ class BoardController extends BaseController
             'signature'          => $this->selectedSignature(),
             'categories'         => $this->categoryModel->getByBoard($board['id']),
             'selectedCategoryId' => $this->resolveCategoryId($board['id'], $this->request->getGet('category')),
+            'seriesList'         => $this->seriesChoices(),
         ]);
     }
 
@@ -297,6 +305,8 @@ class BoardController extends BaseController
         if ($this->request->getPost('use_signature')) {
             $data['signature'] = $this->selectedSignature()['content'] ?? null;
         }
+
+        $data += $this->resolveSeries();
 
         $data['tags'] = $this->resolveTags($this->request->getPost('tags'), $data['title'], $data['content'], $board, (bool) $data['is_secret']);
 
@@ -366,6 +376,7 @@ class BoardController extends BaseController
             'post'       => $post,
             'files'      => $files,
             'categories' => $this->categoryModel->getByBoard($board['id']),
+            'seriesList' => $this->seriesChoices(),
         ]);
     }
 
@@ -416,7 +427,7 @@ class BoardController extends BaseController
             'tags'        => $this->resolveTags($this->request->getPost('tags'), $title, $content, $board, (bool) $this->request->getPost('is_secret')),
             'is_notice'   => $this->getUserRole() === 'admin' ? (int) $this->request->getPost('is_notice') : $post['is_notice'],
             'is_secret'   => (int) $this->request->getPost('is_secret'),
-        ]);
+        ] + $this->resolveSeries());
 
         // 파일 추가 업로드
         if ($multiFiles) {
@@ -660,6 +671,41 @@ class BoardController extends BaseController
         }
 
         return PostModel::normalizeTags(implode(',', service('groqTags')->extract($title, $content)));
+    }
+
+    /**
+     * 글쓰기 화면의 시리즈 선택지 — 시리즈는 운영자만 지정하므로 운영자가 아니면 빈 목록.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function seriesChoices(): array
+    {
+        return $this->getUserRole() === 'admin' ? $this->seriesModel->orderBy('title')->findAll() : [];
+    }
+
+    /**
+     * 저장할 series_id·series_order — 운영자 요청에서만 만든다(그 외에는 빈 배열이라 기존 값이 유지된다).
+     * 존재하지 않는 시리즈는 해제로 취급하고, 순서를 비우면 시리즈의 맨 뒤로 보낸다.
+     *
+     * @return array{series_id?: int|null, series_order?: int|null}
+     */
+    private function resolveSeries(): array
+    {
+        if ($this->getUserRole() !== 'admin') {
+            return [];
+        }
+
+        $seriesId = (int) $this->request->getPost('series_id');
+        if ($seriesId <= 0 || $this->seriesModel->find($seriesId) === null) {
+            return ['series_id' => null, 'series_order' => null];
+        }
+
+        $order = (int) $this->request->getPost('series_order');
+
+        return [
+            'series_id'    => $seriesId,
+            'series_order' => $order > 0 ? min($order, 65535) : $this->seriesModel->nextOrder($seriesId),
+        ];
     }
 
     /**

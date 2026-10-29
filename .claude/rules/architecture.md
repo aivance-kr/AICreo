@@ -76,7 +76,15 @@ boards / posts / post_files / post_comments  — board system
 inquiries           — inquiry form submissions
 banners / popups / popup_pages               — marketing overlays
 media               — media library
+series              — 연재 묶음 (slug·title·description·status). posts.series_id / series_order(NULL 허용)로 연결
 ```
+
+## 시리즈(연재)
+
+- 한 글은 최대 한 시리즈에만 속한다(다대다 피벗 없음). 외래 키·유니크 제약은 없고, 시리즈 삭제 시 `SeriesModel` 이 글의 소속만 해제한다.
+- 글 상세 상단의 시리즈 상자(`board/_series_nav.php`)는 `SeriesModel::navigation()` 이 만든다. 캐시 키는 시리즈 단위 `series_nav_{id}` 하나이고 현재 위치·이전·다음은 매번 계산한다. `PostModel` 의 insert/update/delete 훅이 이전·현재 시리즈 캐시를 지운다.
+- 하단의 글 번호 기준 이전/다음 글(`getPrevious`/`getNext`)은 시리즈와 무관하게 그대로 둔다 — 두 내비게이션은 역할이 다르다.
+- 시리즈 관리는 `/admin/series`, 글에 지정은 운영자만 글쓰기·수정 화면에서(순서를 비우면 맨 뒤), 소개 페이지는 `/series/{slug}`.
 
 ## IP 차단
 
