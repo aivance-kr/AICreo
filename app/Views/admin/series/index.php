@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <div class="alert alert-info small">
-    시리즈는 운영자가 순서를 정하는 연재 묶음입니다. 한 글은 하나의 시리즈에만 속하며, 글쓰기 화면에서 지정하거나, 시리즈 수정 화면에서 글을 검색·글 번호로 넣을 수 있습니다.
+    시리즈는 운영자가 순서를 정하는 연재 묶음입니다. 한 글은 여러 시리즈에 속할 수 있으며, 글쓰기 화면에서 지정하거나, 시리즈 수정 화면에서 글을 검색·글 번호로 넣을 수 있습니다.
     시리즈를 삭제해도 글은 지워지지 않고 소속만 해제됩니다.
 </div>
 
@@ -107,13 +107,11 @@
                             <span class="small">
                                 #<?= (int) $post['id'] ?> <?= esc($post['title']) ?>
                                 <span class="text-muted">· <?= esc((string) $post['board_title']) ?></span>
-                                <?php if ((int) $post['series_id'] === (int) $editing['id']): ?>
-                                    <span class="badge text-bg-secondary">이 시리즈</span>
-                                <?php elseif ($post['series_id'] !== null): ?>
-                                    <span class="badge text-bg-warning">다른 시리즈(옮겨짐)</span>
+                                <?php if ((int) $post['is_member'] === 1): ?>
+                                    <span class="badge text-bg-secondary">이미 포함</span>
                                 <?php endif; ?>
                             </span>
-                            <?php if ((int) $post['series_id'] !== (int) $editing['id']): ?>
+                            <?php if ((int) $post['is_member'] !== 1): ?>
                             <form method="post" action="/admin/series/<?= (int) $editing['id'] ?>/posts">
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="post_ids" value="<?= (int) $post['id'] ?>">
@@ -134,7 +132,7 @@
                                aria-describedby="series-post-ids-help" required>
                         <button type="submit" class="btn btn-primary">넣기</button>
                     </div>
-                    <div id="series-post-ids-help" class="form-text">콤마(,)로 구분합니다. 입력한 순서대로 시리즈 맨 뒤에 붙고, 다른 시리즈의 글은 이 시리즈로 옮겨집니다.</div>
+                    <div id="series-post-ids-help" class="form-text">콤마(,)로 구분합니다. 입력한 순서대로 시리즈 맨 뒤에 붙습니다. 글은 여러 시리즈에 동시에 속할 수 있습니다.</div>
                 </form>
 
                 <h3 class="h6 fw-semibold">속한 글 (<?= count($members) ?>)</h3>

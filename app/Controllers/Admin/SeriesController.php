@@ -33,7 +33,7 @@ class SeriesController extends BaseController
             'editing'    => $editing,
             'members'    => $editing ? $this->seriesModel->memberPosts($editId) : [],
             'keyword'    => $keyword,
-            'found'      => $editing ? $this->seriesModel->searchPosts($keyword) : [],
+            'found'      => $editing ? $this->seriesModel->searchPosts($editId, $keyword) : [],
         ]);
     }
 
@@ -81,10 +81,7 @@ class SeriesController extends BaseController
         }
 
         $result  = $this->seriesModel->attachPosts($id, $ids);
-        $message = count($result['added']) + count($result['moved']) . '개 글을 시리즈에 넣었습니다.';
-        if ($result['moved'] !== []) {
-            $message .= ' (다른 시리즈에서 옮김: ' . implode(', ', $result['moved']) . ')';
-        }
+        $message = count($result['added']) . '개 글을 시리즈에 넣었습니다.';
         if ($result['already'] !== []) {
             $message .= ' 이미 포함: ' . implode(', ', $result['already']) . '.';
         }
@@ -92,7 +89,7 @@ class SeriesController extends BaseController
             $message .= ' 없는 글: ' . implode(', ', $result['missing']) . '.';
         }
 
-        $flash = $result['added'] === [] && $result['moved'] === [] ? 'error' : 'success';
+        $flash = $result['added'] === [] ? 'error' : 'success';
 
         return redirect()->to($editUrl)->with($flash, $message);
     }

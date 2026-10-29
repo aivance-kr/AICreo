@@ -18,6 +18,7 @@ $routes->get('feed', 'Front\FeedController::index');
 $routes->get('rss', 'Front\FeedController::index');
 $routes->get('og/(:num)\\.png', 'Front\OgImageController::post/$1');
 $routes->get('search', 'Front\SearchController::index');
+$routes->get('series', 'Front\SeriesController::index');
 $routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
 
 // ─── 인증 ────────────────────────────────────────────────────────────────────
