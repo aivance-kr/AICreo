@@ -3,17 +3,28 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use DateTimeImmutable;
 
 class PostModel extends Model
 {
-    public const MAX_TAGS       = 10;
-    public const MAX_TAG_LENGTH = 30;
+    public const MAX_TAGS                   = 10;
+    public const MAX_TAG_LENGTH             = 30;
+    private const RELATED_CACHE_VERSION_KEY = 'related_posts_version';
+    private const RELATED_CACHE_TTL         = 3600;
 
     /**
      * 목록용 공감수·댓글수(활성 댓글만) 서브쿼리
      */
     private const COUNT_SUBQUERIES = '(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS like_count, '
         . '(SELECT COUNT(*) FROM post_comments WHERE post_comments.post_id = posts.id AND post_comments.is_active = 1) AS comment_count';
+
+    /**
+     * "많이 본 글" 기간 키 → 표시명. all 은 누적 조회수.
+     */
+    public const POPULAR_PERIODS = ['all' => '전체', '7d' => '7일', '30d' => '30일'];
+
+    private const POPULAR_DAYS      = ['7d' => 7, '30d' => 30];
+    private const POPULAR_CACHE_TTL = 600;
 
     protected $table          = 'posts';
     protected $primaryKey     = 'id';
@@ -22,12 +33,12 @@ class PostModel extends Model
     protected $allowedFields  = [
         'board_id', 'category_id', 'user_id', 'title', 'content', 'signature', 'tags',
         'author_name', 'author_password',
-        'is_notice', 'is_secret', 'is_active', 'ip_address',
+        'is_notice', 'is_secret', 'is_active', 'publish_at', 'ip_address',
         'views', 'wp_post_id', 'created_at', 'updated_at',
     ];
-    protected $afterInsert = ['clearSitemapCache'];
-    protected $afterUpdate = ['clearSitemapCache', 'clearSeriesCache'];
-    protected $afterDelete = ['clearSitemapCache', 'clearSeriesCache'];
+    protected $afterInsert = ['clearSeoCache', 'clearRelatedCache'];
+    protected $afterUpdate = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache'];
+    protected $afterDelete = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache'];
 
     /**
      * sitemap.xml 용 공개 글 목록 — 비밀글·비활성 게시판 제외.
@@ -63,6 +74,58 @@ class PostModel extends Model
             ->where('boards.read_permission', 'guest')
             ->orderBy('posts.id', 'DESC')
             ->findAll($limit);
+    }
+
+    /**
+     * 공개 글 중 많이 본 글 — getLatestPublic 과 같은 공개 조건.
+     * all 은 posts.views 누적, 7d/30d 는 page_visits 의 해당 글 주소 방문 수 기준이다.
+     * 모르는 기간 값은 all 로 취급한다.
+     *
+     * @return list<array<string, mixed>> 기간 집계일 때는 visit_count 가 함께 담긴다
+     */
+    public function getPopular(string $period, int $limit): array
+    {
+        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest');
+
+        $days = self::POPULAR_DAYS[$period] ?? null;
+
+        if ($days === null) {
+            return $builder->orderBy('posts.views', 'DESC')->orderBy('posts.id', 'DESC')->findAll($limit);
+        }
+
+        $since = date('Y-m-d 00:00:00', strtotime("-{$days} days"));
+
+        return $builder->select('COUNT(v.id) AS visit_count', false)
+            ->join(
+                'page_visits v',
+                "v.uri = CONCAT('/board/', boards.slug, '/', posts.id) AND v.created_at >= " . $this->db->escape($since),
+                'inner',
+            )
+            ->groupBy('posts.id, boards.name, boards.slug')
+            ->orderBy('visit_count', 'DESC')
+            ->orderBy('posts.id', 'DESC')
+            ->findAll($limit);
+    }
+
+    /**
+     * getPopular 결과를 캐시한다(10분). 글 수정 시 무효화하지 않고 TTL 만료에 맡긴다.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getPopularCached(string $period, int $limit): array
+    {
+        $period = isset(self::POPULAR_PERIODS[$period]) ? $period : 'all';
+
+        return cache()->remember(
+            "popular_posts_{$period}_{$limit}",
+            self::POPULAR_CACHE_TTL,
+            fn (): array => $this->getPopular($period, $limit),
+        );
     }
 
     /**
@@ -107,6 +170,78 @@ class PostModel extends Model
         $posts = $builder->orderBy('posts.id', 'DESC')->findAll($perPage, ($page - 1) * $perPage);
 
         return ['posts' => $posts, 'total' => $total];
+    }
+
+    /**
+     * 상세 하단 "이어 읽을 글" — 같은 태그를 하나라도 공유하거나 같은 카테고리인 다른 공개 글.
+     * 태그 겹침 수가 많은 글이 먼저, 같으면 최신 글이 먼저. 공개 조건은 getLatestPublic 과 같다.
+     * 결과는 캐시하고 글 저장·삭제 때 clearRelatedCache 로 무효화한다.
+     *
+     * @return list<array{id: int, title: string, board_slug: string, thumb: string|null}>
+     */
+    public function getRelated(int $postId, int $limit = 5): array
+    {
+        $version = cache()->get(self::RELATED_CACHE_VERSION_KEY) ?? '0';
+
+        return cache()->remember(
+            "related_posts_{$version}_{$postId}_{$limit}",
+            self::RELATED_CACHE_TTL,
+            fn (): array => $this->queryRelated($postId, $limit),
+        );
+    }
+
+    /**
+     * @return list<array{id: int, title: string, board_slug: string, thumb: string|null}>
+     */
+    private function queryRelated(int $postId, int $limit): array
+    {
+        $current = $this->select('tags, category_id')->find($postId);
+        if ($current === null) {
+            return [];
+        }
+
+        $matches  = [];
+        $overlaps = [];
+
+        foreach (self::splitTags($current['tags']) as $tag) {
+            $expr       = 'FIND_IN_SET(' . $this->db->escape($tag) . ', posts.tags) > 0';
+            $matches[]  = $expr;
+            $overlaps[] = "({$expr})";
+        }
+        if ($current['category_id'] !== null) {
+            $matches[] = 'posts.category_id = ' . (int) $current['category_id'];
+        }
+        if ($matches === []) {
+            return [];
+        }
+
+        $builder = $this->select('posts.id, posts.title, posts.content, boards.slug AS board_slug')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->where('posts.id !=', $postId)
+            ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest')
+            ->where('(' . implode(' OR ', $matches) . ')', null, false);
+        // 태그 겹침 수가 많은 글 먼저 (태그가 없는 글은 카테고리 일치만으로 후보가 되므로 건너뛴다)
+        if ($overlaps !== []) {
+            $builder->orderBy(implode(' + ', $overlaps), 'DESC', false);
+        }
+        /** @var list<array<string, mixed>> $rows */
+        $rows = $builder->orderBy('posts.id', 'DESC')->findAll($limit);
+
+        helper('image');
+
+        return array_map(static function (array $row): array {
+            $thumb = self::extractThumbnail($row['content']);
+
+            return [
+                'id'         => (int) $row['id'],
+                'title'      => (string) $row['title'],
+                'board_slug' => (string) $row['board_slug'],
+                'thumb'      => $thumb === null ? null : content_thumb_url($thumb),
+            ];
+        }, $rows);
     }
 
     /**
@@ -159,9 +294,25 @@ class PostModel extends Model
      *
      * @return array<string, mixed>
      */
-    protected function clearSitemapCache(array $data): array
+    protected function clearSeoCache(array $data): array
     {
         cache()->delete('seo_sitemap');
+        cache()->delete('seo_feed');
+
+        return $data;
+    }
+
+    /**
+     * 글이 바뀌면 모든 글의 관련 글 캐시를 무효화한다 — 한 글의 태그·공개 여부가 다른 글들의 관련 글에 영향을 주므로
+     * 글 단위가 아니라 버전 토큰을 바꿔 한꺼번에 끊는다.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function clearRelatedCache(array $data): array
+    {
+        cache()->save(self::RELATED_CACHE_VERSION_KEY, uniqid('', true), 0);
 
         return $data;
     }
@@ -288,7 +439,7 @@ class PostModel extends Model
 
     /**
      * 노출 상태를 반전한다(관리자 숨기기/노출 토글). update() 경유로
-     * afterUpdate 훅(clearSitemapCache)이 정상 실행되게 한다.
+     * afterUpdate 훅(clearSeoCache)이 정상 실행되게 한다.
      */
     public function toggleActive(int $id): void
     {
@@ -297,12 +448,50 @@ class PostModel extends Model
             return;
         }
 
-        $this->update($id, ['is_active' => $post['is_active'] ? 0 : 1]);
+        // 예약 글은 토글하면 즉시 공개하고 예약을 푼다
+        $this->update($id, ['is_active' => $post['is_active'] ? 0 : 1, 'publish_at' => null]);
+    }
+
+    /**
+     * 예약 입력(datetime-local 값)을 DB 값으로 바꾼다. 형식이 틀리거나 이미 지난 시각이면 null(= 즉시 공개).
+     */
+    public static function normalizePublishAt(?string $input): ?string
+    {
+        if ($input === null || $input === '') {
+            return null;
+        }
+
+        $time = DateTimeImmutable::createFromFormat('!Y-m-d\TH:i', $input);
+        if ($time === false || $time->getTimestamp() <= time()) {
+            return null;
+        }
+
+        return $time->format('Y-m-d H:i:00');
+    }
+
+    /**
+     * 예약 시각이 지난 글을 공개 처리하고 예약을 비운다.
+     * update() 경유로 사이트맵·RSS·관련 글·시리즈 캐시 훅이 실행된다.
+     *
+     * @return int 공개 처리한 글 수
+     */
+    public function publishDue(): int
+    {
+        $ids = array_column(
+            $this->select('id')->where('publish_at IS NOT NULL')->where('publish_at <=', date('Y-m-d H:i:s'))->findAll(),
+            'id',
+        );
+
+        foreach ($ids as $id) {
+            $this->update($id, ['is_active' => 1, 'publish_at' => null]);
+        }
+
+        return count($ids);
     }
 
     /**
      * 게시물을 다른 게시판으로 일괄 이동한다. 카테고리는 게시판별이므로 비운다.
-     * update() 경유로 afterUpdate 훅(clearSitemapCache)이 실행된다.
+     * update() 경유로 afterUpdate 훅(clearSeoCache)이 실행된다.
      *
      * @param list<int> $ids
      */

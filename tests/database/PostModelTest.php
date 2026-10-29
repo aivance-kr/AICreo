@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Database;
 
+use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
@@ -110,6 +111,57 @@ final class PostModelTest extends DatabaseTestCase
 
         $this->assertSame(['공개 글'], array_column($posts, 'title'));
         $this->assertSame('notice', $posts[0]['board_slug']);
+    }
+
+    private function visit(int $postId, string $createdAt, string $slug = 'notice'): void
+    {
+        $this->db->table('page_visits')->insert([
+            'uri'        => "/board/{$slug}/{$postId}",
+            'ip_address' => '127.0.0.1',
+            'created_at' => $createdAt,
+        ]);
+    }
+
+    public function testGetPopularAllOrdersByViewsAndExcludesNonPublic(): void
+    {
+        $low  = $this->makePost(['title' => '적게', 'views' => 3]);
+        $high = $this->makePost(['title' => '많이', 'views' => 50]);
+        $this->makePost(['title' => '비밀', 'is_secret' => 1, 'views' => 999]);
+        $this->makePost(['title' => '비활성', 'is_active' => 0, 'views' => 999]);
+
+        $posts = $this->model->getPopular('all', 10);
+
+        $this->assertSame([$high, $low], array_map(static fn (array $p): int => (int) $p['id'], $posts));
+        $this->assertSame('notice', $posts[0]['board_slug']);
+    }
+
+    public function testGetPopularByPeriodCountsOnlyVisitsInsideWindow(): void
+    {
+        $recent = $this->makePost(['title' => '최근 인기', 'views' => 1]);
+        $old    = $this->makePost(['title' => '옛 인기', 'views' => 500]);
+        $secret = $this->makePost(['title' => '비밀', 'is_secret' => 1]);
+
+        $now = date('Y-m-d H:i:s');
+        $this->visit($recent, $now);
+        $this->visit($recent, $now);
+        $this->visit($old, date('Y-m-d H:i:s', strtotime('-10 days')));
+        $this->visit($secret, $now);
+
+        $week  = $this->model->getPopular('7d', 10);
+        $month = $this->model->getPopular('30d', 10);
+
+        $this->assertSame([$recent], array_map(static fn (array $p): int => (int) $p['id'], $week));
+        $this->assertSame([$recent, $old], array_map(static fn (array $p): int => (int) $p['id'], $month));
+        $this->assertSame(2, (int) $week[0]['visit_count']);
+    }
+
+    public function testGetPopularRespectsLimitAndRejectsUnknownPeriod(): void
+    {
+        $this->makePost(['views' => 1]);
+        $this->makePost(['views' => 2]);
+
+        $this->assertCount(1, $this->model->getPopular('all', 1));
+        $this->assertSame($this->model->getPopular('all', 10), $this->model->getPopular('bogus', 10));
     }
 
     public function testGetPreviousReturnsOlderPostInSameBoard(): void
@@ -284,5 +336,100 @@ final class PostModelTest extends DatabaseTestCase
 
         $this->assertSame(3, $result['total']);
         $this->assertCount(1, $result['posts']);
+    }
+
+    public function testGetRelatedOrdersByTagOverlapThenNewest(): void
+    {
+        cache()->clean();
+        $current = $this->makePost(['tags' => 'php,ci4,redis']);
+        $one     = $this->makePost(['title' => '하나', 'tags' => 'php']);
+        $two     = $this->makePost(['title' => '둘', 'tags' => 'php,ci4']);
+        $oneNew  = $this->makePost(['title' => '하나최신', 'tags' => 'redis']);
+        $this->makePost(['title' => '무관', 'tags' => 'java']);
+
+        $ids = array_column($this->model->getRelated($current), 'id');
+
+        $this->assertSame([$two, $oneNew, $one], $ids);
+    }
+
+    public function testGetRelatedExcludesNonPublicAndMatchesCategory(): void
+    {
+        cache()->clean();
+        $categoryId = (int) model(BoardCategoryModel::class)->insert(['board_id' => $this->boardId, 'name' => '분류']);
+        $current    = $this->makePost(['tags' => 'php', 'category_id' => $categoryId]);
+        $byCategory = $this->makePost(['title' => '같은분류', 'category_id' => $categoryId]);
+        $this->makePost(['title' => '비밀', 'tags' => 'php', 'is_secret' => 1]);
+        $this->makePost(['title' => '숨김', 'tags' => 'php', 'is_active' => 0]);
+
+        $this->assertSame([$byCategory], array_column($this->model->getRelated($current), 'id'));
+    }
+
+    public function testGetRelatedIsEmptyWithoutTagsOrCategory(): void
+    {
+        cache()->clean();
+        $current = $this->makePost();
+        $this->makePost(['tags' => 'php']);
+
+        $this->assertSame([], $this->model->getRelated($current));
+    }
+
+    public function testGetRelatedCacheIsInvalidatedOnSaveAndDelete(): void
+    {
+        cache()->clean();
+        $current = $this->makePost(['tags' => 'php']);
+        $this->assertSame([], $this->model->getRelated($current));
+
+        $other = $this->makePost(['title' => '새글', 'tags' => 'php']);
+        $this->assertSame([$other], array_column($this->model->getRelated($current), 'id'));
+
+        $this->model->delete($other);
+        $this->assertSame([], $this->model->getRelated($current));
+    }
+
+    public function testNormalizePublishAtAcceptsOnlyFutureValidDatetime(): void
+    {
+        $future = date('Y-m-d\TH:i', strtotime('+1 day'));
+
+        $this->assertSame(date('Y-m-d H:i:00', strtotime($future)), PostModel::normalizePublishAt($future));
+        $this->assertNull(PostModel::normalizePublishAt(date('Y-m-d\TH:i', strtotime('-1 day'))));
+        $this->assertNull(PostModel::normalizePublishAt('garbage'));
+        $this->assertNull(PostModel::normalizePublishAt(''));
+        $this->assertNull(PostModel::normalizePublishAt(null));
+    }
+
+    public function testPublishDueActivatesOnlyElapsedScheduledPosts(): void
+    {
+        $due    = $this->makePost(['is_active' => 0, 'publish_at' => date('Y-m-d H:i:s', strtotime('-1 minute'))]);
+        $later  = $this->makePost(['is_active' => 0, 'publish_at' => date('Y-m-d H:i:s', strtotime('+1 hour'))]);
+        $hidden = $this->makePost(['is_active' => 0]);
+
+        cache()->save('seo_feed', 'stale', 60);
+
+        $this->assertSame(1, $this->model->publishDue());
+
+        $this->assertSame(1, (int) $this->model->find($due)['is_active']);
+        $this->assertNull($this->model->find($due)['publish_at']);
+        $this->assertSame(0, (int) $this->model->find($later)['is_active']);
+        $this->assertNotNull($this->model->find($later)['publish_at']);
+        $this->assertSame(0, (int) $this->model->find($hidden)['is_active']);
+        $this->assertNull(cache()->get('seo_feed'));
+    }
+
+    public function testScheduledPostIsHiddenFromPublicQueries(): void
+    {
+        $this->makePost(['is_active' => 0, 'publish_at' => date('Y-m-d H:i:s', strtotime('+1 hour')), 'title' => '예약글']);
+
+        $this->assertSame([], $this->model->getLatestPublic(10));
+        $this->assertSame([], $this->model->getPublicForSitemap());
+    }
+
+    public function testToggleActiveOnScheduledPostPublishesNow(): void
+    {
+        $id = $this->makePost(['is_active' => 0, 'publish_at' => date('Y-m-d H:i:s', strtotime('+1 hour'))]);
+
+        $this->model->toggleActive($id);
+
+        $this->assertSame(1, (int) $this->model->find($id)['is_active']);
+        $this->assertNull($this->model->find($id)['publish_at']);
     }
 }

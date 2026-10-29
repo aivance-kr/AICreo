@@ -24,6 +24,12 @@ body {
     color: var(--primary);
     box-shadow: inset 0 -2px 0 var(--primary);
 }
+/* 데스크톱: 마우스 오버·키보드 포커스로 하위 메뉴 표시 (간격 없애 오버 끊김 방지) */
+@media (min-width: 992px) and (hover: hover) {
+    .navbar .dropdown-menu { margin-top: 0; }
+    .navbar .dropdown:hover > .dropdown-menu,
+    .navbar .dropdown:focus-within > .dropdown-menu { display: block; }
+}
 
 /* ─── 히어로 ─────────────────────────────────────── */
 .hero-section {

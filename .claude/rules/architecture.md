@@ -98,3 +98,9 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - Cloudflare 뒤에서 실제 접속자 IP 를 받도록 `Config\App` 생성자가 `proxyIPs` 에 `App\Libraries\CloudflareIps` 대역(`CF-Connecting-IP`)을 등록한다. 엣지 IP 가 아닌 곳에서 온 요청의 헤더는 무시된다. Cloudflare 대역이 바뀌면 `CloudflareIps::RANGES` 를 갱신한다.
 - `BlockedIpModel::block()` 은 Cloudflare 엣지 IP 를 차단하지 않고 `false` 를 돌려준다(정상 방문자 오차단 방지).
 - `.env` 의 `security.ipWhitelist`(쉼표 구분)에 든 IP 는 `BlockedIpModel::block()` 이 차단하지 않고 `isBlocked()` 도 항상 false 를 돌려준다(기존 차단 행도 무시). IP 는 공개 저장소에 커밋하지 않고 서버 `.env` 에만 둔다.
+
+## 예약 발행
+
+- `posts.publish_at`(TIMESTAMP NULL)이 있으면 예약 글이다. 저장 시 `is_active=0` 이라 공개 목록·RSS·sitemap 쿼리에는 원래 걸러진다. 예약 입력은 운영자 전용(글쓰기·수정 화면의 `publish_at`), 미래 시각만 유효하다(`PostModel::normalizePublishAt()`).
+- 이 저장소에는 `Config/Tasks.php` 스케줄러가 없다. `php spark posts:publish-scheduled` 가 시각이 지난 글을 공개하고 `publish_at` 을 비운다. **서버 crontab에 1분마다 등록해야 한다** (예: `* * * * * cd /path/to/app && php spark posts:publish-scheduled`).
+- 공개 처리는 `PostModel::update()` 경유라 `seo_sitemap`·`seo_feed`·관련 글·시리즈 캐시 훅이 돈다. 관리자 숨기기/노출 토글은 예약을 풀고 즉시 반영한다.

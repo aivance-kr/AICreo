@@ -34,6 +34,12 @@ a { color: inherit; }
 .il-navbar .nav-link:hover { color: var(--primary); }
 .il-navbar .nav-link.active { box-shadow: inset 0 -3px 0 var(--primary); color: var(--primary); }
 .il-navbar .dropdown-menu { border-radius: 0; }
+/* 데스크톱: 마우스 오버·키보드 포커스로 하위 메뉴 표시 (간격 없애 오버 끊김 방지) */
+@media (min-width: 992px) and (hover: hover) {
+    .il-navbar .dropdown-menu { margin-top: 0; }
+    .il-navbar .dropdown:hover > .dropdown-menu,
+    .il-navbar .dropdown:focus-within > .dropdown-menu { display: block; }
+}
 .il-toggler { border-color: var(--text-strong); color: var(--text-strong); font-weight: 700; margin: .5rem 0; }
 .il-toggler-label { margin-left: .4rem; }
 @media (max-width: 991.98px) { .il-nav { gap: 0; padding-bottom: .5rem; } }

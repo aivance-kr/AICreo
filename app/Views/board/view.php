@@ -150,6 +150,27 @@ ob_start();
 </div>
 <?php endif; ?>
 
+<?php if (! empty($relatedPosts)): ?>
+<!-- 관련 글 -->
+<section class="mb-4" aria-labelledby="related-posts-title">
+    <h2 id="related-posts-title" class="h6 mb-3">이어 읽을 글</h2>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
+        <?php foreach ($relatedPosts as $related): ?>
+        <div class="col">
+            <a href="/board/<?= esc($related['board_slug'], 'attr') ?>/<?= (int) $related['id'] ?>" class="card h-100 text-decoration-none">
+                <?php if ($related['thumb']): ?>
+                <img src="<?= esc($related['thumb'], 'attr') ?>" alt="" class="card-img-top" loading="lazy" style="height:120px;object-fit:cover">
+                <?php endif; ?>
+                <div class="card-body p-2">
+                    <span class="small"><?= esc($related['title']) ?></span>
+                </div>
+            </a>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</section>
+<?php endif; ?>
+
 <!-- 댓글 -->
 <div id="comments" class="card mb-4">
     <div class="card-header bg-white">
