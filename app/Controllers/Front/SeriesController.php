@@ -9,10 +9,25 @@ use App\Models\SeriesModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
 /**
- * 시리즈(연재) 소개 페이지 — /series/{slug}
+ * 시리즈(연재) 목록 /series, 소개 페이지 /series/{slug}
  */
 class SeriesController extends BaseController
 {
+    public function index(): string
+    {
+        $seriesList = (new SeriesModel())->listPublic();
+
+        return $this->render('series/index', [
+            'seriesList' => $seriesList,
+            'page'       => [
+                'title'     => '시리즈',
+                'meta_desc' => '연재 중인 시리즈와 완결된 시리즈 목록',
+                'canonical' => base_url('series'),
+                'noindex'   => $seriesList === [],
+            ],
+        ]);
+    }
+
     public function show(string $slug): string
     {
         $model  = new SeriesModel();

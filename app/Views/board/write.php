@@ -69,24 +69,26 @@
             <?php endif; ?>
 
             <?php if (! empty($seriesList)): ?>
-            <div class="row g-2 mb-3">
-                <div class="col-sm-8">
-                    <label class="form-label small" for="post-series">시리즈</label>
-                    <select name="series_id" id="post-series" class="form-select form-select-sm">
-                        <option value="">선택 안 함</option>
-                        <?php foreach ($seriesList as $item): ?>
-                        <option value="<?= (int) $item['id'] ?>" <?= (int) old('series_id', $post['series_id'] ?? 0) === (int) $item['id'] ? 'selected' : '' ?>><?= esc($item['title']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+            <?php $checkedSeries = array_map('intval', (array) (old('series_ids') ?? array_keys($postSeries))); ?>
+            <fieldset class="mb-3">
+                <legend class="form-label small">시리즈 <span class="text-muted">(여러 개 선택 가능)</span></legend>
+                <input type="hidden" name="series_form" value="1">
+                <?php foreach ($seriesList as $item): ?>
+                <?php $sid = (int) $item['id']; ?>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <div class="form-check flex-grow-1">
+                        <input type="checkbox" name="series_ids[]" value="<?= $sid ?>" id="post-series-<?= $sid ?>" class="form-check-input"
+                               <?= in_array($sid, $checkedSeries, true) ? 'checked' : '' ?>>
+                        <label for="post-series-<?= $sid ?>" class="form-check-label small"><?= esc($item['title']) ?></label>
+                    </div>
+                    <label class="visually-hidden" for="post-series-order-<?= $sid ?>"><?= esc($item['title']) ?> 순서</label>
+                    <input type="number" name="series_order[<?= $sid ?>]" id="post-series-order-<?= $sid ?>" class="form-control form-control-sm" style="width:6rem"
+                           min="1" max="65535" placeholder="순서"
+                           value="<?= esc(old('series_order.' . $sid, $postSeries[$sid] ?? '')) ?>">
                 </div>
-                <div class="col-sm-4">
-                    <label class="form-label small" for="post-series-order">순서</label>
-                    <input type="number" name="series_order" id="post-series-order" class="form-control form-control-sm"
-                           min="1" max="65535" aria-describedby="post-series-order-help"
-                           value="<?= esc(old('series_order', $post['series_order'] ?? '')) ?>">
-                </div>
-                <div id="post-series-order-help" class="form-text mt-0">순서를 비우면 시리즈의 맨 뒤에 붙습니다.</div>
-            </div>
+                <?php endforeach; ?>
+                <div class="form-text">순서를 비우면 해당 시리즈의 맨 뒤에 붙습니다.</div>
+            </fieldset>
             <?php endif; ?>
 
             <div class="mb-3">

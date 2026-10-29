@@ -186,7 +186,7 @@ class BoardController extends BaseController
         $canonical = base_url('board/' . $board['slug'] . '/' . $post['id']);
 
         // 시리즈(연재) 내비게이션 — 하단 글 번호 기준 이전/다음 글과는 별개로 얹는다
-        $seriesNav = $post['series_id'] ? $this->seriesModel->navigation((int) $post['series_id'], $postId) : null;
+        $seriesNavs = $this->seriesModel->navigationsForPost($postId);
 
         // 공개 글에만 Article + BreadcrumbList JSON-LD 부착 (색인 제외 글은 생략)
         $jsonLd = [];
@@ -195,7 +195,7 @@ class BoardController extends BaseController
             $ld     = new JsonLdBuilder();
             $author = $post['user_nickname'] ?? mask_name($post['author_name'] ?? '');
             $jsonLd = [
-                $ld->blogPosting($post, $canonical, (string) $author, $seriesNav['series'] ?? null),
+                $ld->blogPosting($post, $canonical, (string) $author, $seriesNavs[0]['series'] ?? null),
                 $ld->breadcrumb([
                     ['name' => '홈', 'url' => base_url('/')],
                     ['name' => $board['name'], 'url' => base_url('board/' . $board['slug'])],
@@ -228,7 +228,7 @@ class BoardController extends BaseController
             'currentCategory'     => $categoryId,
             'prevPost'            => $prevPost,
             'nextPost'            => $nextPost,
-            'seriesNav'           => $seriesNav,
+            'seriesNavs'          => $seriesNavs,
             'postTopAds'          => $adModel->getActiveByPosition('post_top'),
             'postBotAds'          => $adModel->getActiveByPosition('post_bottom'),
             'guestCommentCaptcha' => $guestCommentCaptcha,
@@ -265,6 +265,7 @@ class BoardController extends BaseController
             'categories'         => $this->categoryModel->getByBoard($board['id']),
             'selectedCategoryId' => $this->resolveCategoryId($board['id'], $this->request->getGet('category')),
             'seriesList'         => $this->seriesChoices(),
+            'postSeries'         => [],
         ]);
     }
 
@@ -306,8 +307,6 @@ class BoardController extends BaseController
             $data['signature'] = $this->selectedSignature()['content'] ?? null;
         }
 
-        $data += $this->resolveSeries();
-
         $data['tags'] = $this->resolveTags($this->request->getPost('tags'), $data['title'], $data['content'], $board, (bool) $data['is_secret']);
 
         if ($isGuest) {
@@ -325,6 +324,7 @@ class BoardController extends BaseController
         }
 
         $postId = $this->postModel->insert($data);
+        $this->saveSeries($postId);
 
         // 파일 저장 (검증 통과 후 디스크 오류 등 예외 대비 롤백)
         if ($hasFiles) {
@@ -377,6 +377,7 @@ class BoardController extends BaseController
             'files'      => $files,
             'categories' => $this->categoryModel->getByBoard($board['id']),
             'seriesList' => $this->seriesChoices(),
+            'postSeries' => $this->seriesModel->seriesOfPost($postId),
         ]);
     }
 
@@ -427,7 +428,8 @@ class BoardController extends BaseController
             'tags'        => $this->resolveTags($this->request->getPost('tags'), $title, $content, $board, (bool) $this->request->getPost('is_secret')),
             'is_notice'   => $this->getUserRole() === 'admin' ? (int) $this->request->getPost('is_notice') : $post['is_notice'],
             'is_secret'   => (int) $this->request->getPost('is_secret'),
-        ] + $this->resolveSeries());
+        ]);
+        $this->saveSeries($postId);
 
         // 파일 추가 업로드
         if ($multiFiles) {
@@ -684,28 +686,24 @@ class BoardController extends BaseController
     }
 
     /**
-     * 저장할 series_id·series_order — 운영자 요청에서만 만든다(그 외에는 빈 배열이라 기존 값이 유지된다).
-     * 존재하지 않는 시리즈는 해제로 취급하고, 순서를 비우면 시리즈의 맨 뒤로 보낸다.
-     *
-     * @return array{series_id?: int|null, series_order?: int|null}
+     * 글쓰기 폼의 시리즈 선택(series_ids[] 체크 + series_order[시리즈번호])을 저장한다 — 운영자 요청에서만.
+     * 시리즈 영역이 폼에 있었음을 알리는 series_form 이 없으면 기존 소속을 건드리지 않는다.
      */
-    private function resolveSeries(): array
+    private function saveSeries(int $postId): void
     {
-        if ($this->getUserRole() !== 'admin') {
-            return [];
+        if ($this->getUserRole() !== 'admin' || ! $this->request->getPost('series_form')) {
+            return;
         }
 
-        $seriesId = (int) $this->request->getPost('series_id');
-        if ($seriesId <= 0 || $this->seriesModel->find($seriesId) === null) {
-            return ['series_id' => null, 'series_order' => null];
+        $orders = (array) $this->request->getPost('series_order');
+        $wanted = [];
+
+        foreach ((array) $this->request->getPost('series_ids') as $seriesId) {
+            $order                   = (int) ($orders[(int) $seriesId] ?? 0);
+            $wanted[(int) $seriesId] = $order > 0 ? $order : null;
         }
 
-        $order = (int) $this->request->getPost('series_order');
-
-        return [
-            'series_id'    => $seriesId,
-            'series_order' => $order > 0 ? min($order, 65535) : $this->seriesModel->nextOrder($seriesId),
-        ];
+        $this->seriesModel->syncPostSeries($postId, $wanted);
     }
 
     /**
