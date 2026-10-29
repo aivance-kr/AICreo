@@ -31,14 +31,20 @@ final class SeriesModelTest extends DatabaseTestCase
 
     private function makePost(string $title, ?int $order, array $overrides = []): int
     {
-        return (int) $this->posts->insert(array_merge([
-            'board_id'     => $this->boardId,
-            'title'        => $title,
-            'content'      => '본문',
-            'author_name'  => '작성자',
-            'series_id'    => $this->seriesId,
-            'series_order' => $order,
+        $postId = (int) $this->posts->insert(array_merge([
+            'board_id'    => $this->boardId,
+            'title'       => $title,
+            'content'     => '본문',
+            'author_name' => '작성자',
         ], $overrides));
+        $this->link($this->seriesId, $postId, $order);
+
+        return $postId;
+    }
+
+    private function link(int $seriesId, int $postId, ?int $order): void
+    {
+        $this->db->table('post_series')->insert(['series_id' => $seriesId, 'post_id' => $postId, 'series_order' => $order]);
     }
 
     public function testNavigationOrdersBySeriesOrderThenId(): void
@@ -104,13 +110,8 @@ final class SeriesModelTest extends DatabaseTestCase
         $this->assertSame(1, $this->model->navigation($this->seriesId, $first)['total']);
 
         $second = $this->makePost('2편', 2);
+        $this->model->attachPosts($this->seriesId, [$second]);
         $this->assertSame(2, $this->model->navigation($this->seriesId, $first)['total']);
-
-        // 다른 시리즈로 옮기면 이전 시리즈 캐시도 지워진다
-        $otherId = (int) $this->model->insert(['slug' => 'other', 'title' => '다른 연재']);
-        $this->posts->update($second, ['series_id' => $otherId]);
-        $this->assertSame(1, $this->model->navigation($this->seriesId, $first)['total']);
-        $this->assertSame(1, $this->model->navigation($otherId, $second)['total']);
 
         $this->posts->update($first, ['is_active' => 0]);
         $this->assertNull($this->model->navigation($this->seriesId, $first));
@@ -132,10 +133,94 @@ final class SeriesModelTest extends DatabaseTestCase
 
         $this->model->delete($this->seriesId);
 
-        $post = $this->posts->find($postId);
-        $this->assertNotNull($post);
-        $this->assertNull($post['series_id']);
-        $this->assertNull($post['series_order']);
+        $this->assertNotNull($this->posts->find($postId));
+        $this->assertSame([], $this->model->seriesOfPost($postId));
         $this->assertNull($this->model->navigation($this->seriesId, $postId));
+    }
+
+    public function testParsePostIdsDedupesAndSkipsGarbage(): void
+    {
+        $this->assertSame([12, 5, 7], SeriesModel::parsePostIds(' 12, 5,,abc, 12 ,0, -3, 7 '));
+        $this->assertSame([], SeriesModel::parsePostIds(''));
+    }
+
+    public function testAttachPostsAppendsInInputOrderAndKeepsOtherSeries(): void
+    {
+        $inSeries = $this->makePost('이미', 3);
+        $otherId  = (int) $this->model->insert(['slug' => 'other', 'title' => '다른 연재']);
+        $shared   = $this->makePost('공유', 1);
+        $this->link($otherId, $shared, 1);
+        $this->model->detachPost($this->seriesId, $shared);
+        $free = $this->makePost('무소속', null);
+        $this->model->detachPost($this->seriesId, $free);
+
+        $result = $this->model->attachPosts($this->seriesId, [$free, $inSeries, $shared, 99999]);
+
+        $this->assertSame([$free, $shared], $result['added']);
+        $this->assertSame([$inSeries], $result['already']);
+        $this->assertSame([99999], $result['missing']);
+        $this->assertSame([$this->seriesId => 5, $otherId => 1], $this->model->seriesOfPost($shared));
+        $this->assertSame(4, $this->model->seriesOfPost($free)[$this->seriesId]);
+    }
+
+    public function testPostCanBelongToManySeriesAndSyncReplacesMembership(): void
+    {
+        $otherId = (int) $this->model->insert(['slug' => 'other', 'title' => '다른 연재']);
+        $postId  = $this->makePost('글', 1);
+
+        $this->model->syncPostSeries($postId, [$this->seriesId => null, $otherId => 5]);
+        $this->assertSame([$this->seriesId => 1, $otherId => 5], $this->model->seriesOfPost($postId));
+        $this->assertCount(2, $this->model->navigationsForPost($postId));
+
+        $this->model->syncPostSeries($postId, [$otherId => null, 99999 => 1]);
+        $this->assertSame([$otherId => 5], $this->model->seriesOfPost($postId));
+        $this->assertNull($this->model->navigation($this->seriesId, $postId));
+    }
+
+    public function testListPublicCountsOnlyPublicPostsAndHidesEmptySeries(): void
+    {
+        $this->makePost('공개', 1);
+        $this->makePost('비밀', 2, ['is_secret' => 1]);
+        $this->model->insert(['slug' => 'empty', 'title' => '빈 연재']);
+
+        $list = $this->model->listPublic();
+
+        $this->assertCount(1, $list);
+        $this->assertSame('demo', $list[0]['slug']);
+        $this->assertSame(1, (int) $list[0]['post_count']);
+    }
+
+    public function testDetachPostOnlyAffectsOwnSeries(): void
+    {
+        $postId = $this->makePost('1편', 1);
+
+        $this->model->detachPost($this->seriesId + 999, $postId);
+        $this->assertArrayHasKey($this->seriesId, $this->model->seriesOfPost($postId));
+
+        $this->model->detachPost($this->seriesId, $postId);
+        $this->assertSame([], $this->model->seriesOfPost($postId));
+    }
+
+    public function testSearchPostsMatchesTitleOrId(): void
+    {
+        $postId = $this->makePost('검색대상글', 1);
+        $this->makePost('다른글', 2);
+
+        $byTitle = $this->model->searchPosts($this->seriesId, '검색대상');
+        $this->assertSame([$postId], array_map('intval', array_column($byTitle, 'id')));
+        $this->assertContains($postId, array_map('intval', array_column($this->model->searchPosts($this->seriesId, (string) $postId), 'id')));
+        $this->assertSame([], $this->model->searchPosts($this->seriesId, '  '));
+    }
+
+    public function testReorderPostsRenumbersInGivenOrder(): void
+    {
+        $a = $this->makePost('A', 1);
+        $b = $this->makePost('B', 2);
+        $c = $this->makePost('C', 3);
+
+        $this->model->reorderPosts($this->seriesId, [$c, 99999, $a, $b]);
+
+        $this->assertSame([$c, $a, $b], array_map('intval', array_column($this->model->publicPosts($this->seriesId), 'id')));
+        $this->assertSame(2, $this->model->seriesOfPost($a)[$this->seriesId]);
     }
 }

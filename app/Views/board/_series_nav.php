@@ -1,4 +1,3 @@
-<?php if ($seriesNav !== null): ?>
 <?php $seriesPostUrl = static fn (array $p): string => '/board/' . esc((string) $p['board_slug'], 'attr') . '/' . (int) $p['id']; ?>
 <details class="series-nav mt-3">
     <summary>
@@ -21,4 +20,3 @@
     </nav>
     <?php endif; ?>
 </details>
-<?php endif; ?>

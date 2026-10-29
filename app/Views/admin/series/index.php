@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <div class="alert alert-info small">
-    시리즈는 운영자가 순서를 정하는 연재 묶음입니다. 한 글은 하나의 시리즈에만 속하며, 글을 쓰거나 수정할 때 "시리즈"와 "순서"를 지정합니다.
+    시리즈는 운영자가 순서를 정하는 연재 묶음입니다. 한 글은 여러 시리즈에 속할 수 있으며, 글쓰기 화면에서 지정하거나, 시리즈 수정 화면에서 글을 검색·글 번호로 넣을 수 있습니다.
     시리즈를 삭제해도 글은 지워지지 않고 소속만 해제됩니다.
 </div>
 
@@ -83,7 +83,122 @@
                 </form>
             </div>
         </div>
+
+        <?php if ($editing): ?>
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h2 class="h6 fw-semibold mb-3">시리즈에 글 넣기</h2>
+
+                <form method="get" action="/admin/series" class="mb-3" role="search">
+                    <input type="hidden" name="edit" value="<?= (int) $editing['id'] ?>">
+                    <label class="form-label small fw-semibold" for="series-search">글 검색 (제목 또는 글 번호)</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="q" id="series-search" class="form-control" value="<?= esc($keyword, 'attr') ?>">
+                        <button type="submit" class="btn btn-outline-secondary">검색</button>
+                    </div>
+                </form>
+                <?php if ($keyword !== ''): ?>
+                    <?php if ($found === []): ?>
+                        <p class="text-muted small">검색 결과가 없습니다.</p>
+                    <?php else: ?>
+                    <ul class="list-group list-group-flush mb-3">
+                        <?php foreach ($found as $post): ?>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                            <span class="small">
+                                #<?= (int) $post['id'] ?> <?= esc($post['title']) ?>
+                                <span class="text-muted">· <?= esc((string) $post['board_title']) ?></span>
+                                <?php if ((int) $post['is_member'] === 1): ?>
+                                    <span class="badge text-bg-secondary">이미 포함</span>
+                                <?php endif; ?>
+                            </span>
+                            <?php if ((int) $post['is_member'] !== 1): ?>
+                            <form method="post" action="/admin/series/<?= (int) $editing['id'] ?>/posts">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="post_ids" value="<?= (int) $post['id'] ?>">
+                                <button type="submit" class="btn btn-outline-primary btn-sm text-nowrap">추가</button>
+                            </form>
+                            <?php endif; ?>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php endif; ?>
+                <?php endif; ?>
+
+                <form method="post" action="/admin/series/<?= (int) $editing['id'] ?>/posts" class="mb-4">
+                    <?= csrf_field() ?>
+                    <label class="form-label small fw-semibold" for="series-post-ids">글 번호로 한 번에 넣기</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="post_ids" id="series-post-ids" class="form-control" placeholder="예: 12, 15, 20"
+                               aria-describedby="series-post-ids-help" required>
+                        <button type="submit" class="btn btn-primary">넣기</button>
+                    </div>
+                    <div id="series-post-ids-help" class="form-text">콤마(,)로 구분합니다. 입력한 순서대로 시리즈 맨 뒤에 붙습니다. 글은 여러 시리즈에 동시에 속할 수 있습니다.</div>
+                </form>
+
+                <h3 class="h6 fw-semibold">속한 글 (<?= count($members) ?>)</h3>
+                <?php if ($members === []): ?>
+                    <p class="text-muted small mb-0">아직 글이 없습니다.</p>
+                <?php else: ?>
+                <form method="post" action="/admin/series/<?= (int) $editing['id'] ?>/posts/order" id="series-order-form">
+                    <?= csrf_field() ?>
+                    <p class="form-text mt-0">손잡이(<i class="bi bi-grip-vertical" aria-hidden="true"></i>)를 끌어 순서를 바꾸고 "순서 저장"을 누르세요. 위쪽이 1편입니다.</p>
+                    <ol class="list-group list-group-flush" id="series-members">
+                        <?php foreach ($members as $post): ?>
+                        <li class="list-group-item px-0 d-flex align-items-center gap-2">
+                            <input type="hidden" name="post_ids[]" value="<?= (int) $post['id'] ?>">
+                            <span class="series-handle text-muted" style="cursor:grab" title="끌어서 순서 변경"><i class="bi bi-grip-vertical" aria-hidden="true"></i><span class="visually-hidden">끌어서 순서 변경</span></span>
+                            <span class="small flex-grow-1">
+                                <span class="series-no fw-semibold"></span>
+                                #<?= (int) $post['id'] ?> <?= esc($post['title']) ?>
+                                <?php if (! (int) $post['is_active'] || (int) $post['is_secret']): ?>
+                                    <span class="badge text-bg-light">비공개</span>
+                                <?php endif; ?>
+                            </span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm series-up" aria-label="위로">▲</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm series-down" aria-label="아래로">▼</button>
+                            <button type="submit" class="btn btn-outline-danger btn-sm text-nowrap"
+                                    formaction="/admin/series/<?= (int) $editing['id'] ?>/posts/<?= (int) $post['id'] ?>/remove">빼기</button>
+                        </li>
+                        <?php endforeach; ?>
+                    </ol>
+                    <div class="text-end mt-3">
+                        <button type="submit" class="btn btn-primary btn-sm px-4">순서 저장</button>
+                    </div>
+                </form>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
 <?= $this->endSection() ?>
+<?php if ($editing && $members !== []): ?>
+<?= $this->section('scripts') ?>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"
+        integrity="sha384-BSxuMLxX+FCbTdYec3TbXlnMGEEM2QXTFdtDaveen71o+jswm2J36+xFqp8k4VHM"
+        crossorigin="anonymous"></script>
+<script>
+(() => {
+    const list = document.getElementById('series-members');
+    const renumber = () => list.querySelectorAll('li').forEach((li, i) => {
+        li.querySelector('.series-no').textContent = (i + 1) + '.';
+    });
+    renumber();
+    new Sortable(list, { handle: '.series-handle', animation: 150, onEnd: renumber });
+    list.addEventListener('click', (e) => {
+        const btn = e.target.closest('.series-up, .series-down');
+        if (!btn) return;
+        const li = btn.closest('li');
+        if (btn.classList.contains('series-up') && li.previousElementSibling) {
+            list.insertBefore(li, li.previousElementSibling);
+        } else if (btn.classList.contains('series-down') && li.nextElementSibling) {
+            list.insertBefore(li.nextElementSibling, li);
+        }
+        renumber();
+        btn.focus();
+    });
+})();
+</script>
+<?= $this->endSection() ?>
+<?php endif; ?>

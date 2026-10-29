@@ -18,6 +18,7 @@ $routes->get('feed', 'Front\FeedController::index');
 $routes->get('rss', 'Front\FeedController::index');
 $routes->get('og/(:num)\\.png', 'Front\OgImageController::post/$1');
 $routes->get('search', 'Front\SearchController::index');
+$routes->get('series', 'Front\SeriesController::index');
 $routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
 
 // ─── 인증 ────────────────────────────────────────────────────────────────────
@@ -170,6 +171,9 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('series', 'Admin\SeriesController::index');
     $routes->post('series', 'Admin\SeriesController::store');
     $routes->post('series/(:num)', 'Admin\SeriesController::update/$1');
+    $routes->post('series/(:num)/posts', 'Admin\SeriesController::addPosts/$1');
+    $routes->post('series/(:num)/posts/order', 'Admin\SeriesController::reorderPosts/$1');
+    $routes->post('series/(:num)/posts/(:num)/remove', 'Admin\SeriesController::removePost/$1/$2');
     $routes->post('series/(:num)/delete', 'Admin\SeriesController::delete/$1');
 
     // 광고 관리
