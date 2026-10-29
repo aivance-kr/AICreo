@@ -57,6 +57,7 @@ ob_start();
             <span><i class="bi bi-clock" aria-hidden="true"></i><span class="visually-hidden">작성일 </span> <?= $post['created_at'] ?></span>
             <span><i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">조회수 </span> <?= number_format($post['views']) ?></span>
         </div>
+        <?= view('board/_series_nav', ['seriesNav' => $seriesNav]) ?>
     </div>
     <div class="card-body">
         <!-- 본문 상단 광고 -->

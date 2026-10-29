@@ -238,3 +238,48 @@
 .board-list-gallery .small {
     font-size: 1rem;
 }
+
+/* ─── 시리즈(연재) 내비게이션 — 글 상세 상단 · 모든 테마 공통 ─────────── */
+.series-nav {
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: .5rem;
+    padding: .625rem .875rem;
+    font-size: var(--fs-meta);
+}
+.series-nav > summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .25rem .75rem;
+    cursor: pointer;
+}
+.series-nav__label {
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--bs-secondary-color, #6c757d);
+}
+.series-nav__title {
+    font-weight: 700;
+    text-decoration: none;
+}
+.series-nav__pos {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+.series-nav__list {
+    margin: .75rem 0 0;
+    padding-left: 1.5rem;
+}
+.series-nav__list li[aria-current="page"] {
+    font-weight: 700;
+}
+.series-nav__list li[aria-current="page"] a {
+    text-decoration: none;
+}
+.series-nav__pager {
+    display: flex;
+    gap: 1rem;
+    margin-top: .75rem;
+    padding-top: .625rem;
+    border-top: 1px solid var(--bs-border-color, #dee2e6);
+}

@@ -18,6 +18,7 @@ $routes->get('feed', 'Front\FeedController::index');
 $routes->get('rss', 'Front\FeedController::index');
 $routes->get('og/(:num)\\.png', 'Front\OgImageController::post/$1');
 $routes->get('search', 'Front\SearchController::index');
+$routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
 
 // ─── 인증 ────────────────────────────────────────────────────────────────────
 $routes->get('auth/login', 'Front\AuthController::login');
@@ -164,6 +165,12 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('popups/(:num)/edit', 'Admin\PopupController::edit/$1');
     $routes->post('popups/(:num)/edit', 'Admin\PopupController::update/$1');
     $routes->post('popups/(:num)/delete', 'Admin\PopupController::delete/$1');
+
+    // 시리즈(연재) 관리
+    $routes->get('series', 'Admin\SeriesController::index');
+    $routes->post('series', 'Admin\SeriesController::store');
+    $routes->post('series/(:num)', 'Admin\SeriesController::update/$1');
+    $routes->post('series/(:num)/delete', 'Admin\SeriesController::delete/$1');
 
     // 광고 관리
     $routes->get('ads', 'Admin\AdController::index');

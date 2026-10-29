@@ -23,11 +23,20 @@ class PostModel extends Model
         'board_id', 'category_id', 'user_id', 'title', 'content', 'signature', 'tags',
         'author_name', 'author_password',
         'is_notice', 'is_secret', 'is_active', 'ip_address',
-        'views', 'wp_post_id', 'created_at', 'updated_at',
+        'series_id', 'series_order', 'views', 'wp_post_id', 'created_at', 'updated_at',
     ];
-    protected $afterInsert = ['clearSitemapCache'];
-    protected $afterUpdate = ['clearSitemapCache'];
-    protected $afterDelete = ['clearSitemapCache'];
+    protected $afterInsert  = ['clearSitemapCache', 'clearSeriesCache'];
+    protected $beforeUpdate = ['rememberSeriesIds'];
+    protected $afterUpdate  = ['clearSitemapCache', 'clearSeriesCache'];
+    protected $beforeDelete = ['rememberSeriesIds'];
+    protected $afterDelete  = ['clearSitemapCache', 'clearSeriesCache'];
+
+    /**
+     * 수정·삭제 직전 글들이 속해 있던 시리즈 번호 (이동 전 시리즈 캐시도 지우기 위해)
+     *
+     * @var list<int>
+     */
+    private array $previousSeriesIds = [];
 
     /**
      * sitemap.xml 용 공개 글 목록 — 비밀글·비활성 게시판 제외.
@@ -162,6 +171,51 @@ class PostModel extends Model
     protected function clearSitemapCache(array $data): array
     {
         cache()->delete('seo_sitemap');
+
+        return $data;
+    }
+
+    /**
+     * 변경 전 시리즈 번호를 기억해 둔다.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function rememberSeriesIds(array $data): array
+    {
+        $ids = array_filter((array) ($data['id'] ?? []));
+        $this->previousSeriesIds = [];
+
+        if ($ids !== []) {
+            $rows = $this->db->table('posts')->select('series_id')->whereIn('id', $ids)->where('series_id IS NOT NULL', null, false)->get()->getResultArray();
+            $this->previousSeriesIds = array_map('intval', array_column($rows, 'series_id'));
+        }
+
+        return $data;
+    }
+
+    /**
+     * 글이 바뀌면 속한 시리즈(이전·현재)의 내비게이션 캐시를 지운다.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function clearSeriesCache(array $data): array
+    {
+        $seriesIds = $this->previousSeriesIds;
+        $this->previousSeriesIds = [];
+
+        $ids = array_filter((array) ($data['id'] ?? []));
+        if ($ids !== []) {
+            $rows      = $this->db->table('posts')->select('series_id')->whereIn('id', $ids)->where('series_id IS NOT NULL', null, false)->get()->getResultArray();
+            $seriesIds = array_merge($seriesIds, array_map('intval', array_column($rows, 'series_id')));
+        }
+
+        foreach (array_unique($seriesIds) as $seriesId) {
+            SeriesModel::clearCache($seriesId);
+        }
 
         return $data;
     }
