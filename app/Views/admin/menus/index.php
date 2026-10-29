@@ -75,7 +75,7 @@
                     <?= csrf_field() ?>
                     <input type="hidden" id="menuId" name="_menu_id" value="">
                     <div class="mb-2" id="menuIdRow" hidden>
-                        <label class="form-label small">메뉴 ID</label>
+                        <label for="mIdView" class="form-label small">메뉴 ID</label>
                         <input type="text" id="mIdView" class="form-control form-control-sm" readonly>
                     </div>
                     <div class="mb-2">
