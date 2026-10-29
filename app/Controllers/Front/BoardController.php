@@ -656,6 +656,32 @@ class BoardController extends BaseController
         ]);
     }
 
+    // ─── 시리즈 AI 추천 ─────────────────────────────────────────────────────
+
+    /**
+     * 글쓰기·수정 화면의 "AI 추천" 버튼 — 지금 쓰는 제목·본문과 어울리는 시리즈 번호를 돌려준다(운영자 전용).
+     * 저장은 하지 않고 체크 후보만 알려주며, 최종 선택은 운영자가 한다.
+     */
+    public function seriesSuggest(): ResponseInterface
+    {
+        if ($this->getUserRole() !== 'admin') {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => '권한이 없습니다.', 'csrf_hash' => csrf_hash()]);
+        }
+
+        $groq = service('groqSeries');
+        if (! $groq->isEnabled()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'AI 추천을 쓰려면 .env 에 GROQ_API_KEY 를 설정해야 합니다.', 'csrf_hash' => csrf_hash()]);
+        }
+
+        $ids = $groq->suggest(
+            (string) $this->request->getPost('title'),
+            (string) $this->request->getPost('content'),
+            $this->seriesModel->suggestionCandidates(),
+        );
+
+        return $this->response->setJSON(['success' => true, 'ids' => $ids, 'csrf_hash' => csrf_hash()]);
+    }
+
     // ─── 내부 헬퍼 ──────────────────────────────────────────────────────────
 
     /**

@@ -71,7 +71,13 @@
             <?php if (! empty($seriesList)): ?>
             <?php $checkedSeries = array_map('intval', (array) (old('series_ids') ?? array_keys($postSeries))); ?>
             <fieldset class="mb-3">
-                <legend class="form-label small">시리즈 <span class="text-muted">(여러 개 선택 가능)</span></legend>
+                <legend class="form-label small">
+                    시리즈 <span class="text-muted">(여러 개 선택 가능)</span>
+                    <button type="button" id="series-suggest-btn" class="btn btn-outline-secondary btn-sm ms-2 py-0">
+                        <i class="bi bi-stars" aria-hidden="true"></i> AI 추천
+                    </button>
+                    <span id="series-suggest-status" class="small text-muted ms-2" role="status" aria-live="polite"></span>
+                </legend>
                 <input type="hidden" name="series_form" value="1">
                 <?php foreach ($seriesList as $item): ?>
                 <?php $sid = (int) $item['id']; ?>
@@ -220,6 +226,59 @@ document.querySelector('form').addEventListener('submit', async function (event)
         alert('이미지 업로드에 실패했습니다. 이미지를 다시 확인해 주세요.');
     }
 });
+
+// 시리즈 AI 추천 — 제목·본문을 보내 어울리는 시리즈를 체크해 준다 (저장은 운영자가 확인 후)
+const seriesSuggestBtn = document.getElementById('series-suggest-btn');
+if (seriesSuggestBtn) {
+    const CSRF_FIELD_NAME = <?= json_encode(csrf_token()) ?>;
+    let csrfHash = <?= json_encode(csrf_hash()) ?>;
+    const statusBox = document.getElementById('series-suggest-status');
+
+    seriesSuggestBtn.addEventListener('click', async function () {
+        const editor = tinymce.activeEditor;
+        const body = new URLSearchParams();
+        body.set(CSRF_FIELD_NAME, csrfHash);
+        body.set('title', document.getElementById('post-title').value);
+        body.set('content', editor ? editor.getContent() : document.getElementById('content-editor').value);
+
+        seriesSuggestBtn.disabled = true;
+        statusBox.textContent = '추천 중…';
+
+        try {
+            const response = await fetch('/board/series-suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                credentials: 'same-origin',
+                body: body.toString(),
+            });
+            const data = await response.json();
+
+            if (data.csrf_hash) {
+                csrfHash = data.csrf_hash;
+                document.querySelectorAll('input[name="' + CSRF_FIELD_NAME + '"]').forEach(input => { input.value = csrfHash; });
+            }
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || '추천에 실패했습니다.');
+            }
+
+            const names = [];
+            data.ids.forEach(id => {
+                const box = document.getElementById('post-series-' + id);
+                if (box) {
+                    box.checked = true;
+                    names.push(document.querySelector('label[for="post-series-' + id + '"]').textContent.trim());
+                }
+            });
+            statusBox.textContent = names.length
+                ? '추천: ' + names.join(', ') + ' — 확인 후 저장하세요.'
+                : '어울리는 시리즈를 찾지 못했습니다.';
+        } catch (error) {
+            statusBox.textContent = error.message || '추천에 실패했습니다.';
+        } finally {
+            seriesSuggestBtn.disabled = false;
+        }
+    });
+}
 
 // 파일 선택 시 클라이언트 사전 검증
 const attachInput = document.getElementById('attachments');
