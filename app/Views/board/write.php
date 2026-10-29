@@ -53,6 +53,13 @@
                            <?= ($post && $post['is_notice']) ? 'checked' : '' ?>>
                     <label for="is_notice" class="form-check-label small">공지글로 등록</label>
                 </div>
+                <div>
+                    <label for="publish_at" class="form-label small mb-1">예약 발행</label>
+                    <input type="datetime-local" name="publish_at" id="publish_at" class="form-control form-control-sm" style="width:15rem"
+                           aria-describedby="publish-at-help"
+                           value="<?= esc(old('publish_at', ($post && $post['publish_at']) ? date('Y-m-d\TH:i', strtotime($post['publish_at'])) : '')) ?>">
+                    <div id="publish-at-help" class="form-text">미래 시각을 지정하면 숨김으로 저장되고 그 시각 이후 자동 공개됩니다. 비우면 바로 공개합니다.</div>
+                </div>
             </div>
             <?php endif; ?>
 

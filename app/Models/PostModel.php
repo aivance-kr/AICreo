@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use DateTimeImmutable;
 
 class PostModel extends Model
 {
@@ -32,12 +33,12 @@ class PostModel extends Model
     protected $allowedFields  = [
         'board_id', 'category_id', 'user_id', 'title', 'content', 'signature', 'tags',
         'author_name', 'author_password',
-        'is_notice', 'is_secret', 'is_active', 'ip_address',
+        'is_notice', 'is_secret', 'is_active', 'publish_at', 'ip_address',
         'views', 'wp_post_id', 'created_at', 'updated_at',
     ];
-    protected $afterInsert = ['clearSitemapCache', 'clearRelatedCache'];
-    protected $afterUpdate = ['clearSitemapCache', 'clearSeriesCache', 'clearRelatedCache'];
-    protected $afterDelete = ['clearSitemapCache', 'clearSeriesCache', 'clearRelatedCache'];
+    protected $afterInsert = ['clearSeoCache', 'clearRelatedCache'];
+    protected $afterUpdate = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache'];
+    protected $afterDelete = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache'];
 
     /**
      * sitemap.xml 용 공개 글 목록 — 비밀글·비활성 게시판 제외.
@@ -293,9 +294,10 @@ class PostModel extends Model
      *
      * @return array<string, mixed>
      */
-    protected function clearSitemapCache(array $data): array
+    protected function clearSeoCache(array $data): array
     {
         cache()->delete('seo_sitemap');
+        cache()->delete('seo_feed');
 
         return $data;
     }
@@ -437,7 +439,7 @@ class PostModel extends Model
 
     /**
      * 노출 상태를 반전한다(관리자 숨기기/노출 토글). update() 경유로
-     * afterUpdate 훅(clearSitemapCache)이 정상 실행되게 한다.
+     * afterUpdate 훅(clearSeoCache)이 정상 실행되게 한다.
      */
     public function toggleActive(int $id): void
     {
@@ -446,12 +448,50 @@ class PostModel extends Model
             return;
         }
 
-        $this->update($id, ['is_active' => $post['is_active'] ? 0 : 1]);
+        // 예약 글은 토글하면 즉시 공개하고 예약을 푼다
+        $this->update($id, ['is_active' => $post['is_active'] ? 0 : 1, 'publish_at' => null]);
+    }
+
+    /**
+     * 예약 입력(datetime-local 값)을 DB 값으로 바꾼다. 형식이 틀리거나 이미 지난 시각이면 null(= 즉시 공개).
+     */
+    public static function normalizePublishAt(?string $input): ?string
+    {
+        if ($input === null || $input === '') {
+            return null;
+        }
+
+        $time = DateTimeImmutable::createFromFormat('!Y-m-d\TH:i', $input);
+        if ($time === false || $time->getTimestamp() <= time()) {
+            return null;
+        }
+
+        return $time->format('Y-m-d H:i:00');
+    }
+
+    /**
+     * 예약 시각이 지난 글을 공개 처리하고 예약을 비운다.
+     * update() 경유로 사이트맵·RSS·관련 글·시리즈 캐시 훅이 실행된다.
+     *
+     * @return int 공개 처리한 글 수
+     */
+    public function publishDue(): int
+    {
+        $ids = array_column(
+            $this->select('id')->where('publish_at IS NOT NULL')->where('publish_at <=', date('Y-m-d H:i:s'))->findAll(),
+            'id',
+        );
+
+        foreach ($ids as $id) {
+            $this->update($id, ['is_active' => 1, 'publish_at' => null]);
+        }
+
+        return count($ids);
     }
 
     /**
      * 게시물을 다른 게시판으로 일괄 이동한다. 카테고리는 게시판별이므로 비운다.
-     * update() 경유로 afterUpdate 훅(clearSitemapCache)이 실행된다.
+     * update() 경유로 afterUpdate 훅(clearSeoCache)이 실행된다.
      *
      * @param list<int> $ids
      */

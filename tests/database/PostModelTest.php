@@ -385,4 +385,51 @@ final class PostModelTest extends DatabaseTestCase
         $this->model->delete($other);
         $this->assertSame([], $this->model->getRelated($current));
     }
+
+    public function testNormalizePublishAtAcceptsOnlyFutureValidDatetime(): void
+    {
+        $future = date('Y-m-d\TH:i', strtotime('+1 day'));
+
+        $this->assertSame(date('Y-m-d H:i:00', strtotime($future)), PostModel::normalizePublishAt($future));
+        $this->assertNull(PostModel::normalizePublishAt(date('Y-m-d\TH:i', strtotime('-1 day'))));
+        $this->assertNull(PostModel::normalizePublishAt('garbage'));
+        $this->assertNull(PostModel::normalizePublishAt(''));
+        $this->assertNull(PostModel::normalizePublishAt(null));
+    }
+
+    public function testPublishDueActivatesOnlyElapsedScheduledPosts(): void
+    {
+        $due    = $this->makePost(['is_active' => 0, 'publish_at' => date('Y-m-d H:i:s', strtotime('-1 minute'))]);
+        $later  = $this->makePost(['is_active' => 0, 'publish_at' => date('Y-m-d H:i:s', strtotime('+1 hour'))]);
+        $hidden = $this->makePost(['is_active' => 0]);
+
+        cache()->save('seo_feed', 'stale', 60);
+
+        $this->assertSame(1, $this->model->publishDue());
+
+        $this->assertSame(1, (int) $this->model->find($due)['is_active']);
+        $this->assertNull($this->model->find($due)['publish_at']);
+        $this->assertSame(0, (int) $this->model->find($later)['is_active']);
+        $this->assertNotNull($this->model->find($later)['publish_at']);
+        $this->assertSame(0, (int) $this->model->find($hidden)['is_active']);
+        $this->assertNull(cache()->get('seo_feed'));
+    }
+
+    public function testScheduledPostIsHiddenFromPublicQueries(): void
+    {
+        $this->makePost(['is_active' => 0, 'publish_at' => date('Y-m-d H:i:s', strtotime('+1 hour')), 'title' => '예약글']);
+
+        $this->assertSame([], $this->model->getLatestPublic(10));
+        $this->assertSame([], $this->model->getPublicForSitemap());
+    }
+
+    public function testToggleActiveOnScheduledPostPublishesNow(): void
+    {
+        $id = $this->makePost(['is_active' => 0, 'publish_at' => date('Y-m-d H:i:s', strtotime('+1 hour'))]);
+
+        $this->model->toggleActive($id);
+
+        $this->assertSame(1, (int) $this->model->find($id)['is_active']);
+        $this->assertNull($this->model->find($id)['publish_at']);
+    }
 }
