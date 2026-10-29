@@ -41,8 +41,13 @@ class MenuController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $parentId = (int) $this->request->getPost('parent_id') ?: null;
+        if (($error = $this->parentError($parentId)) !== null) {
+            return redirect()->back()->withInput()->with('errors', [$error]);
+        }
+
         $this->menuModel->insert([
-            'parent_id'  => $this->request->getPost('parent_id') ?: null,
+            'parent_id'  => $parentId,
             'title'      => $this->request->getPost('title'),
             'url'        => $this->request->getPost('url') ?: null,
             'target'     => $this->request->getPost('target') ?: '_self',
@@ -60,7 +65,13 @@ class MenuController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $parentId = (int) $this->request->getPost('parent_id') ?: null;
+        if (($error = $this->parentError($parentId, $id)) !== null) {
+            return redirect()->back()->withInput()->with('errors', [$error]);
+        }
+
         $this->menuModel->update($id, [
+            'parent_id'  => $parentId,
             'title'      => $this->request->getPost('title'),
             'url'        => $this->request->getPost('url') ?: null,
             'target'     => $this->request->getPost('target') ?: '_self',
@@ -78,5 +89,28 @@ class MenuController extends BaseController
         $this->menuModel->clearCache();
 
         return redirect()->to('/admin/menus')->with('success', '삭제되었습니다.');
+    }
+
+    /**
+     * 상위 메뉴 지정이 유효한지 검사한다. 메뉴는 2단까지만 허용한다.
+     */
+    private function parentError(?int $parentId, ?int $selfId = null): ?string
+    {
+        if ($parentId === null) {
+            return null;
+        }
+        if ($parentId === $selfId) {
+            return '자기 자신을 상위 메뉴로 지정할 수 없습니다.';
+        }
+
+        $parent = $this->menuModel->find($parentId);
+        if ($parent === null || $parent['parent_id'] !== null) {
+            return '상위 메뉴는 최상위 메뉴만 선택할 수 있습니다.';
+        }
+        if ($selfId !== null && $this->menuModel->where('parent_id', $selfId)->countAllResults() > 0) {
+            return '하위 메뉴가 있는 메뉴는 다른 메뉴의 하위로 옮길 수 없습니다.';
+        }
+
+        return null;
     }
 }

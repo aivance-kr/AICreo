@@ -18,6 +18,7 @@
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
+                                    <span class="badge bg-light text-muted border">#<?= $top['id'] ?></span>
                                     <strong><?= esc($top['title']) ?></strong>
                                     <code class="small text-muted ms-1"><?= esc($top['url']) ?></code>
                                     <?= $top['is_active'] ? '' : '<span class="badge bg-secondary ms-1">비활성</span>' ?>
@@ -39,7 +40,7 @@
                                         <span class="drag-handle text-muted" style="cursor:grab"><i class="bi bi-grip-vertical" aria-hidden="true"></i></span>
                                         <div class="flex-grow-1 d-flex justify-content-between align-items-center">
                                             <div>
-                                                &nbsp;&nbsp;└ <?= esc($child['title']) ?>
+                                                &nbsp;&nbsp;└ <span class="badge bg-light text-muted border">#<?= $child['id'] ?></span> <?= esc($child['title']) ?>
                                                 <code class="small text-muted ms-1"><?= esc($child['url']) ?></code>
                                                 <?= $child['is_active'] ? '' : '<span class="badge bg-secondary ms-1">비활성</span>' ?>
                                             </div>
@@ -73,6 +74,10 @@
                 <form method="post" id="menuForm" action="/admin/menus">
                     <?= csrf_field() ?>
                     <input type="hidden" id="menuId" name="_menu_id" value="">
+                    <div class="mb-2" id="menuIdRow" hidden>
+                        <label class="form-label small">메뉴 ID</label>
+                        <input type="text" id="mIdView" class="form-control form-control-sm" readonly>
+                    </div>
                     <div class="mb-2">
                         <label for="mTitle" class="form-label small">제목 *</label>
                         <input type="text" name="title" id="mTitle" class="form-control form-control-sm" required>
@@ -82,8 +87,14 @@
                         <input type="text" name="url" id="mUrl" class="form-control form-control-sm" placeholder="/about (하위 메뉴만 있는 상위 메뉴는 비워두세요)">
                     </div>
                     <div class="mb-2">
-                        <label for="mParent" class="form-label small">상위 메뉴 ID (없으면 비워두세요)</label>
-                        <input type="number" name="parent_id" id="mParent" class="form-control form-control-sm" placeholder="없음">
+                        <label for="mParent" class="form-label small">상위 메뉴</label>
+                        <select name="parent_id" id="mParent" class="form-select form-select-sm">
+                            <option value="">없음 (최상위 메뉴)</option>
+                            <?php foreach ($menuTree as $top): ?>
+                            <option value="<?= $top['id'] ?>">#<?= $top['id'] ?> <?= esc($top['title']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text" id="mParentHelp" hidden>하위 메뉴가 있는 메뉴는 최상위로만 둘 수 있습니다.</div>
                     </div>
                     <div class="row g-2 mb-2">
                         <div class="col">
@@ -183,12 +194,28 @@ function fillEditForm(m) {
     document.getElementById('menuForm').action = '/admin/menus/' + m.id + '/edit';
     document.getElementById('mTitle').value   = m.title;
     document.getElementById('mUrl').value     = m.url || '';
-    document.getElementById('mParent').value  = m.parent_id || '';
+    document.getElementById('menuIdRow').hidden = false;
+    document.getElementById('mIdView').value  = m.id;
+    setParentOptions(m);
     document.getElementById('mSort').value    = m.sort_order;
     document.getElementById('mTarget').value  = m.target;
     document.getElementById('mActive').checked = m.is_active == 1;
 }
+// 자기 자신은 상위 후보에서 빼고, 하위 메뉴가 있는 메뉴는 최상위로 고정한다(2단까지만 허용).
+function setParentOptions(m) {
+    const select = document.getElementById('mParent');
+    const hasChildren = !!document.querySelector('#menuRoot > li[data-id="' + m.id + '"] .menu-children li');
+    Array.from(select.options).forEach(o => { o.hidden = o.value === String(m.id); });
+    select.value = hasChildren ? '' : (m.parent_id || '');
+    select.disabled = hasChildren;
+    document.getElementById('mParentHelp').hidden = !hasChildren;
+}
 function resetForm() {
+    document.getElementById('menuIdRow').hidden = true;
+    const select = document.getElementById('mParent');
+    select.disabled = false;
+    Array.from(select.options).forEach(o => { o.hidden = false; });
+    document.getElementById('mParentHelp').hidden = true;
     document.getElementById('formTitle').textContent = '메뉴 추가';
     document.getElementById('menuForm').action = '/admin/menus';
     document.getElementById('menuForm').reset();

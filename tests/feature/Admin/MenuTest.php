@@ -49,6 +49,41 @@ final class MenuTest extends AdminTestCase
         $this->assertSame(0, (new MenuModel())->where('url', '/x')->countAllResults());
     }
 
+    public function testUpdateChangesParent(): void
+    {
+        $model    = new MenuModel();
+        $parentId = (int) $model->insert(['parent_id' => null, 'title' => '소개', 'url' => null, 'sort_order' => 1, 'is_active' => 1]);
+        $childId  = (int) $model->insert(['parent_id' => null, 'title' => '연혁', 'url' => '/history', 'sort_order' => 2, 'is_active' => 1]);
+
+        $this->withSession($this->adminSession)->post("admin/menus/{$childId}/edit", [
+            'title'      => '연혁',
+            'url'        => '/history',
+            'parent_id'  => $parentId,
+            'sort_order' => 2,
+            'is_active'  => 1,
+        ])->assertRedirectTo('/admin/menus');
+
+        $this->assertSame($parentId, (int) $model->find($childId)['parent_id']);
+    }
+
+    public function testUpdateRejectsInvalidParent(): void
+    {
+        $model   = new MenuModel();
+        $topId   = (int) $model->insert(['parent_id' => null, 'title' => '소개', 'url' => null, 'sort_order' => 1, 'is_active' => 1]);
+        $childId = (int) $model->insert(['parent_id' => $topId, 'title' => '연혁', 'url' => '/history', 'sort_order' => 1, 'is_active' => 1]);
+        $otherId = (int) $model->insert(['parent_id' => null, 'title' => '기타', 'url' => '/etc', 'sort_order' => 2, 'is_active' => 1]);
+
+        $post = static fn (int $parent): array => ['title' => 'x', 'url' => '/x', 'parent_id' => $parent, 'sort_order' => 1, 'is_active' => 1];
+
+        // 자기 자신 / 하위 메뉴를 상위로 / 하위가 있는 메뉴를 하위로
+        $this->withSession($this->adminSession)->post("admin/menus/{$otherId}/edit", $post($otherId));
+        $this->withSession($this->adminSession)->post("admin/menus/{$otherId}/edit", $post($childId));
+        $this->withSession($this->adminSession)->post("admin/menus/{$topId}/edit", $post($otherId));
+
+        $this->assertNull($model->find($otherId)['parent_id']);
+        $this->assertNull($model->find($topId)['parent_id']);
+    }
+
     public function testAdminDeletesMenu(): void
     {
         $model = new MenuModel();
