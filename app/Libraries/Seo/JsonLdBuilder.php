@@ -119,11 +119,12 @@ class JsonLdBuilder
     /**
      * 게시글(posts) BlogPosting 노드.
      *
-     * @param array<string, mixed> $post
+     * @param array<string, mixed>      $post
+     * @param array<string, mixed>|null $series 속한 시리즈(title·slug) — 있으면 isPartOf 로 연재임을 알린다
      *
      * @return array<string, mixed>
      */
-    public function blogPosting(array $post, string $url, string $authorName): array
+    public function blogPosting(array $post, string $url, string $authorName, ?array $series = null): array
     {
         $node = [
             '@type'     => 'BlogPosting',
@@ -132,6 +133,14 @@ class JsonLdBuilder
             'author'    => ['@type' => 'Person', 'name' => $authorName],
             'publisher' => ['@id' => base_url(self::ORG_ID)],
         ];
+
+        if ($series !== null && ! empty($series['slug'])) {
+            $node['isPartOf'] = [
+                '@type' => 'CreativeWorkSeries',
+                'name'  => $series['title'] ?? '',
+                'url'   => base_url('series/' . $series['slug']),
+            ];
+        }
 
         $body = trim(strip_tags((string) ($post['content'] ?? '')));
         if ($body !== '') {
