@@ -13,7 +13,9 @@ use RuntimeException;
  */
 final class GroqSeriesServiceTest extends CIUnitTestCase
 {
-    /** @var list<array{id: int, title: string, description: string|null, samples: list<string>}> */
+    /**
+     * @var list<array{id: int, title: string, description: string|null, samples: list<string>}>
+     */
     private array $candidates = [
         ['id' => 1, 'title' => 'Claude Code 실전기', 'description' => 'AI 코딩 도구 사용기', 'samples' => ['dev-issue 스킬', '토큰 사용량']],
         ['id' => 2, 'title' => 'AI가 만든 게시판', 'description' => null, 'samples' => []],
