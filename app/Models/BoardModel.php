@@ -45,6 +45,7 @@ class BoardModel extends Model
     {
         cache()->delete('seo_sitemap');
         cache()->delete('seo_llms');
+        cache()->delete('public_tag_counts');
 
         return $data;
     }

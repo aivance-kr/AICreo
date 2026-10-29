@@ -54,6 +54,11 @@ class SitemapController extends BaseController
             ];
         }
 
+        // 태그 목록 — 공개 태그가 있을 때만 (태그별 페이지는 얇은 목록이라 제외)
+        if ((new PostModel())->getPublicTagCounts() !== []) {
+            $urls[] = ['loc' => base_url('tags')];
+        }
+
         // 공개 글 (비밀글·비활성 게시판 제외)
         foreach ((new PostModel())->getPublicForSitemap() as $post) {
             $urls[] = [
