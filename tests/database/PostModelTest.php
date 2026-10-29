@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Database;
 
+use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
@@ -284,5 +285,53 @@ final class PostModelTest extends DatabaseTestCase
 
         $this->assertSame(3, $result['total']);
         $this->assertCount(1, $result['posts']);
+    }
+
+    public function testGetRelatedOrdersByTagOverlapThenNewest(): void
+    {
+        cache()->clean();
+        $current = $this->makePost(['tags' => 'php,ci4,redis']);
+        $one     = $this->makePost(['title' => '하나', 'tags' => 'php']);
+        $two     = $this->makePost(['title' => '둘', 'tags' => 'php,ci4']);
+        $oneNew  = $this->makePost(['title' => '하나최신', 'tags' => 'redis']);
+        $this->makePost(['title' => '무관', 'tags' => 'java']);
+
+        $ids = array_column($this->model->getRelated($current), 'id');
+
+        $this->assertSame([$two, $oneNew, $one], $ids);
+    }
+
+    public function testGetRelatedExcludesNonPublicAndMatchesCategory(): void
+    {
+        cache()->clean();
+        $categoryId = (int) model(BoardCategoryModel::class)->insert(['board_id' => $this->boardId, 'name' => '분류']);
+        $current    = $this->makePost(['tags' => 'php', 'category_id' => $categoryId]);
+        $byCategory = $this->makePost(['title' => '같은분류', 'category_id' => $categoryId]);
+        $this->makePost(['title' => '비밀', 'tags' => 'php', 'is_secret' => 1]);
+        $this->makePost(['title' => '숨김', 'tags' => 'php', 'is_active' => 0]);
+
+        $this->assertSame([$byCategory], array_column($this->model->getRelated($current), 'id'));
+    }
+
+    public function testGetRelatedIsEmptyWithoutTagsOrCategory(): void
+    {
+        cache()->clean();
+        $current = $this->makePost();
+        $this->makePost(['tags' => 'php']);
+
+        $this->assertSame([], $this->model->getRelated($current));
+    }
+
+    public function testGetRelatedCacheIsInvalidatedOnSaveAndDelete(): void
+    {
+        cache()->clean();
+        $current = $this->makePost(['tags' => 'php']);
+        $this->assertSame([], $this->model->getRelated($current));
+
+        $other = $this->makePost(['title' => '새글', 'tags' => 'php']);
+        $this->assertSame([$other], array_column($this->model->getRelated($current), 'id'));
+
+        $this->model->delete($other);
+        $this->assertSame([], $this->model->getRelated($current));
     }
 }

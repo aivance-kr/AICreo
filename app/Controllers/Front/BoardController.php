@@ -229,6 +229,7 @@ class BoardController extends BaseController
             'prevPost'            => $prevPost,
             'nextPost'            => $nextPost,
             'seriesNavs'          => $seriesNavs,
+            'relatedPosts'        => $noindex ? [] : $this->postModel->getRelated($postId),
             'postTopAds'          => $adModel->getActiveByPosition('post_top'),
             'postBotAds'          => $adModel->getActiveByPosition('post_bottom'),
             'guestCommentCaptcha' => $guestCommentCaptcha,

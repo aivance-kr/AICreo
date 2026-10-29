@@ -6,8 +6,10 @@ use CodeIgniter\Model;
 
 class PostModel extends Model
 {
-    public const MAX_TAGS       = 10;
-    public const MAX_TAG_LENGTH = 30;
+    public const MAX_TAGS                   = 10;
+    public const MAX_TAG_LENGTH             = 30;
+    private const RELATED_CACHE_VERSION_KEY = 'related_posts_version';
+    private const RELATED_CACHE_TTL         = 3600;
 
     /**
      * 목록용 공감수·댓글수(활성 댓글만) 서브쿼리
@@ -25,9 +27,9 @@ class PostModel extends Model
         'is_notice', 'is_secret', 'is_active', 'ip_address',
         'views', 'wp_post_id', 'created_at', 'updated_at',
     ];
-    protected $afterInsert = ['clearSitemapCache'];
-    protected $afterUpdate = ['clearSitemapCache', 'clearSeriesCache'];
-    protected $afterDelete = ['clearSitemapCache', 'clearSeriesCache'];
+    protected $afterInsert = ['clearSitemapCache', 'clearRelatedCache'];
+    protected $afterUpdate = ['clearSitemapCache', 'clearSeriesCache', 'clearRelatedCache'];
+    protected $afterDelete = ['clearSitemapCache', 'clearSeriesCache', 'clearRelatedCache'];
 
     /**
      * sitemap.xml 용 공개 글 목록 — 비밀글·비활성 게시판 제외.
@@ -110,6 +112,78 @@ class PostModel extends Model
     }
 
     /**
+     * 상세 하단 "이어 읽을 글" — 같은 태그를 하나라도 공유하거나 같은 카테고리인 다른 공개 글.
+     * 태그 겹침 수가 많은 글이 먼저, 같으면 최신 글이 먼저. 공개 조건은 getLatestPublic 과 같다.
+     * 결과는 캐시하고 글 저장·삭제 때 clearRelatedCache 로 무효화한다.
+     *
+     * @return list<array{id: int, title: string, board_slug: string, thumb: string|null}>
+     */
+    public function getRelated(int $postId, int $limit = 5): array
+    {
+        $version = cache()->get(self::RELATED_CACHE_VERSION_KEY) ?? '0';
+
+        return cache()->remember(
+            "related_posts_{$version}_{$postId}_{$limit}",
+            self::RELATED_CACHE_TTL,
+            fn (): array => $this->queryRelated($postId, $limit),
+        );
+    }
+
+    /**
+     * @return list<array{id: int, title: string, board_slug: string, thumb: string|null}>
+     */
+    private function queryRelated(int $postId, int $limit): array
+    {
+        $current = $this->select('tags, category_id')->find($postId);
+        if ($current === null) {
+            return [];
+        }
+
+        $matches  = [];
+        $overlaps = [];
+
+        foreach (self::splitTags($current['tags']) as $tag) {
+            $expr       = 'FIND_IN_SET(' . $this->db->escape($tag) . ', posts.tags) > 0';
+            $matches[]  = $expr;
+            $overlaps[] = "({$expr})";
+        }
+        if ($current['category_id'] !== null) {
+            $matches[] = 'posts.category_id = ' . (int) $current['category_id'];
+        }
+        if ($matches === []) {
+            return [];
+        }
+
+        $builder = $this->select('posts.id, posts.title, posts.content, boards.slug AS board_slug')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->where('posts.id !=', $postId)
+            ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest')
+            ->where('(' . implode(' OR ', $matches) . ')', null, false);
+        // 태그 겹침 수가 많은 글 먼저 (태그가 없는 글은 카테고리 일치만으로 후보가 되므로 건너뛴다)
+        if ($overlaps !== []) {
+            $builder->orderBy(implode(' + ', $overlaps), 'DESC', false);
+        }
+        /** @var list<array<string, mixed>> $rows */
+        $rows = $builder->orderBy('posts.id', 'DESC')->findAll($limit);
+
+        helper('image');
+
+        return array_map(static function (array $row): array {
+            $thumb = self::extractThumbnail($row['content']);
+
+            return [
+                'id'         => (int) $row['id'],
+                'title'      => (string) $row['title'],
+                'board_slug' => (string) $row['board_slug'],
+                'thumb'      => $thumb === null ? null : content_thumb_url($thumb),
+            ];
+        }, $rows);
+    }
+
+    /**
      * 게시글 본문 HTML에서 첫 번째 이미지 src 를 추출한다 (블로그형/갤러리형 목록 썸네일용).
      */
     public static function extractThumbnail(?string $content): ?string
@@ -162,6 +236,21 @@ class PostModel extends Model
     protected function clearSitemapCache(array $data): array
     {
         cache()->delete('seo_sitemap');
+
+        return $data;
+    }
+
+    /**
+     * 글이 바뀌면 모든 글의 관련 글 캐시를 무효화한다 — 한 글의 태그·공개 여부가 다른 글들의 관련 글에 영향을 주므로
+     * 글 단위가 아니라 버전 토큰을 바꿔 한꺼번에 끊는다.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function clearRelatedCache(array $data): array
+    {
+        cache()->save(self::RELATED_CACHE_VERSION_KEY, uniqid('', true), 0);
 
         return $data;
     }
