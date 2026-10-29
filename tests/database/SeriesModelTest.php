@@ -138,4 +138,52 @@ final class SeriesModelTest extends DatabaseTestCase
         $this->assertNull($post['series_order']);
         $this->assertNull($this->model->navigation($this->seriesId, $postId));
     }
+
+    public function testParsePostIdsDedupesAndSkipsGarbage(): void
+    {
+        $this->assertSame([12, 5, 7], SeriesModel::parsePostIds(' 12, 5,,abc, 12 ,0, -3, 7 '));
+        $this->assertSame([], SeriesModel::parsePostIds(''));
+    }
+
+    public function testAttachPostsAppendsInInputOrderAndReportsResults(): void
+    {
+        $inSeries = $this->makePost('이미', 3);
+        $otherId  = (int) $this->model->insert(['slug' => 'other', 'title' => '다른 연재']);
+        $moved    = $this->makePost('이동', 1, ['series_id' => $otherId]);
+        $free     = $this->makePost('무소속', null, ['series_id' => null]);
+        $this->assertSame(1, $this->model->navigation($otherId, $moved)['total']);
+
+        $result = $this->model->attachPosts($this->seriesId, [$free, $inSeries, $moved, 99999]);
+
+        $this->assertSame([$free], $result['added']);
+        $this->assertSame([$moved], $result['moved']);
+        $this->assertSame([$inSeries], $result['already']);
+        $this->assertSame([99999], $result['missing']);
+        $this->assertSame(4, (int) $this->posts->find($free)['series_order']);
+        $this->assertSame(5, (int) $this->posts->find($moved)['series_order']);
+        $this->assertSame($this->seriesId, (int) $this->posts->find($moved)['series_id']);
+        $this->assertNull($this->model->navigation($otherId, $moved));
+    }
+
+    public function testDetachPostOnlyAffectsOwnSeries(): void
+    {
+        $postId = $this->makePost('1편', 1);
+
+        $this->model->detachPost($this->seriesId + 999, $postId);
+        $this->assertSame($this->seriesId, (int) $this->posts->find($postId)['series_id']);
+
+        $this->model->detachPost($this->seriesId, $postId);
+        $this->assertNull($this->posts->find($postId)['series_id']);
+    }
+
+    public function testSearchPostsMatchesTitleOrId(): void
+    {
+        $postId = $this->makePost('검색대상글', 1);
+        $this->makePost('다른글', 2);
+
+        $byTitle = $this->model->searchPosts('검색대상');
+        $this->assertSame([$postId], array_map('intval', array_column($byTitle, 'id')));
+        $this->assertContains($postId, array_map('intval', array_column($this->model->searchPosts((string) $postId), 'id')));
+        $this->assertSame([], $this->model->searchPosts('  '));
+    }
 }

@@ -26,10 +26,14 @@ class SeriesController extends BaseController
     {
         $editId  = (int) $this->request->getGet('edit');
         $editing = $editId > 0 ? $this->seriesModel->find($editId) : null;
+        $keyword = trim((string) $this->request->getGet('q'));
 
         return $this->render('admin/series/index', [
             'seriesList' => $this->seriesModel->listWithCounts(),
             'editing'    => $editing,
+            'members'    => $editing ? $this->seriesModel->memberPosts($editId) : [],
+            'keyword'    => $keyword,
+            'found'      => $editing ? $this->seriesModel->searchPosts($keyword) : [],
         ]);
     }
 
@@ -59,6 +63,45 @@ class SeriesController extends BaseController
         $this->seriesModel->update($id, $input);
 
         return redirect()->to(self::LIST_URL)->with('success', '시리즈가 수정되었습니다.');
+    }
+
+    /**
+     * 글 번호를 콤마로 구분해 한 번에 넣거나(검색 결과의 "추가" 버튼은 번호 1개), 시리즈에서 뺀다.
+     */
+    public function addPosts(int $id): ResponseInterface
+    {
+        if ($this->seriesModel->find($id) === null) {
+            return redirect()->to(self::LIST_URL)->with('error', '시리즈를 찾을 수 없습니다.');
+        }
+
+        $editUrl = self::LIST_URL . '?edit=' . $id;
+        $ids     = SeriesModel::parsePostIds((string) $this->request->getPost('post_ids'));
+        if ($ids === []) {
+            return redirect()->to($editUrl)->with('error', '글 번호를 입력하세요. 여러 개는 콤마(,)로 구분합니다.');
+        }
+
+        $result  = $this->seriesModel->attachPosts($id, $ids);
+        $message = count($result['added']) + count($result['moved']) . '개 글을 시리즈에 넣었습니다.';
+        if ($result['moved'] !== []) {
+            $message .= ' (다른 시리즈에서 옮김: ' . implode(', ', $result['moved']) . ')';
+        }
+        if ($result['already'] !== []) {
+            $message .= ' 이미 포함: ' . implode(', ', $result['already']) . '.';
+        }
+        if ($result['missing'] !== []) {
+            $message .= ' 없는 글: ' . implode(', ', $result['missing']) . '.';
+        }
+
+        $flash = $result['added'] === [] && $result['moved'] === [] ? 'error' : 'success';
+
+        return redirect()->to($editUrl)->with($flash, $message);
+    }
+
+    public function removePost(int $id, int $postId): ResponseInterface
+    {
+        $this->seriesModel->detachPost($id, $postId);
+
+        return redirect()->to(self::LIST_URL . '?edit=' . $id)->with('success', '시리즈에서 뺐습니다. 글은 그대로 남습니다.');
     }
 
     public function delete(int $id): ResponseInterface

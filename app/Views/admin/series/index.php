@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <div class="alert alert-info small">
-    시리즈는 운영자가 순서를 정하는 연재 묶음입니다. 한 글은 하나의 시리즈에만 속하며, 글을 쓰거나 수정할 때 "시리즈"와 "순서"를 지정합니다.
+    시리즈는 운영자가 순서를 정하는 연재 묶음입니다. 한 글은 하나의 시리즈에만 속하며, 글쓰기 화면에서 지정하거나, 시리즈 수정 화면에서 글을 검색·글 번호로 넣을 수 있습니다.
     시리즈를 삭제해도 글은 지워지지 않고 소속만 해제됩니다.
 </div>
 
@@ -83,6 +83,85 @@
                 </form>
             </div>
         </div>
+
+        <?php if ($editing): ?>
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h2 class="h6 fw-semibold mb-3">시리즈에 글 넣기</h2>
+
+                <form method="get" action="/admin/series" class="mb-3" role="search">
+                    <input type="hidden" name="edit" value="<?= (int) $editing['id'] ?>">
+                    <label class="form-label small fw-semibold" for="series-search">글 검색 (제목 또는 글 번호)</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="q" id="series-search" class="form-control" value="<?= esc($keyword, 'attr') ?>">
+                        <button type="submit" class="btn btn-outline-secondary">검색</button>
+                    </div>
+                </form>
+                <?php if ($keyword !== ''): ?>
+                    <?php if ($found === []): ?>
+                        <p class="text-muted small">검색 결과가 없습니다.</p>
+                    <?php else: ?>
+                    <ul class="list-group list-group-flush mb-3">
+                        <?php foreach ($found as $post): ?>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                            <span class="small">
+                                #<?= (int) $post['id'] ?> <?= esc($post['title']) ?>
+                                <span class="text-muted">· <?= esc((string) $post['board_title']) ?></span>
+                                <?php if ((int) $post['series_id'] === (int) $editing['id']): ?>
+                                    <span class="badge text-bg-secondary">이 시리즈</span>
+                                <?php elseif ($post['series_id'] !== null): ?>
+                                    <span class="badge text-bg-warning">다른 시리즈(옮겨짐)</span>
+                                <?php endif; ?>
+                            </span>
+                            <?php if ((int) $post['series_id'] !== (int) $editing['id']): ?>
+                            <form method="post" action="/admin/series/<?= (int) $editing['id'] ?>/posts">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="post_ids" value="<?= (int) $post['id'] ?>">
+                                <button type="submit" class="btn btn-outline-primary btn-sm text-nowrap">추가</button>
+                            </form>
+                            <?php endif; ?>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php endif; ?>
+                <?php endif; ?>
+
+                <form method="post" action="/admin/series/<?= (int) $editing['id'] ?>/posts" class="mb-4">
+                    <?= csrf_field() ?>
+                    <label class="form-label small fw-semibold" for="series-post-ids">글 번호로 한 번에 넣기</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="post_ids" id="series-post-ids" class="form-control" placeholder="예: 12, 15, 20"
+                               aria-describedby="series-post-ids-help" required>
+                        <button type="submit" class="btn btn-primary">넣기</button>
+                    </div>
+                    <div id="series-post-ids-help" class="form-text">콤마(,)로 구분합니다. 입력한 순서대로 시리즈 맨 뒤에 붙고, 다른 시리즈의 글은 이 시리즈로 옮겨집니다.</div>
+                </form>
+
+                <h3 class="h6 fw-semibold">속한 글 (<?= count($members) ?>)</h3>
+                <?php if ($members === []): ?>
+                    <p class="text-muted small mb-0">아직 글이 없습니다.</p>
+                <?php else: ?>
+                <ol class="list-group list-group-flush">
+                    <?php foreach ($members as $post): ?>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                        <span class="small">
+                            <?= $post['series_order'] !== null ? (int) $post['series_order'] . '.' : '-' ?>
+                            #<?= (int) $post['id'] ?> <?= esc($post['title']) ?>
+                            <?php if (! (int) $post['is_active'] || (int) $post['is_secret']): ?>
+                                <span class="badge text-bg-light">비공개</span>
+                            <?php endif; ?>
+                        </span>
+                        <form method="post" action="/admin/series/<?= (int) $editing['id'] ?>/posts/<?= (int) $post['id'] ?>/remove">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn-outline-danger btn-sm text-nowrap">빼기</button>
+                        </form>
+                    </li>
+                    <?php endforeach; ?>
+                </ol>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
