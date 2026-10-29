@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Libraries\Ai\GroqSeriesService;
 use App\Libraries\Ai\GroqTagService;
 use App\Libraries\Seo\IndexNowService;
 use App\Libraries\ThemeView;
@@ -18,6 +19,15 @@ class Services extends BaseService
         }
 
         return new GroqTagService();
+    }
+
+    public static function groqSeries(bool $getShared = true): GroqSeriesService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('groqSeries');
+        }
+
+        return new GroqSeriesService();
     }
 
     public static function indexnow(bool $getShared = true): IndexNowService

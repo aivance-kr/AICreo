@@ -326,6 +326,42 @@ class SeriesModel extends Model
     }
 
     /**
+     * AI 시리즈 추천용 후보 — 최근 시리즈 순으로 번호·제목·소개와 최근 공개 글 제목(최대 $samples 개).
+     *
+     * @return list<array{id: int, title: string, description: string|null, samples: list<string>}>
+     */
+    public function suggestionCandidates(int $limit = 50, int $samples = 5): array
+    {
+        $series = $this->select('id, title, description')->orderBy('id', 'DESC')->findAll($limit);
+        if ($series === []) {
+            return [];
+        }
+
+        $rows = $this->publicPostsBuilder()
+            ->select('post_series.series_id, posts.title')
+            ->whereIn('post_series.series_id', array_column($series, 'id'))
+            ->orderBy('posts.id', 'DESC')
+            ->limit($limit * $samples * 2)
+            ->get()->getResultArray();
+
+        $titles = [];
+
+        foreach ($rows as $row) {
+            $key = (int) $row['series_id'];
+            if (count($titles[$key] ?? []) < $samples) {
+                $titles[$key][] = (string) $row['title'];
+            }
+        }
+
+        return array_map(static fn (array $item): array => [
+            'id'          => (int) $item['id'],
+            'title'       => (string) $item['title'],
+            'description' => $item['description'],
+            'samples'     => $titles[(int) $item['id']] ?? [],
+        ], $series);
+    }
+
+    /**
      * 공개 글 조회용 공통 쿼리 — 비밀글·숨김글·삭제글·비공개 게시판 글 제외.
      */
     private function publicPostsBuilder(): BaseBuilder
