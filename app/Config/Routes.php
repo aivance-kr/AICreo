@@ -20,6 +20,8 @@ $routes->get('og/(:num)\\.png', 'Front\OgImageController::post/$1');
 $routes->get('search', 'Front\SearchController::index');
 $routes->get('series', 'Front\SeriesController::index');
 $routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
+$routes->get('tags', 'Front\TagController::index');
+$routes->get('tags/(:segment)', 'Front\TagController::show/$1');
 
 // ─── 인증 ────────────────────────────────────────────────────────────────────
 $routes->get('auth/login', 'Front\AuthController::login');

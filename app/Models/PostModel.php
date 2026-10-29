@@ -11,6 +11,8 @@ class PostModel extends Model
     public const MAX_TAG_LENGTH             = 30;
     private const RELATED_CACHE_VERSION_KEY = 'related_posts_version';
     private const RELATED_CACHE_TTL         = 3600;
+    private const TAG_COUNTS_CACHE_KEY      = 'public_tag_counts';
+    private const TAG_COUNTS_CACHE_TTL      = 3600;
 
     /**
      * 목록용 공감수·댓글수(활성 댓글만) 서브쿼리
@@ -36,9 +38,9 @@ class PostModel extends Model
         'is_notice', 'is_secret', 'is_active', 'publish_at', 'ip_address',
         'views', 'wp_post_id', 'created_at', 'updated_at',
     ];
-    protected $afterInsert = ['clearSeoCache', 'clearRelatedCache'];
-    protected $afterUpdate = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache'];
-    protected $afterDelete = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache'];
+    protected $afterInsert = ['clearSeoCache', 'clearRelatedCache', 'clearTagCountsCache'];
+    protected $afterUpdate = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache', 'clearTagCountsCache'];
+    protected $afterDelete = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache', 'clearTagCountsCache'];
 
     /**
      * sitemap.xml 용 공개 글 목록 — 비밀글·비활성 게시판 제외.
@@ -165,6 +167,79 @@ class PostModel extends Model
             ->like('posts.title', $keyword)
             ->orLike('posts.content', $keyword)
             ->groupEnd();
+
+        $total = (clone $builder)->countAllResults(false);
+        $posts = $builder->orderBy('posts.id', 'DESC')->findAll($perPage, ($page - 1) * $perPage);
+
+        return ['posts' => $posts, 'total' => $total];
+    }
+
+    /**
+     * 공개 글의 태그별 글 수 — getLatestPublic 과 같은 공개 조건. 많은 순, 같으면 이름순.
+     * 대소문자만 다른 태그는 하나로 합친다(먼저 나온 표기를 쓴다). 결과는 캐시하고 글 변경 때 무효화한다.
+     *
+     * @return array<string, int> 태그 => 글 수
+     */
+    public function getPublicTagCounts(): array
+    {
+        return cache()->remember(self::TAG_COUNTS_CACHE_KEY, self::TAG_COUNTS_CACHE_TTL, function (): array {
+            $rows = $this->select('posts.tags')
+                ->join('boards', 'boards.id = posts.board_id', 'inner')
+                ->where('posts.is_secret', 0)
+                ->where('posts.is_active', 1)
+                ->where('boards.is_active', 1)
+                ->where('boards.read_permission', 'guest')
+                ->where('posts.tags IS NOT NULL')
+                ->orderBy('posts.id', 'DESC')
+                ->findAll();
+
+            $names  = [];
+            $counts = [];
+
+            foreach ($rows as $row) {
+                foreach (self::splitTags($row['tags']) as $tag) {
+                    $key = mb_strtolower($tag);
+                    $names[$key] ??= $tag;
+                    $counts[$key] = ($counts[$key] ?? 0) + 1;
+                }
+            }
+
+            $result = [];
+
+            foreach ($counts as $key => $count) {
+                $result[$names[$key]] = $count;
+            }
+            uksort($result, static fn (string $a, string $b): int => $result[$b] <=> $result[$a] ?: strcmp($a, $b));
+
+            return $result;
+        });
+    }
+
+    /**
+     * 사이드바 태그 클라우드용 상위 N개 태그.
+     *
+     * @return array<string, int> 태그 => 글 수
+     */
+    public function getTagCloud(int $limit): array
+    {
+        return array_slice($this->getPublicTagCounts(), 0, $limit, true);
+    }
+
+    /**
+     * 사이트 전체 공개 글 중 해당 태그를 가진 글 — getLatestPublic 과 같은 공개 조건.
+     *
+     * @return array{posts: list<array<string, mixed>>, total: int}
+     */
+    public function searchPublicByTag(string $tag, int $page, int $perPage): array
+    {
+        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->join('users', 'users.id = posts.user_id', 'left')
+            ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest')
+            ->where('FIND_IN_SET(' . $this->db->escape($tag) . ', posts.tags) >', 0, false);
 
         $total = (clone $builder)->countAllResults(false);
         $posts = $builder->orderBy('posts.id', 'DESC')->findAll($perPage, ($page - 1) * $perPage);
@@ -313,6 +388,20 @@ class PostModel extends Model
     protected function clearRelatedCache(array $data): array
     {
         cache()->save(self::RELATED_CACHE_VERSION_KEY, uniqid('', true), 0);
+
+        return $data;
+    }
+
+    /**
+     * 글이 바뀌면 공개 태그 집계 캐시를 지운다.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function clearTagCountsCache(array $data): array
+    {
+        cache()->delete(self::TAG_COUNTS_CACHE_KEY);
 
         return $data;
     }
