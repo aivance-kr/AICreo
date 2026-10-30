@@ -9,6 +9,7 @@
  * @var list<array<string, mixed>> $popularPosts
  * @var string $popularPeriod
  * @var list<array{year: int, month: int, count: int}> $archiveCounts
+ * @var array<string, int> $tagCloud
  * @var bool $withCategories
  */
 $groups = [];
@@ -87,4 +88,15 @@ foreach ($archiveCounts as $row) {
     </details>
     <?php endforeach; ?>
 </nav>
+<?php endif; ?>
+<?php if (! empty($tagCloud)): ?>
+<section class="side-tags" aria-label="태그">
+    <h2 class="side-cats__title">태그</h2>
+    <ul class="side-cats__list">
+        <?php foreach ($tagCloud as $name => $count): ?>
+        <li><a href="/tags/<?= esc(rawurlencode((string) $name), 'attr') ?>">#<?= esc((string) $name) ?> <small>(<?= (int) $count ?>)</small></a></li>
+        <?php endforeach; ?>
+        <li><a href="/tags">전체 태그</a></li>
+    </ul>
+</section>
 <?php endif; ?>

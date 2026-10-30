@@ -52,6 +52,7 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
     'popularPosts'    => $popularPosts ?? [],
     'popularPeriod'   => $popularPeriod ?? '7d',
     'archiveCounts'   => $archiveCounts ?? [],
+    'tagCloud'        => $tagCloud ?? [],
     'withCategories'  => true,
 ]));
 ?>

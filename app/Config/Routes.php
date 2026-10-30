@@ -22,6 +22,8 @@ $routes->get('series', 'Front\SeriesController::index');
 $routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
 $routes->get('archive', 'Front\ArchiveController::index');
 $routes->get('archive/(:num)/(:num)', 'Front\ArchiveController::month/$1/$2');
+$routes->get('tags', 'Front\TagController::index');
+$routes->get('tags/(:segment)', 'Front\TagController::show/$1');
 
 // ─── 인증 ────────────────────────────────────────────────────────────────────
 $routes->get('auth/login', 'Front\AuthController::login');
