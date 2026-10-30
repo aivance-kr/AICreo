@@ -364,6 +364,17 @@ final class PostModelTest extends DatabaseTestCase
         $this->assertSame([$byCategory], array_column($this->model->getRelated($current), 'id'));
     }
 
+    public function testGetRelatedUsesTitleSimilarityWhenNoTagsOrCategory(): void
+    {
+        cache()->clean();
+        $current = $this->makePost(['title' => '라라벨 큐 워커 운영 가이드']);
+        $similar = $this->makePost(['title' => '라라벨 큐 장애 대응']);
+        $this->makePost(['title' => '맛집 탐방기']);
+        $this->makePost(['title' => '최신 무관한 글']);
+
+        $this->assertSame([$similar], array_column($this->model->getRelated($current), 'id'));
+    }
+
     public function testGetRelatedIsEmptyWithoutTagsOrCategory(): void
     {
         cache()->clean();
