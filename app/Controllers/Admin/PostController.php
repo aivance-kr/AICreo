@@ -22,12 +22,13 @@ class PostController extends BaseController
 
     public function index(): string
     {
-        $keyword = $this->request->getGet('q') ?? '';
-        $boardId = (int) ($this->request->getGet('board_id') ?? 0);
-        $page    = max(1, (int) ($this->request->getGet('page') ?? 1));
-        $perPage = 20;
+        $keyword    = $this->request->getGet('q') ?? '';
+        $boardId    = (int) ($this->request->getGet('board_id') ?? 0);
+        $categoryId = (int) ($this->request->getGet('category_id') ?? 0);
+        $page       = max(1, (int) ($this->request->getGet('page') ?? 1));
+        $perPage    = 20;
 
-        $result = $this->postModel->getAdminList($page, $perPage, $keyword, $boardId);
+        $result = $this->postModel->getAdminList($page, $perPage, $keyword, $boardId, $categoryId);
         $boards = $this->boardModel->orderBy('sort_order')->findAll();
 
         $categoriesByBoard = [];
@@ -46,6 +47,7 @@ class PostController extends BaseController
             'totalPages'        => (int) ceil($result['total'] / $perPage),
             'keyword'           => $keyword,
             'boardId'           => $boardId,
+            'categoryId'        => $categoryId,
             'boards'            => $boards,
             'categoriesByBoard' => $categoriesByBoard,
         ]);

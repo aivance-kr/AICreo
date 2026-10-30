@@ -724,14 +724,18 @@ class PostModel extends Model
     /**
      * @return array{posts: list<array<string, mixed>>, total: int}
      */
-    public function getAdminList(int $page, int $perPage, string $keyword = '', int $boardId = 0): array
+    public function getAdminList(int $page, int $perPage, string $keyword = '', int $boardId = 0, int $categoryId = 0): array
     {
-        $builder = $this->select('posts.*, boards.name as board_name, boards.slug as board_slug, users.nickname as user_nickname')
+        $builder = $this->select('posts.*, boards.name as board_name, boards.slug as board_slug, board_categories.name as category_name, users.nickname as user_nickname')
             ->join('boards', 'boards.id = posts.board_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->join('users', 'users.id = posts.user_id', 'left');
 
         if ($boardId > 0) {
             $builder->where('posts.board_id', $boardId);
+        }
+        if ($categoryId > 0) {
+            $builder->where('posts.category_id', $categoryId);
         }
         if ($keyword !== '') {
             $builder->groupStart()

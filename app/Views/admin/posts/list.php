@@ -16,6 +16,20 @@
         </select>
     </div>
     <div class="col-auto">
+        <label class="visually-hidden" for="post-category">카테고리 필터</label>
+        <select name="category_id" id="post-category" class="form-select form-select-sm">
+            <option value="">전체 카테고리</option>
+            <?php foreach ($boards as $b): ?>
+            <?php if (empty($categoriesByBoard[(int) $b['id']])): continue; endif; ?>
+            <optgroup label="<?= esc($b['name']) ?>">
+                <?php foreach ($categoriesByBoard[(int) $b['id']] as $c): ?>
+                <option value="<?= $c['id'] ?>" <?= $categoryId === (int) $c['id'] ? 'selected' : '' ?>><?= esc($c['name']) ?></option>
+                <?php endforeach; ?>
+            </optgroup>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="col-auto">
         <label class="visually-hidden" for="post-search">제목 또는 작성자 검색</label>
         <input type="text" name="q" id="post-search" class="form-control form-control-sm" placeholder="제목 / 작성자 검색"
                value="<?= esc($keyword) ?>">
@@ -80,6 +94,7 @@
                     </th>
                     <th scope="col">ID</th>
                     <th scope="col">게시판</th>
+                    <th scope="col">카테고리</th>
                     <th scope="col">제목</th>
                     <th scope="col">작성자</th>
                     <th scope="col">조회</th>
@@ -90,7 +105,7 @@
             </thead>
             <tbody>
                 <?php if (empty($posts)): ?>
-                <tr><td colspan="9" class="text-center text-muted py-4">게시물이 없습니다.</td></tr>
+                <tr><td colspan="10" class="text-center text-muted py-4">게시물이 없습니다.</td></tr>
                 <?php endif; ?>
                 <?php foreach ($posts as $p): ?>
                 <tr>
@@ -100,6 +115,7 @@
                     </td>
                     <td data-label="ID" class="text-muted small"><?= $p['id'] ?></td>
                     <td data-label="게시판"><span class="badge bg-light text-dark border"><?= esc($p['board_name']) ?></span></td>
+                    <td data-label="카테고리" class="small"><?= esc($p['category_name'] ?? '-') ?></td>
                     <td data-label="제목">
                         <?php if ($p['is_notice']): ?>
                             <span class="badge bg-warning text-dark me-1">공지</span>
@@ -148,7 +164,7 @@
 <nav class="mt-3">
     <ul class="pagination pagination-sm justify-content-center">
         <?php
-        $qs = http_build_query(array_filter(['q' => $keyword, 'board_id' => $boardId ?: '']));
+        $qs = http_build_query(array_filter(['q' => $keyword, 'board_id' => $boardId ?: '', 'category_id' => $categoryId ?: '']));
         $qs = $qs ? '&' . $qs : '';
         // 현재 페이지가 속한 10개 단위 블록만 노출
         $blockSize  = 10;

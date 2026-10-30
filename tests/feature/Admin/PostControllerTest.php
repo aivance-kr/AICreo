@@ -167,4 +167,17 @@ final class PostControllerTest extends AdminTestCase
 
         $result->assertSessionHas('error');
     }
+
+    public function testIndexFiltersByCategory(): void
+    {
+        $boardId = (int) (new BoardModel())->getBySlug('notice')['id'];
+        $catId   = (int) (new BoardCategoryModel())->insert(['board_id' => $boardId, 'slug' => 'f', 'name' => '필터카테'], true);
+        $this->makePost(['title' => '카테있는글', 'category_id' => $catId]);
+        $this->makePost(['title' => '카테없는글']);
+
+        $result = $this->withSession($this->adminSession)->get('admin/posts?category_id=' . $catId);
+
+        $result->assertSee('카테있는글');
+        $result->assertDontSee('카테없는글');
+    }
 }
