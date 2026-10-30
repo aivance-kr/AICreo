@@ -21,8 +21,12 @@
 
         <form method="post"
               action="<?= $post ? "/board/{$board['slug']}/{$post['id']}/edit" : "/board/{$board['slug']}/write" ?>"
-              enctype="multipart/form-data">
+              enctype="multipart/form-data"
+              data-autosave-key="post-draft:<?= esc($board['slug'], 'attr') ?>:<?= $post ? (int) $post['id'] : 'new' ?>"
+              data-autosave-edit="<?= $post ? '1' : '0' ?>">
             <?= csrf_field() ?>
+
+            <div id="autosave-notice" class="alert alert-warning small py-2" role="status" hidden></div>
 
             <!-- 비회원 입력 -->
             <?php if (! session()->get('user_id')): ?>
@@ -193,7 +197,10 @@
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
 <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="<?= asset_url('js/post-autosave.js') ?>"></script>
 <script>
+let autosave = null;
+
 tinymce.init({
     selector: '#content-editor',
     language: 'ko_KR',
@@ -207,6 +214,21 @@ tinymce.init({
     body_class: 'post-content',
     content_style: 'body { margin: 1rem; }',
     automatic_uploads: true,
+    // 에디터가 준비되면 임시저장을 시작한다 (본문은 에디터가 정규화한 값을 기준으로 비교)
+    init_instance_callback(editor) {
+        const form = document.querySelector('form[data-autosave-key]');
+        if (!form || typeof PostAutosave !== 'function') {
+            return;
+        }
+        autosave = PostAutosave({
+            form,
+            notice: document.getElementById('autosave-notice'),
+            key: form.dataset.autosaveKey,
+            isEdit: form.dataset.autosaveEdit === '1',
+            getContent: () => editor.getContent(),
+            setContent: (html) => editor.setContent(html),
+        });
+    },
     // 상대 경로로 저장하면 글 보는 주소(/index.php/...)에 따라 이미지 경로가 어긋난다 — 루트 기준 절대 경로로 저장
     relative_urls: false,
     remove_script_host: true,
@@ -228,6 +250,7 @@ document.querySelector('form').addEventListener('submit', async function (event)
     try {
         await tinymce.activeEditor.uploadImages();
         tinymce.triggerSave();
+        if (autosave) autosave.discard();
         this.submit();
     } catch (error) {
         alert('이미지 업로드에 실패했습니다. 이미지를 다시 확인해 주세요.');

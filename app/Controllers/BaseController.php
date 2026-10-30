@@ -81,11 +81,14 @@ class BaseController extends Controller
         $popularPeriod = isset(PostModel::POPULAR_PERIODS[$popularPeriod]) ? $popularPeriod : '7d';
         $popularPosts  = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getPopularCached($popularPeriod, 5) : [];
 
+        // 사이드바 아카이브 — 블로그형 테마에서만 (연·월별 공개 글 수, 캐시됨)
+        $archiveCounts = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getArchiveCounts() : [];
+
         // 사이드바 태그 클라우드 — 블로그형 테마에서만, 상위 15개
         $tagCloud = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getTagCloud(15) : [];
 
         // jsonLd 기본값을 항상 [] 로 명시 (Config\View::$saveData=true 공유 렌더러 누출 방지)
-        $this->viewData = ['settings' => $settings, 'menus' => $menus, 'boardCategories' => $boardCategories, 'authUser' => $authUser, 'unreadInquiries' => $unreadInquiries, 'subLeftBanners' => $subLeftBanners, 'activePopups' => $activePopups, 'sidebarAds' => $sidebarAds, 'popularPosts' => $popularPosts, 'popularPeriod' => $popularPeriod, 'tagCloud' => $tagCloud, 'jsonLd' => []];
+        $this->viewData = ['settings' => $settings, 'menus' => $menus, 'boardCategories' => $boardCategories, 'authUser' => $authUser, 'unreadInquiries' => $unreadInquiries, 'subLeftBanners' => $subLeftBanners, 'activePopups' => $activePopups, 'sidebarAds' => $sidebarAds, 'popularPosts' => $popularPosts, 'popularPeriod' => $popularPeriod, 'archiveCounts' => $archiveCounts, 'tagCloud' => $tagCloud, 'jsonLd' => []];
     }
 
     protected function getUserRole(): string
