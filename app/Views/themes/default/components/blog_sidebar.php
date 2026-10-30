@@ -1,6 +1,6 @@
 <?php
 /**
- * 블로그형 테마 공용 사이드바 내용 — 사이드바 광고 + 많이 본 글 + 월별 아카이브 + 게시판 카테고리.
+ * 블로그형 테마 공용 사이드바 내용 — 사이드바 광고 + 많이 본 글 + 월별 아카이브·게시판 카테고리(둘 다 접힘).
  * 내용이 없으면 빈 문자열을 낸다(호출 측이 aside 를 그리지 않도록 trim 으로 판정).
  *
  * @var list<array<string, mixed>> $menus
@@ -36,7 +36,8 @@ if (! empty($withCategories)) {
 <?= view('themes/default/components/ad_unit', ['ads' => $sidebarAds ?? [], 'slot' => 'sidebar']) ?>
 <?php if ($groups !== []): ?>
 <nav class="side-cats" aria-label="카테고리">
-    <h2 class="side-cats__title">카테고리</h2>
+  <details>
+    <summary class="side-cats__title">카테고리</summary>
     <?php foreach ($groups as $slug => $group): ?>
         <?php if (count($groups) > 1): ?><h3 class="side-cats__board"><?= esc($group['title']) ?></h3><?php endif; ?>
         <ul class="side-cats__list">
@@ -46,6 +47,7 @@ if (! empty($withCategories)) {
             <?php endforeach; ?>
         </ul>
     <?php endforeach; ?>
+  </details>
 </nav>
 <?php endif; ?>
 <?php if (! empty($popularPosts)): ?>
@@ -71,7 +73,8 @@ foreach ($archiveCounts as $row) {
 }
 ?>
 <nav class="side-archive" aria-label="월별 아카이브">
-    <h2 class="side-cats__title">아카이브</h2>
+  <details class="side-archive__all">
+    <summary class="side-cats__title">아카이브</summary>
     <ul class="side-cats__list">
         <?php foreach (array_slice($archiveCounts, 0, 12) as $row): ?>
         <li><a href="/archive/<?= (int) $row['year'] ?>/<?= sprintf('%02d', $row['month']) ?>"><?= (int) $row['year'] ?>년 <?= (int) $row['month'] ?>월</a> (<?= (int) $row['count'] ?>)</li>
@@ -87,6 +90,7 @@ foreach ($archiveCounts as $row) {
         </ul>
     </details>
     <?php endforeach; ?>
+  </details>
 </nav>
 <?php endif; ?>
 <?php if (! empty($tagCloud)): ?>
