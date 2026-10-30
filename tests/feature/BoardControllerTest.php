@@ -237,6 +237,45 @@ final class BoardControllerTest extends FeatureTestCase
         $result->assertSee('share-btn');
     }
 
+    public function testViewShareButtonsUseCanonicalUrl(): void
+    {
+        $postId = (int) (new PostModel())->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '공유 글',
+            'content'     => '본문',
+            'author_name' => '작성자',
+        ]);
+        $canonical = base_url("board/qna/{$postId}");
+
+        $result = $this->get("board/qna/{$postId}");
+
+        $result->assertSee('data-url="' . $canonical . '"');
+        $result->assertSee('twitter.com/intent/tweet?url=' . rawurlencode($canonical));
+        $result->assertSee('facebook.com/sharer/sharer.php?u=' . rawurlencode($canonical));
+        $result->assertDontSee('data-kakao-share');
+    }
+
+    public function testViewShowsKakaoShareOnlyWhenJsKeyConfigured(): void
+    {
+        $postId = (int) (new PostModel())->insert([
+            'board_id'    => $this->boardId('qna'),
+            'title'       => '공유 글',
+            'content'     => '본문',
+            'author_name' => '작성자',
+        ]);
+
+        putenv('KAKAO_JS_KEY=test-js-key');
+
+        try {
+            $result = $this->get("board/qna/{$postId}");
+        } finally {
+            putenv('KAKAO_JS_KEY');
+        }
+
+        $result->assertSee('data-kakao-share');
+        $result->assertSee('data-kakao-key="test-js-key"');
+    }
+
     public function testViewIncludesReadingProgressAndTocScript(): void
     {
         $postId = (int) (new PostModel())->insert([
