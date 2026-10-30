@@ -273,17 +273,32 @@ document.querySelector('form').addEventListener('submit', async function (event)
     }
 });
 
+// AJAX 요청 공통 — CSRF 토큰은 요청마다 재발급되므로 폼의 hidden 값을 단일 출처로 쓴다 (버튼마다 따로 들고 있으면 낡은 토큰으로 403 HTML 이 온다)
+const CSRF_FIELD_NAME = <?= json_encode(csrf_token()) ?>;
+const currentCsrfHash = () => document.querySelector('input[name="' + CSRF_FIELD_NAME + '"]').value;
+const applyCsrfHash = hash => {
+    if (hash) {
+        document.querySelectorAll('input[name="' + CSRF_FIELD_NAME + '"]').forEach(input => { input.value = hash; });
+    }
+};
+// JSON 이 아닌 응답(만료된 CSRF·서버 오류의 HTML 페이지)은 파싱 오류 대신 안내 문구로 바꾼다
+const readJson = async response => {
+    try {
+        return await response.json();
+    } catch (error) {
+        throw new Error('요청이 거부되었습니다(' + response.status + '). 페이지를 새로고침한 뒤 다시 시도해 주세요.');
+    }
+};
+
 // 시리즈 AI 추천 — 제목·본문을 보내 어울리는 시리즈를 체크해 준다 (저장은 운영자가 확인 후)
 const seriesSuggestBtn = document.getElementById('series-suggest-btn');
 if (seriesSuggestBtn) {
-    const CSRF_FIELD_NAME = <?= json_encode(csrf_token()) ?>;
-    let csrfHash = <?= json_encode(csrf_hash()) ?>;
     const statusBox = document.getElementById('series-suggest-status');
 
     seriesSuggestBtn.addEventListener('click', async function () {
         const editor = tinymce.activeEditor;
         const body = new URLSearchParams();
-        body.set(CSRF_FIELD_NAME, csrfHash);
+        body.set(CSRF_FIELD_NAME, currentCsrfHash());
         body.set('title', document.getElementById('post-title').value);
         body.set('content', editor ? editor.getContent() : document.getElementById('content-editor').value);
 
@@ -297,12 +312,9 @@ if (seriesSuggestBtn) {
                 credentials: 'same-origin',
                 body: body.toString(),
             });
-            const data = await response.json();
+            const data = await readJson(response);
 
-            if (data.csrf_hash) {
-                csrfHash = data.csrf_hash;
-                document.querySelectorAll('input[name="' + CSRF_FIELD_NAME + '"]').forEach(input => { input.value = csrfHash; });
-            }
+            applyCsrfHash(data.csrf_hash);
             if (!response.ok || !data.success) {
                 throw new Error(data.message || '추천에 실패했습니다.');
             }
@@ -329,8 +341,6 @@ if (seriesSuggestBtn) {
 // 글 AI 제안 — 요약(메타 설명)·태그·제목 후보를 받아 보여 주고, 운영자가 "적용"을 눌러야 입력란에 채운다 (저장은 폼 저장 때)
 const aiSuggestBtn = document.getElementById('ai-suggest-btn');
 if (aiSuggestBtn) {
-    const AI_CSRF_FIELD_NAME = <?= json_encode(csrf_token()) ?>;
-    let aiCsrfHash = <?= json_encode(csrf_hash()) ?>;
     const aiStatus = document.getElementById('ai-suggest-status');
     const aiResult = document.getElementById('ai-suggest-result');
 
@@ -356,7 +366,7 @@ if (aiSuggestBtn) {
     aiSuggestBtn.addEventListener('click', async function () {
         const editor = tinymce.activeEditor;
         const body = new URLSearchParams();
-        body.set(AI_CSRF_FIELD_NAME, aiCsrfHash);
+        body.set(CSRF_FIELD_NAME, currentCsrfHash());
         body.set('title', document.getElementById('post-title').value);
         body.set('content', editor ? editor.getContent() : document.getElementById('content-editor').value);
 
@@ -372,12 +382,9 @@ if (aiSuggestBtn) {
                 credentials: 'same-origin',
                 body: body.toString(),
             });
-            const data = await response.json();
+            const data = await readJson(response);
 
-            if (data.csrf_hash) {
-                aiCsrfHash = data.csrf_hash;
-                document.querySelectorAll('input[name="' + AI_CSRF_FIELD_NAME + '"]').forEach(input => { input.value = aiCsrfHash; });
-            }
+            applyCsrfHash(data.csrf_hash);
             if (!response.ok || !data.success) {
                 throw new Error(data.message || '제안을 받지 못했습니다.');
             }
