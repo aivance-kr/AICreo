@@ -114,7 +114,7 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 ## 뉴스레터 구독
 
 - 테이블: `subscribers`(이메일·상태 pending/confirmed/unsubscribed·확인/해지 토큰), `newsletter_deliveries`(발송 큐: post_id+subscriber_id 유일, `sent_at` NULL 이면 미발송), `posts.newsletter_enqueued_at`(글당 한 번만 큐에 올리는 표식).
-- 신청 `POST /newsletter/subscribe`(푸터 폼 한 곳, 허니팟 `website`, IP당 시간당 5회·이메일당 2회 제한) → 확인 메일 → `GET /newsletter/confirm/{토큰}` 으로 구독 완료. 확인 전 주소에는 발송하지 않는다. 해지는 `/newsletter/unsubscribe/{토큰}`(GET 원클릭, 메일 앱의 `List-Unsubscribe-Post` POST 도 같은 주소). 해지하면 미발송 큐도 지운다. 두 경로는 방문 로그에서 제외한다(주소에 토큰이 있음).
+- 신청 `POST /newsletter/subscribe`(푸터 폼 한 곳 — default·blog 는 `components/footer`, 나머지 테마는 공용 `site_footer_info`, 허니팟 `website`, IP당 시간당 5회·이메일당 2회 제한) → 확인 메일 → `GET /newsletter/confirm/{토큰}` 으로 구독 완료. 확인 전 주소에는 발송하지 않는다. 해지는 `/newsletter/unsubscribe/{토큰}`(GET 원클릭, 메일 앱의 `List-Unsubscribe-Post` POST 도 같은 주소). 해지하면 미발송 큐도 지운다. 두 경로는 방문 로그에서 제외한다(주소에 토큰이 있음).
 - 큐 적재: `PostModel::enqueueNewsletter` 훅(afterInsert/afterUpdate)이 글이 **공개 + 비밀글 아님 + 공개 게시판 + 쓰기 권한이 admin 인 게시판**일 때 그 시점의 확인된 구독자만 큐에 올린다. 회원·비회원이 쓸 수 있는 게시판 글은 제외(구독자 스팸 통로 방지). 예약 글은 `posts:publish-scheduled` 가 공개할 때, 숨김 글은 노출로 바꿀 때 올라간다. WP 가져오기 글은 가져올 때 표식을 채워 제외한다.
 - 발송: `php spark newsletter:send [--limit 50]` 가 큐에서 한 번에 `--limit` 건만 보낸다. 실패한 건은 `sent_at` 이 비어 있어 다음 실행에서 다시 시도한다. 요청 사이클에서는 발송하지 않는다. 메일은 `.env` 의 `email.*`(SMTP)·`fromEmail`(비면 사이트 설정 이메일)을 쓴다.
 - 관리자: `/admin/subscribers`(상태·이메일 검색, CSV 내보내기, 삭제).
