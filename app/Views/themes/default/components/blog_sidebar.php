@@ -1,6 +1,6 @@
 <?php
 /**
- * 블로그형 테마 공용 사이드바 내용 — 사이드바 광고 + 많이 본 글 + 월별 아카이브 + 게시판 카테고리.
+ * 블로그형 테마 공용 사이드바 내용 — 사이드바 광고 + 많이 본 글 + 월별 아카이브(접힘) + 게시판 카테고리.
  * 내용이 없으면 빈 문자열을 낸다(호출 측이 aside 를 그리지 않도록 trim 으로 판정).
  *
  * @var list<array<string, mixed>> $menus
@@ -39,12 +39,23 @@ if (! empty($withCategories)) {
     <h2 class="side-cats__title">카테고리</h2>
     <?php foreach ($groups as $slug => $group): ?>
         <?php if (count($groups) > 1): ?><h3 class="side-cats__board"><?= esc($group['title']) ?></h3><?php endif; ?>
+        <?php $visibleCats = array_slice($group['categories'], 0, 6); $hiddenCats = array_slice($group['categories'], 6); ?>
         <ul class="side-cats__list">
             <li><a href="/board/<?= esc($slug) ?>">전체</a></li>
-            <?php foreach ($group['categories'] as $category): ?>
+            <?php foreach ($visibleCats as $category): ?>
             <li><a href="/board/<?= esc($slug) ?>?category=<?= esc($category['id']) ?>"><?= esc($category['name']) ?></a></li>
             <?php endforeach; ?>
         </ul>
+        <?php if ($hiddenCats !== []): ?>
+        <details class="side-cats__more">
+            <summary>더 보기 (<?= count($hiddenCats) ?>)</summary>
+            <ul class="side-cats__list">
+                <?php foreach ($hiddenCats as $category): ?>
+                <li><a href="/board/<?= esc($slug) ?>?category=<?= esc($category['id']) ?>"><?= esc($category['name']) ?></a></li>
+                <?php endforeach; ?>
+            </ul>
+        </details>
+        <?php endif; ?>
     <?php endforeach; ?>
 </nav>
 <?php endif; ?>
@@ -71,7 +82,8 @@ foreach ($archiveCounts as $row) {
 }
 ?>
 <nav class="side-archive" aria-label="월별 아카이브">
-    <h2 class="side-cats__title">아카이브</h2>
+  <details class="side-archive__all">
+    <summary class="side-cats__title">아카이브</summary>
     <ul class="side-cats__list">
         <?php foreach (array_slice($archiveCounts, 0, 12) as $row): ?>
         <li><a href="/archive/<?= (int) $row['year'] ?>/<?= sprintf('%02d', $row['month']) ?>"><?= (int) $row['year'] ?>년 <?= (int) $row['month'] ?>월</a> (<?= (int) $row['count'] ?>)</li>
@@ -87,6 +99,7 @@ foreach ($archiveCounts as $row) {
         </ul>
     </details>
     <?php endforeach; ?>
+  </details>
 </nav>
 <?php endif; ?>
 <?php if (! empty($tagCloud)): ?>
