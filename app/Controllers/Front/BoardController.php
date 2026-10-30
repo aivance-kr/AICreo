@@ -95,12 +95,27 @@ class BoardController extends BaseController
             'searchType'      => $type,
             'categories'      => $categories,
             'currentCategory' => $categoryId,
+            'listQs'          => $this->listQuery(),
             'page'            => [
                 'title'     => $board['name'],
                 'canonical' => $canonical,
                 'noindex'   => (bool) $keyword || $board['read_permission'] !== 'guest',
             ],
         ]);
+    }
+
+    /**
+     * 목록에서 따라온 카테고리·페이지 쿼리(`?category=3&page=2`). 없으면 빈 문자열.
+     * 글 상세·수정·삭제·좋아요·댓글을 거쳐도 원래 목록 위치로 돌아가도록 링크와 리다이렉트에 붙인다.
+     */
+    private function listQuery(): string
+    {
+        $qs = array_filter([
+            'category' => max(0, (int) $this->request->getGet('category')),
+            'page'     => max(0, (int) $this->request->getGet('page')) > 1 ? (int) $this->request->getGet('page') : 0,
+        ]);
+
+        return $qs === [] ? '' : '?' . http_build_query($qs);
     }
 
     /**
@@ -144,7 +159,7 @@ class BoardController extends BaseController
 
         (new PostLikeModel())->toggle($postId, $this->likeVoterKey());
 
-        return redirect()->to("/board/{$boardSlug}/{$postId}#post-like");
+        return redirect()->to("/board/{$boardSlug}/{$postId}" . $this->listQuery() . '#post-like');
     }
 
     /**
@@ -226,6 +241,7 @@ class BoardController extends BaseController
             'likeCount'           => $likeModel->countByPost($postId),
             'liked'               => $likeModel->hasLiked($postId, $this->likeVoterKey()),
             'currentCategory'     => $categoryId,
+            'listQs'              => $this->listQuery(),
             'prevPost'            => $prevPost,
             'nextPost'            => $nextPost,
             'seriesNavs'          => $seriesNavs,
@@ -267,6 +283,7 @@ class BoardController extends BaseController
             'signature'          => $this->selectedSignature(),
             'categories'         => $this->categoryModel->getByBoard($board['id']),
             'selectedCategoryId' => $this->resolveCategoryId($board['id'], $this->request->getGet('category')),
+            'listQs'             => $this->listQuery(),
             'seriesList'         => $this->seriesChoices(),
             'postSeries'         => [],
         ]);
@@ -389,6 +406,7 @@ class BoardController extends BaseController
             'post'       => $post,
             'files'      => $files,
             'categories' => $this->categoryModel->getByBoard($board['id']),
+            'listQs'     => $this->listQuery(),
             'seriesList' => $this->seriesChoices(),
             'postSeries' => $this->seriesModel->seriesOfPost($postId),
         ]);
@@ -410,7 +428,7 @@ class BoardController extends BaseController
 
         session()->set('edit_auth_' . $postId, true);
 
-        return redirect()->to("/board/{$boardSlug}/{$postId}/edit");
+        return redirect()->to("/board/{$boardSlug}/{$postId}/edit" . $this->listQuery());
     }
 
     public function update(string $boardSlug, int $postId): ResponseInterface|string
@@ -482,7 +500,7 @@ class BoardController extends BaseController
 
         session()->remove('edit_auth_' . $postId);
 
-        return redirect()->to("/board/{$boardSlug}/{$postId}")->with('success', '수정되었습니다.');
+        return redirect()->to("/board/{$boardSlug}/{$postId}" . $this->listQuery())->with('success', '수정되었습니다.');
     }
 
     // ─── 삭제 ───────────────────────────────────────────────────────────────
@@ -500,7 +518,7 @@ class BoardController extends BaseController
         $this->postModel->delete($postId);
         session()->remove('edit_auth_' . $postId);
 
-        return redirect()->to("/board/{$boardSlug}")->with('success', '삭제되었습니다.');
+        return redirect()->to("/board/{$boardSlug}" . $this->listQuery())->with('success', '삭제되었습니다.');
     }
 
     // ─── 파일 다운로드 ───────────────────────────────────────────────────────
@@ -573,7 +591,7 @@ class BoardController extends BaseController
             session()->remove($this->guestCommentCaptchaKey($postId));
         }
 
-        return redirect()->to("/board/{$boardSlug}/{$postId}#comments")->with('success', '댓글이 등록되었습니다.');
+        return redirect()->to("/board/{$boardSlug}/{$postId}" . $this->listQuery() . '#comments')->with('success', '댓글이 등록되었습니다.');
     }
 
     /**
@@ -649,7 +667,7 @@ class BoardController extends BaseController
 
         $this->commentModel->delete($commentId);
 
-        return redirect()->to("/board/{$boardSlug}/{$postId}#comments");
+        return redirect()->to("/board/{$boardSlug}/{$postId}" . $this->listQuery() . '#comments');
     }
 
     // ─── 에디터 이미지 업로드 ───────────────────────────────────────────────

@@ -12,8 +12,8 @@ $postBase = '/board/' . esc($board['slug']) . '/' . $post['id'];
 ob_start();
 ?>
 <?php if ($canEdit): ?>
-    <a href="<?= $postBase ?>/edit" class="btn btn-sm btn-outline-secondary">수정</a>
-    <form method="post" action="<?= $postBase ?>/delete"
+    <a href="<?= $postBase ?>/edit<?= esc($listQs, 'attr') ?>" class="btn btn-sm btn-outline-secondary">수정</a>
+    <form method="post" action="<?= $postBase ?>/delete<?= esc($listQs, 'attr') ?>"
           onsubmit="return confirm('이 게시글을 삭제하시겠습니까? 되돌릴 수 없습니다.')">
         <?= csrf_field() ?>
         <button class="btn btn-sm btn-outline-danger">삭제</button>
@@ -26,7 +26,7 @@ ob_start();
 <?php $postActions = ob_get_clean(); ?>
 
 <div class="mb-2">
-    <a href="/board/<?= esc($board['slug']) ?><?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="text-decoration-none text-muted small">
+    <a href="/board/<?= esc($board['slug']) ?><?= esc($listQs, 'attr') ?>" class="text-decoration-none text-muted small">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= esc($board['name']) ?> 목록
     </a>
 </div>
@@ -74,7 +74,7 @@ ob_start();
         <?php endif; ?>
 
         <!-- 공감(좋아요) -->
-        <form id="post-like" method="post" action="<?= $postBase ?>/like" class="text-center my-4">
+        <form id="post-like" method="post" action="<?= $postBase ?>/like<?= esc($listQs, 'attr') ?>" class="text-center my-4">
             <?= csrf_field() ?>
             <button type="submit" class="btn <?= $liked ? 'btn-danger' : 'btn-outline-danger' ?>" aria-pressed="<?= $liked ? 'true' : 'false' ?>">
                 <i class="bi <?= $liked ? 'bi-heart-fill' : 'bi-heart' ?>" aria-hidden="true"></i>
@@ -133,13 +133,13 @@ ob_start();
 <div class="card mb-4">
     <div class="list-group list-group-flush">
         <?php if ($nextPost): ?>
-        <a href="/board/<?= esc($board['slug']) ?>/<?= $nextPost['id'] ?><?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
+        <a href="/board/<?= esc($board['slug']) ?>/<?= $nextPost['id'] ?><?= esc($listQs, 'attr') ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
             <span class="text-muted small flex-shrink-0" style="width:4.5rem;"><i class="bi bi-arrow-up" aria-hidden="true"></i> 다음글</span>
             <span class="text-truncate"><?= esc($nextPost['title']) ?></span>
         </a>
         <?php endif; ?>
         <?php if ($prevPost): ?>
-        <a href="/board/<?= esc($board['slug']) ?>/<?= $prevPost['id'] ?><?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
+        <a href="/board/<?= esc($board['slug']) ?>/<?= $prevPost['id'] ?><?= esc($listQs, 'attr') ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
             <span class="text-muted small flex-shrink-0" style="width:4.5rem;"><i class="bi bi-arrow-down" aria-hidden="true"></i> 이전글</span>
             <span class="text-truncate"><?= esc($prevPost['title']) ?></span>
         </a>
@@ -187,7 +187,7 @@ ob_start();
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-muted small"><?= substr($c['created_at'], 0, 16) ?></span>
                     <?php if ($role === 'admin' || ($userId && $c['user_id'] == $userId)): ?>
-                    <form method="post" action="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/comment/<?= $c['id'] ?>/delete"
+                    <form method="post" action="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/comment/<?= $c['id'] ?>/delete<?= esc($listQs, 'attr') ?>"
                           onsubmit="return confirm('이 댓글을 삭제하시겠습니까?')">
                         <?= csrf_field() ?>
                         <button class="btn btn-link btn-sm text-danger p-0">삭제<span class="visually-hidden"> — <?= esc($c['user_nickname'] ?? mask_name($c['author_name'])) ?>님의 댓글</span></button>
@@ -202,7 +202,7 @@ ob_start();
 
     <!-- 댓글 작성 -->
     <div class="card-footer bg-white">
-        <form method="post" action="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/comment">
+        <form method="post" action="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/comment<?= esc($listQs, 'attr') ?>">
             <?= csrf_field() ?>
             <?php if (! session()->get('user_id')): ?>
             <div class="row g-2 mb-2">
