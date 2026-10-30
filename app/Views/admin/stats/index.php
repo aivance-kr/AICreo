@@ -41,6 +41,8 @@
 })();
 </script>
 
+<div class="mb-3"><a href="<?= base_url('admin/stats/posts') ?>" class="btn btn-sm btn-outline-primary">글별 조회 통계</a></div>
+
 <!-- 통계 카드 -->
 <div class="row g-3 mb-4">
     <?php
