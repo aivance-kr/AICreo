@@ -25,9 +25,16 @@
     if (copyBtn) {
         copyBtn.addEventListener('click', function () {
             var label = copyBtn.querySelector('span');
+            var icon = copyBtn.querySelector('i');
             copyText(copyBtn.dataset.url).then(function () {
                 label.textContent = '복사됨';
-                setTimeout(function () { label.textContent = '링크 복사'; }, 2000);
+                icon.className = 'bi bi-check2';
+                copyBtn.classList.add('is-copied');
+                setTimeout(function () {
+                    label.textContent = '링크 복사';
+                    icon.className = 'bi bi-link-45deg';
+                    copyBtn.classList.remove('is-copied');
+                }, 2000);
             }, function () {
                 window.prompt('주소를 복사하세요', copyBtn.dataset.url);
             });

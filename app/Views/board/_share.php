@@ -9,22 +9,22 @@
  */
 $encodedUrl = rawurlencode($url);
 ?>
-<div class="post-share d-flex flex-wrap gap-2 mb-2" role="group" aria-label="공유하기">
-    <button type="button" class="btn btn-sm btn-outline-secondary" id="share-btn" data-url="<?= esc($shortUrl, 'attr') ?>">
-        <i class="bi bi-link-45deg" aria-hidden="true"></i> <span>링크 복사</span>
+<div class="post-share" role="group" aria-label="공유하기">
+    <button type="button" class="post-share__btn" id="share-btn" data-url="<?= esc($shortUrl, 'attr') ?>" title="링크 복사">
+        <i class="bi bi-link-45deg" aria-hidden="true"></i><span class="visually-hidden">링크 복사</span>
     </button>
     <?php if ($kakaoJsKey !== ''): ?>
-    <button type="button" class="btn btn-sm btn-outline-secondary" data-kakao-share
+    <button type="button" class="post-share__btn" data-kakao-share title="카카오톡 공유"
             data-kakao-key="<?= esc($kakaoJsKey, 'attr') ?>" data-url="<?= esc($url, 'attr') ?>" data-title="<?= esc($title, 'attr') ?>">
-        <i class="bi bi-chat-fill" aria-hidden="true"></i> 카카오톡
+        <i class="bi bi-chat-fill" aria-hidden="true"></i><span class="visually-hidden">카카오톡 공유</span>
     </button>
     <?php endif; ?>
-    <a class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer"
+    <a class="post-share__btn" target="_blank" rel="noopener noreferrer" title="X 공유"
        href="https://twitter.com/intent/tweet?url=<?= $encodedUrl ?>&amp;text=<?= rawurlencode($title) ?>">
-        <i class="bi bi-twitter-x" aria-hidden="true"></i> X<span class="visually-hidden"> 로 공유 (새 창 열림)</span>
+        <i class="bi bi-twitter-x" aria-hidden="true"></i><span class="visually-hidden">X 로 공유 (새 창 열림)</span>
     </a>
-    <a class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer"
+    <a class="post-share__btn" target="_blank" rel="noopener noreferrer" title="페이스북 공유"
        href="https://www.facebook.com/sharer/sharer.php?u=<?= $encodedUrl ?>">
-        <i class="bi bi-facebook" aria-hidden="true"></i> 페이스북<span class="visually-hidden"> 으로 공유 (새 창 열림)</span>
+        <i class="bi bi-facebook" aria-hidden="true"></i><span class="visually-hidden">페이스북으로 공유 (새 창 열림)</span>
     </a>
 </div>
