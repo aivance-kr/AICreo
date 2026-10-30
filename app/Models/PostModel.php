@@ -33,7 +33,7 @@ class PostModel extends Model
     protected $useTimestamps  = true;
     protected $useSoftDeletes = true;
     protected $allowedFields  = [
-        'board_id', 'category_id', 'user_id', 'title', 'content', 'signature', 'tags',
+        'board_id', 'category_id', 'user_id', 'title', 'content', 'signature', 'tags', 'meta_desc',
         'author_name', 'author_password',
         'is_notice', 'is_secret', 'is_active', 'publish_at', 'ip_address',
         'views', 'wp_post_id', 'created_at', 'updated_at',
@@ -539,6 +539,16 @@ class PostModel extends Model
 
         // 예약 글은 토글하면 즉시 공개하고 예약을 푼다
         $this->update($id, ['is_active' => $post['is_active'] ? 0 : 1, 'publish_at' => null]);
+    }
+
+    /**
+     * 메타 설명 입력을 정리한다 — 줄바꿈·연속 공백을 하나로 접고 300자(컬럼 길이)로 자른다. 비면 null(= 본문 앞부분 사용).
+     */
+    public static function normalizeMetaDesc(?string $input): ?string
+    {
+        $text = mb_substr(trim((string) preg_replace('/\s+/u', ' ', (string) $input)), 0, 300);
+
+        return $text === '' ? null : $text;
     }
 
     /**

@@ -54,6 +54,7 @@ $routes->post('board/(:segment)/(:num)/comment/(:num)/delete', 'Front\BoardContr
 // ─── 에디터 이미지 업로드 ─────────────────────────────────────────────────────
 $routes->post('board/image-upload', 'Front\BoardController::imageUpload');
 $routes->post('board/series-suggest', 'Front\BoardController::seriesSuggest');
+$routes->post('board/ai-suggest', 'Front\BoardController::aiSuggest');
 
 // ─── 문의폼 ───────────────────────────────────────────────────────────────────
 $routes->post('inquiry/submit', 'Front\PageController::inquirySubmit');
