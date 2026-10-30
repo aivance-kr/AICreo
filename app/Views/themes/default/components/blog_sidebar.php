@@ -56,9 +56,9 @@ if (! empty($withCategories)) {
         <a href="?popular=<?= esc($key) ?>"<?= ($popularPeriod ?? '7d') === $key ? ' aria-current="true"' : '' ?>><?= esc($label) ?></a>
         <?php endforeach; ?>
     </p>
-    <ol class="side-cats__list">
+    <ol class="side-popular__list">
         <?php foreach ($popularPosts as $post): ?>
-        <li><a href="/board/<?= esc($post['board_slug']) ?>/<?= esc($post['id']) ?>"><?= esc($post['title']) ?></a></li>
+        <li><a href="/board/<?= esc($post['board_slug']) ?>/<?= esc($post['id']) ?>"><span><?= esc($post['title']) ?></span></a></li>
         <?php endforeach; ?>
     </ol>
 </section>
@@ -90,13 +90,19 @@ foreach ($archiveCounts as $row) {
 </nav>
 <?php endif; ?>
 <?php if (! empty($tagCloud)): ?>
+<?php
+// 글 수에 비례해 1~4단계 크기를 준다(전부 같은 수면 가운데 단계로).
+$tagMin = min($tagCloud);
+$tagSpan = max($tagCloud) - $tagMin;
+?>
 <section class="side-tags" aria-label="태그">
     <h2 class="side-cats__title">태그</h2>
-    <ul class="side-cats__list">
+    <ul class="side-tags__cloud">
         <?php foreach ($tagCloud as $name => $count): ?>
-        <li><a href="/tags/<?= esc(rawurlencode((string) $name), 'attr') ?>">#<?= esc((string) $name) ?> <small>(<?= (int) $count ?>)</small></a></li>
+        <?php $level = $tagSpan === 0 ? 2 : 1 + (int) floor(($count - $tagMin) / $tagSpan * 3.999); ?>
+        <li><a href="/tags/<?= esc(rawurlencode((string) $name), 'attr') ?>" data-level="<?= $level ?>">#<?= esc((string) $name) ?> <small><?= (int) $count ?></small></a></li>
         <?php endforeach; ?>
-        <li><a href="/tags">전체 태그</a></li>
     </ul>
+    <a class="side-tags__all" href="/tags">전체 태그 보기 →</a>
 </section>
 <?php endif; ?>
