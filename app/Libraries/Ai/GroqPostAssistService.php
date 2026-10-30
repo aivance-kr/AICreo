@@ -100,7 +100,7 @@ class GroqPostAssistService
     {
         $response = service('curlrequest')->post(self::ENDPOINT, $options);
         if ($response->getStatusCode() !== 200) {
-            log_message('error', 'Groq 글 제안 HTTP ' . $response->getStatusCode() . ' ' . mb_substr($response->getBody(), 0, 300));
+            log_message('error', 'Groq 글 제안 HTTP ' . $response->getStatusCode());
 
             return '';
         }
