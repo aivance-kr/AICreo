@@ -238,7 +238,7 @@ class BoardController extends BaseController
             'jsonLd'              => $jsonLd,
             'page'                => [
                 'title'     => $post['title'],
-                'meta_desc' => post_excerpt($post['content'], 150),
+                'meta_desc' => ($post['meta_desc'] ?? '') !== '' ? $post['meta_desc'] : post_excerpt($post['content'], 150),
                 'canonical' => $canonical,
                 'noindex'   => $noindex,
             ] + $ogPage,
@@ -317,6 +317,9 @@ class BoardController extends BaseController
         }
 
         $data['tags'] = $this->resolveTags($this->request->getPost('tags'), $data['title'], $data['content'], $board, (bool) $data['is_secret']);
+        if ($this->getUserRole() === 'admin') {
+            $data['meta_desc'] = PostModel::normalizeMetaDesc($this->request->getPost('meta_desc'));
+        }
 
         if ($isGuest) {
             $data['author_password'] = password_hash($this->request->getPost('author_password'), PASSWORD_DEFAULT);
@@ -438,6 +441,10 @@ class BoardController extends BaseController
             'is_notice'   => $this->getUserRole() === 'admin' ? (int) $this->request->getPost('is_notice') : $post['is_notice'],
             'is_secret'   => (int) $this->request->getPost('is_secret'),
         ];
+
+        if ($this->getUserRole() === 'admin') {
+            $changes['meta_desc'] = PostModel::normalizeMetaDesc($this->request->getPost('meta_desc'));
+        }
 
         // 예약 입력(운영자 전용): 미래 시각이면 숨김 예약, 비우거나 지난 시각이면 예약 글은 즉시 공개
         if ($this->getUserRole() === 'admin') {
@@ -703,6 +710,31 @@ class BoardController extends BaseController
         );
 
         return $this->response->setJSON(['success' => true, 'ids' => $ids, 'csrf_hash' => csrf_hash()]);
+    }
+
+    // ─── 글 AI 제안 ─────────────────────────────────────────────────────────
+
+    /**
+     * 글쓰기·수정 화면의 "AI 제안" 버튼 — 지금 쓰는 제목·본문으로 요약(메타 설명)·태그·제목 후보를 돌려준다(운영자 전용).
+     * 저장은 하지 않고 후보만 알려주며, 반영은 운영자가 확정할 때 폼 저장으로 한다.
+     */
+    public function aiSuggest(): ResponseInterface
+    {
+        if ($this->getUserRole() !== 'admin') {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => '권한이 없습니다.', 'csrf_hash' => csrf_hash()]);
+        }
+
+        $groq = service('groqPostAssist');
+        if (! $groq->isEnabled()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'AI 제안을 쓰려면 .env 에 GROQ_API_KEY 를 설정해야 합니다.', 'csrf_hash' => csrf_hash()]);
+        }
+
+        $suggestion = $groq->suggest((string) $this->request->getPost('title'), (string) $this->request->getPost('content'));
+        if ($suggestion === null) {
+            return $this->response->setJSON(['success' => false, 'message' => 'AI 제안을 받지 못했습니다. 잠시 후 다시 시도해 주세요.', 'csrf_hash' => csrf_hash()]);
+        }
+
+        return $this->response->setJSON(['success' => true, 'suggestion' => $suggestion, 'csrf_hash' => csrf_hash()]);
     }
 
     // ─── 내부 헬퍼 ──────────────────────────────────────────────────────────

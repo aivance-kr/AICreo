@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Libraries\Ai\GroqPostAssistService;
 use App\Libraries\Ai\GroqSeriesService;
 use App\Libraries\Ai\GroqTagService;
 use App\Libraries\Seo\IndexNowService;
@@ -19,6 +20,15 @@ class Services extends BaseService
         }
 
         return new GroqTagService();
+    }
+
+    public static function groqPostAssist(bool $getShared = true): GroqPostAssistService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('groqPostAssist');
+        }
+
+        return new GroqPostAssistService();
     }
 
     public static function groqSeries(bool $getShared = true): GroqSeriesService

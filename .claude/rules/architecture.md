@@ -88,6 +88,12 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 시리즈 관리는 `/admin/series`(수정 화면에서 글 검색·번호 일괄 입력으로 글 추가), 글에 지정은 운영자만 글쓰기·수정 화면에서 체크박스+순서(비우면 맨 뒤), 공개 목록은 `/series`, 소개 페이지는 `/series/{slug}`.
 - 글쓰기·수정 화면의 "AI 추천" 버튼은 `POST board/series-suggest`(운영자 전용)로 `GroqSeriesService`(`service('groqSeries')`, `GROQ_API_KEY` 공유)에 제목·본문과 `SeriesModel::suggestionCandidates()` 를 보내 어울리는 시리즈를 체크해 준다. 저장은 하지 않으며 후보에 없는 번호는 걸러낸다.
 
+## 글 AI 제안
+
+- 글쓰기·수정 화면의 "AI 제안" 버튼(운영자 전용)은 `POST board/ai-suggest` → `GroqPostAssistService`(`service('groqPostAssist')`, `GROQ_API_KEY` 공유, 타임아웃 5초)로 요약(메타 설명)·태그 후보·제목 후보를 받는다. 저장은 하지 않으며, 화면에서 "적용"을 누른 항목만 입력란에 채우고 폼 저장 때 반영된다.
+- 모델 응답은 `strip_tags`·길이(요약 160자, 태그 5개·30자, 제목 3개)·개수 제한을 거쳐 돌려주고, 화면은 `textContent` 로만 출력한다. 실패하면 컨트롤러가 안내 문구를 돌려준다.
+- 메타 설명은 `posts.meta_desc`(운영자 입력, 300자). 비어 있으면 글 상세의 메타 설명은 기존처럼 본문 앞부분(`post_excerpt`)을 쓴다.
+
 ## IP 차단
 
 - `blocked_ips` 테이블 + `BlockedIpFilter`(전역 before)가 차단 IP의 모든 요청을 403으로 막는다.

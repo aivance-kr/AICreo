@@ -129,6 +129,22 @@
                 <div id="post-tags-help" class="form-text">쉼표(,)로 구분 · 최대 <?= \App\Models\PostModel::MAX_TAGS ?>개 · 로그인 후 공개글은 비워두면 본문으로 AI가 자동 추출</div>
             </div>
 
+            <?php if (session()->get('user_role') === 'admin'): ?>
+            <div class="mb-3">
+                <label class="form-label" for="post-meta-desc">메타 설명</label>
+                <textarea name="meta_desc" id="post-meta-desc" class="form-control" rows="2" maxlength="300"
+                          aria-describedby="post-meta-desc-help"><?= esc(old('meta_desc', $post['meta_desc'] ?? '')) ?></textarea>
+                <div id="post-meta-desc-help" class="form-text">
+                    검색 결과·공유 미리보기에 쓰입니다. 비우면 본문 앞부분을 씁니다.
+                    <button type="button" id="ai-suggest-btn" class="btn btn-outline-secondary btn-sm ms-2 py-0">
+                        <i class="bi bi-stars" aria-hidden="true"></i> AI 제안
+                    </button>
+                    <span id="ai-suggest-status" class="small text-muted ms-2" role="status" aria-live="polite"></span>
+                </div>
+                <div id="ai-suggest-result" class="border rounded p-2 mt-2 small" hidden></div>
+            </div>
+            <?php endif; ?>
+
             <div class="mb-3">
                 <label class="form-label" for="content-editor">내용</label>
                 <textarea name="content" id="content-editor" class="form-control" rows="12"><?= old('content', $post['content'] ?? '') ?></textarea>
@@ -306,6 +322,82 @@ if (seriesSuggestBtn) {
             statusBox.textContent = error.message || '추천에 실패했습니다.';
         } finally {
             seriesSuggestBtn.disabled = false;
+        }
+    });
+}
+
+// 글 AI 제안 — 요약(메타 설명)·태그·제목 후보를 받아 보여 주고, 운영자가 "적용"을 눌러야 입력란에 채운다 (저장은 폼 저장 때)
+const aiSuggestBtn = document.getElementById('ai-suggest-btn');
+if (aiSuggestBtn) {
+    const AI_CSRF_FIELD_NAME = <?= json_encode(csrf_token()) ?>;
+    let aiCsrfHash = <?= json_encode(csrf_hash()) ?>;
+    const aiStatus = document.getElementById('ai-suggest-status');
+    const aiResult = document.getElementById('ai-suggest-result');
+
+    // 후보 한 줄 — 텍스트는 textContent 로만 넣어 XSS 를 막는다
+    const addRow = (label, text, onApply) => {
+        const row = document.createElement('div');
+        row.className = 'd-flex align-items-start gap-2 mb-1';
+        const name = document.createElement('strong');
+        name.className = 'flex-shrink-0';
+        name.textContent = label;
+        const value = document.createElement('span');
+        value.className = 'flex-grow-1';
+        value.textContent = text;
+        const apply = document.createElement('button');
+        apply.type = 'button';
+        apply.className = 'btn btn-outline-primary btn-sm py-0 flex-shrink-0';
+        apply.textContent = '적용';
+        apply.addEventListener('click', onApply);
+        row.append(name, value, apply);
+        aiResult.appendChild(row);
+    };
+
+    aiSuggestBtn.addEventListener('click', async function () {
+        const editor = tinymce.activeEditor;
+        const body = new URLSearchParams();
+        body.set(AI_CSRF_FIELD_NAME, aiCsrfHash);
+        body.set('title', document.getElementById('post-title').value);
+        body.set('content', editor ? editor.getContent() : document.getElementById('content-editor').value);
+
+        aiSuggestBtn.disabled = true;
+        aiStatus.textContent = '제안 받는 중…';
+        aiResult.hidden = true;
+        aiResult.replaceChildren();
+
+        try {
+            const response = await fetch('/board/ai-suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                credentials: 'same-origin',
+                body: body.toString(),
+            });
+            const data = await response.json();
+
+            if (data.csrf_hash) {
+                aiCsrfHash = data.csrf_hash;
+                document.querySelectorAll('input[name="' + AI_CSRF_FIELD_NAME + '"]').forEach(input => { input.value = aiCsrfHash; });
+            }
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || '제안을 받지 못했습니다.');
+            }
+
+            const suggestion = data.suggestion;
+            if (suggestion.summary) {
+                addRow('요약', suggestion.summary, () => { document.getElementById('post-meta-desc').value = suggestion.summary; });
+            }
+            if (suggestion.tags.length) {
+                addRow('태그', suggestion.tags.join(', '), () => { document.getElementById('post-tags').value = suggestion.tags.join(','); });
+            }
+            suggestion.titles.forEach((title, index) => {
+                addRow('제목 ' + (index + 1), title, () => { document.getElementById('post-title').value = title; });
+            });
+            aiResult.hidden = false;
+            aiStatus.textContent = '"적용"을 누른 항목만 입력란에 들어가며, 저장 버튼을 눌러야 반영됩니다.';
+        } catch (error) {
+            aiStatus.textContent = error.message || '제안을 받지 못했습니다.';
+        } finally {
+            aiSuggestBtn.disabled = false;
         }
     });
 }
