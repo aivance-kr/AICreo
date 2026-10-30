@@ -26,6 +26,14 @@
 <div class="col-lg-9 order-lg-1">
 <?php else: ?>
 <div class="row g-4"><div>
+<?php if (! empty($categories)): ?>
+<nav class="nav nav-pills flex-wrap gap-1 mb-3" aria-label="카테고리">
+    <a href="/board/<?= esc($board['slug']) ?>" class="nav-link py-1 px-3 <?= $currentCategory === null ? 'active' : '' ?>"<?= $currentCategory === null ? ' aria-current="page"' : '' ?>>전체</a>
+    <?php foreach ($categories as $cat): ?>
+    <a href="/board/<?= esc($board['slug']) ?>?category=<?= esc($cat['id']) ?>" class="nav-link py-1 px-3 <?= $currentCategory === (int) $cat['id'] ? 'active' : '' ?>"<?= $currentCategory === (int) $cat['id'] ? ' aria-current="page"' : '' ?>><?= esc($cat['name']) ?></a>
+    <?php endforeach; ?>
+</nav>
+<?php endif; ?>
 <?php endif; ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
