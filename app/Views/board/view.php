@@ -39,12 +39,10 @@ ob_start();
                 <?= esc($post['title']) ?>
             </h1>
             <div class="d-flex gap-2 flex-shrink-0">
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="share-btn" data-url="<?= esc($shortUrl, 'attr') ?>">
-                    <i class="bi bi-link-45deg" aria-hidden="true"></i> 주소 복사
-                </button>
                 <?= $postActions ?>
             </div>
         </div>
+        <?= view('board/_share', ['url' => $canonicalUrl, 'title' => $post['title'], 'kakaoJsKey' => $kakaoJsKey]) ?>
         <?php $postTags = \App\Models\PostModel::splitTags($post['tags'] ?? null); ?>
         <?php if ($postTags !== []): ?>
         <div class="mb-1">
@@ -265,16 +263,8 @@ ob_start();
 <?= $this->section('scripts') ?>
 <script src="<?= asset_url('js/post-toc.js') ?>" defer></script>
 <script src="<?= asset_url('js/code-highlight.js') ?>" defer></script>
+<script src="<?= asset_url('js/post-share.js') ?>" defer></script>
 <script>
-document.getElementById('share-btn').addEventListener('click', async function() {
-    const btn = this;
-    try {
-        await navigator.clipboard.writeText(btn.dataset.url);
-        btn.textContent = '복사됨';
-    } catch (e) {
-        window.prompt('주소를 복사하세요', btn.dataset.url);
-    }
-});
 const guestModal = document.getElementById('guestModal');
 guestModal.addEventListener('show.bs.modal', function(e) {
     const action = e.relatedTarget.dataset.action;

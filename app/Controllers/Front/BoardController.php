@@ -233,7 +233,8 @@ class BoardController extends BaseController
             'postTopAds'          => $adModel->getActiveByPosition('post_top'),
             'postBotAds'          => $adModel->getActiveByPosition('post_bottom'),
             'guestCommentCaptcha' => $guestCommentCaptcha,
-            'shortUrl'            => base_url((string) $post['id']),
+            'canonicalUrl'        => $canonical,
+            'kakaoJsKey'          => (string) env('KAKAO_JS_KEY', ''),
             'jsonLd'              => $jsonLd,
             'page'                => [
                 'title'     => $post['title'],
