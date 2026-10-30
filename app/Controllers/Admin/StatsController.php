@@ -15,6 +15,13 @@ class StatsController extends BaseController
 {
     private const DAY_PAGE_SIZE = 50;
 
+    /**
+     * 글별 통계에서 고를 수 있는 기간(일). 많은 방문 로그를 훑으므로 허용 값만 받는다.
+     */
+    private const POST_STATS_DAYS = [7, 30, 90];
+
+    private const POST_STATS_CACHE_TTL = 600;
+
     private readonly PageVisitModel $visitModel;
 
     public function __construct()
@@ -58,6 +65,62 @@ class StatsController extends BaseController
             'period'    => '',
             'value'     => '',
         ]);
+    }
+
+    /**
+     * 글별 조회 통계: 기간 내 상위 글 순위, 선택한 글의 일간(90일은 주간) 추이·유입 경로·검색어.
+     * 방문 로그 집계가 무거워 10분 캐시한다(글 단위로 무효화하지 않고 TTL 에 맡긴다).
+     */
+    public function posts(): string
+    {
+        $days   = (int) ($this->request->getGet('days') ?? 30);
+        $days   = in_array($days, self::POST_STATS_DAYS, true) ? $days : 30;
+        $postId = (int) ($this->request->getGet('post') ?? 0);
+        $host   = $this->request->getUri()->getHost();
+
+        $stats = cache()->remember(
+            "admin_post_stats_{$days}_{$postId}_{$host}",
+            self::POST_STATS_CACHE_TTL,
+            fn (): array => $this->buildPostStats($days, $postId, $host),
+        );
+
+        return $this->render('admin/stats/posts', $stats + ['days' => $days, 'dayOptions' => self::POST_STATS_DAYS]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildPostStats(int $days, int $postId, string $host): array
+    {
+        [$start, $end] = PageVisitModel::dayRange($days);
+
+        $topPosts = $this->visitModel->topPosts($start, $end);
+        $selected = $postId > 0 ? $this->visitModel->postTarget($postId) : null;
+
+        if ($selected === null && $topPosts !== []) {
+            $selected = $this->visitModel->postTarget($topPosts[0]['id']);
+        }
+
+        $trend     = [];
+        $referrers = [];
+        $keywords  = [];
+
+        if ($selected !== null) {
+            $trend     = $this->visitModel->bucketCounts($start, $end, false, $selected['uri']);
+            $referrers = $this->visitModel->topReferrers($start, $end, $host, 10, $selected['uri']);
+            $keywords  = $this->visitModel->topSearchKeywords($start, $end, 10, $selected['uri']);
+        }
+
+        $weekly = $days >= 90;
+
+        return [
+            'topPosts'  => $topPosts,
+            'selected'  => $selected,
+            'weekly'    => $weekly,
+            'trend'     => $weekly ? PageVisitModel::toWeekly($trend) : $trend,
+            'referrers' => $referrers,
+            'keywords'  => $keywords,
+        ];
     }
 
     public function day(string $date): string
