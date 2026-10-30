@@ -464,6 +464,19 @@ final class BoardControllerTest extends FeatureTestCase
         $this->assertStringContainsString("value=\"{$categoryId}\" selected", $writeBody);
     }
 
+    public function testWriteFormExposesAutosaveKeyAndScript(): void
+    {
+        $body = $this->withSession([
+            'user_id'       => 1,
+            'user_nickname' => '관리자',
+            'user_role'     => 'admin',
+        ])->get('board/free/write')->getBody();
+
+        $this->assertStringContainsString('data-autosave-key="post-draft:free:new"', $body);
+        $this->assertStringContainsString('js/post-autosave.js', $body);
+        $this->assertStringContainsString('id="autosave-notice"', $body);
+    }
+
     public function testCategoryFilterNarrowsPostList(): void
     {
         $boardId    = $this->boardId('free');
