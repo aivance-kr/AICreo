@@ -345,6 +345,12 @@
 .post-body {
     margin-bottom: 1.5rem;
 }
+.post-files {
+    margin-top: 1.5rem;
+    padding: .875rem 1rem;
+    border-radius: .5rem;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+}
 .post-tags {
     display: flex;
     flex-wrap: wrap;

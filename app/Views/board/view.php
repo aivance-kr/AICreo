@@ -75,6 +75,45 @@ ob_start();
         </div>
         <?php endif; ?>
 
+        <?php $images = array_filter($files, fn($f) => $f['is_image']); ?>
+        <?php $attachments = array_filter($files, fn($f) => !$f['is_image']); ?>
+        <?php if ($images || $attachments): ?>
+        <div class="post-files" aria-label="첨부">
+            <!-- 이미지 첨부 -->
+            <?php if ($images): ?>
+            <div class="row g-2">
+                <?php foreach ($images as $img): ?>
+                <div class="col-auto">
+                    <a href="/<?= esc($img['file_path']) ?>" target="_blank" rel="noopener">
+                        <img loading="lazy" src="<?= esc(thumb_url($img['file_path'])) ?>" alt="<?= esc($img['original_name']) ?>"
+                             class="img-thumbnail" style="max-height:200px;">
+                        <span class="visually-hidden">원본 이미지 보기 (새 창 열림)</span>
+                    </a>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
+            <!-- 파일 첨부 -->
+            <?php if ($attachments): ?>
+            <div class="file-list<?= $images ? ' mt-3' : '' ?>">
+                <div class="text-muted small mb-1"><i class="bi bi-paperclip" aria-hidden="true"></i> 첨부파일</div>
+                <?php foreach ($attachments as $file): ?>
+                <div>
+                    <a href="/board/file/<?= $file['id'] ?>/download" class="text-decoration-none">
+                        <i class="bi bi-file-earmark" aria-hidden="true"></i>
+                        <?= esc($file['original_name']) ?>
+                        <span class="text-muted">(<?= round($file['file_size'] / 1024) ?>KB)</span>
+                        <span class="text-muted small">↓<?= $file['download_count'] ?></span>
+                    </a>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+
         <?php $postTags = \App\Models\PostModel::splitTags($post['tags'] ?? null); ?>
         <?php if ($postTags !== []): ?>
         <div class="post-tags">
@@ -95,44 +134,6 @@ ob_start();
 
     <!-- 본문 하단 광고 -->
     <?= view('components/ad_slot', ['ads' => $postBotAds]) ?>
-
-    <?php $images = array_filter($files, fn($f) => $f['is_image']); ?>
-    <?php $attachments = array_filter($files, fn($f) => !$f['is_image']); ?>
-    <?php if ($images || $attachments): ?>
-    <section class="post-section" aria-label="첨부">
-        <!-- 이미지 첨부 -->
-        <?php if ($images): ?>
-        <div class="row g-2">
-            <?php foreach ($images as $img): ?>
-            <div class="col-auto">
-                <a href="/<?= esc($img['file_path']) ?>" target="_blank" rel="noopener">
-                    <img loading="lazy" src="<?= esc(thumb_url($img['file_path'])) ?>" alt="<?= esc($img['original_name']) ?>"
-                         class="img-thumbnail" style="max-height:200px;">
-                    <span class="visually-hidden">원본 이미지 보기 (새 창 열림)</span>
-                </a>
-            </div>
-            <?php endforeach; ?>
-        </div>
-        <?php endif; ?>
-
-        <!-- 파일 첨부 -->
-        <?php if ($attachments): ?>
-        <div class="file-list<?= $images ? ' mt-3' : '' ?>">
-            <div class="text-muted small mb-1"><i class="bi bi-paperclip" aria-hidden="true"></i> 첨부파일</div>
-            <?php foreach ($attachments as $file): ?>
-            <div>
-                <a href="/board/file/<?= $file['id'] ?>/download" class="text-decoration-none">
-                    <i class="bi bi-file-earmark" aria-hidden="true"></i>
-                    <?= esc($file['original_name']) ?>
-                    <span class="text-muted">(<?= round($file['file_size'] / 1024) ?>KB)</span>
-                    <span class="text-muted small">↓<?= $file['download_count'] ?></span>
-                </a>
-            </div>
-            <?php endforeach; ?>
-        </div>
-        <?php endif; ?>
-    </section>
-    <?php endif; ?>
 
     <!-- 수정/삭제 버튼 -->
     <?php if (trim($postActions) !== ''): ?>
