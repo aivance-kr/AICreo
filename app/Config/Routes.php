@@ -20,6 +20,8 @@ $routes->get('og/(:num)\\.png', 'Front\OgImageController::post/$1');
 $routes->get('search', 'Front\SearchController::index');
 $routes->get('series', 'Front\SeriesController::index');
 $routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
+$routes->get('archive', 'Front\ArchiveController::index');
+$routes->get('archive/(:num)/(:num)', 'Front\ArchiveController::month/$1/$2');
 $routes->get('tags', 'Front\TagController::index');
 $routes->get('tags/(:segment)', 'Front\TagController::show/$1');
 
@@ -54,9 +56,15 @@ $routes->post('board/(:segment)/(:num)/comment/(:num)/delete', 'Front\BoardContr
 // ─── 에디터 이미지 업로드 ─────────────────────────────────────────────────────
 $routes->post('board/image-upload', 'Front\BoardController::imageUpload');
 $routes->post('board/series-suggest', 'Front\BoardController::seriesSuggest');
+$routes->post('board/ai-suggest', 'Front\BoardController::aiSuggest');
 
 // ─── 문의폼 ───────────────────────────────────────────────────────────────────
 $routes->post('inquiry/submit', 'Front\PageController::inquirySubmit');
+
+// ─── 뉴스레터 구독 ────────────────────────────────────────────────────────────
+$routes->post('newsletter/subscribe', 'Front\NewsletterController::subscribe');
+$routes->get('newsletter/confirm/(:segment)', 'Front\NewsletterController::confirm/$1');
+$routes->match(['get', 'post'], 'newsletter/unsubscribe/(:segment)', 'Front\NewsletterController::unsubscribe/$1');
 
 // ─── 관리자 ──────────────────────────────────────────────────────────────────
 $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): void {
@@ -136,6 +144,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
 
     // 접속 통계
     $routes->get('stats', 'Admin\StatsController::index');
+    $routes->get('stats/posts', 'Admin\StatsController::posts');
     $routes->get('stats/day/(:segment)', 'Admin\StatsController::day/$1');
     $routes->post('stats/block-ip', 'Admin\StatsController::blockIp');
 
@@ -169,6 +178,11 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('popups/(:num)/edit', 'Admin\PopupController::edit/$1');
     $routes->post('popups/(:num)/edit', 'Admin\PopupController::update/$1');
     $routes->post('popups/(:num)/delete', 'Admin\PopupController::delete/$1');
+
+    // 뉴스레터 구독자
+    $routes->get('subscribers', 'Admin\SubscriberController::index');
+    $routes->get('subscribers/export', 'Admin\SubscriberController::export');
+    $routes->post('subscribers/(:num)/delete', 'Admin\SubscriberController::delete/$1');
 
     // 시리즈(연재) 관리
     $routes->get('series', 'Admin\SeriesController::index');

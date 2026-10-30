@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Model;
 use Throwable;
@@ -198,18 +199,24 @@ class PageVisitModel extends Model
 
     /**
      * 기간 내 일별(또는 월별) 방문 수. 데이터 없는 구간은 0으로 채운다.
+     * $uri 를 주면 그 주소만, 404·차단 IP 를 뺀 방문으로 센다.
      *
      * @return list<array{key: string, count: int}> key 는 일별 Y-m-d, 월별 Y-m
      */
-    public function bucketCounts(Time $start, Time $end, bool $monthly): array
+    public function bucketCounts(Time $start, Time $end, bool $monthly, ?string $uri = null): array
     {
         $format = $monthly ? '%Y-%m' : '%Y-%m-%d';
 
-        $rows = $this->select("DATE_FORMAT(created_at, '{$format}') as bucket, COUNT(*) as count", false)
+        $builder = $this->db->table($this->table)
+            ->select("DATE_FORMAT(created_at, '{$format}') as bucket, COUNT(*) as count", false)
             ->where('created_at >=', $start->toDateTimeString())
-            ->where('created_at <', $end->toDateTimeString())
-            ->groupBy('bucket')
-            ->findAll();
+            ->where('created_at <', $end->toDateTimeString());
+
+        if ($uri !== null) {
+            $this->countedOnly($builder)->where('uri', $uri);
+        }
+
+        $rows = $builder->groupBy('bucket')->get()->getResultArray();
 
         $counts = [];
 
@@ -254,7 +261,7 @@ class PageVisitModel extends Model
      *
      * @return list<array{host: string, count: int}>
      */
-    public function topReferrers(Time $start, Time $end, string $excludeHost = '', int $limit = 10): array
+    public function topReferrers(Time $start, Time $end, string $excludeHost = '', int $limit = 10, ?string $uri = null): array
     {
         $host = "SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(referer, '://', -1), '/', 1), ':', 1)";
 
@@ -262,6 +269,10 @@ class PageVisitModel extends Model
             ->select("COALESCE(NULLIF({$host}, ''), '') as host, COUNT(*) as count", false)
             ->where('created_at >=', $start->toDateTimeString())
             ->where('created_at <', $end->toDateTimeString());
+
+        if ($uri !== null) {
+            $this->countedOnly($builder)->where('uri', $uri);
+        }
 
         if ($excludeHost !== '') {
             $builder->groupStart()
@@ -310,13 +321,18 @@ class PageVisitModel extends Model
      *
      * @return list<array{engine: string, keyword: string, count: int}>
      */
-    public function topSearchKeywords(Time $start, Time $end, int $limit = 10): array
+    public function topSearchKeywords(Time $start, Time $end, int $limit = 10, ?string $uri = null): array
     {
         $builder = $this->db->table($this->table)
             ->select('referer, COUNT(*) as count')
             ->where('created_at >=', $start->toDateTimeString())
-            ->where('created_at <', $end->toDateTimeString())
-            ->groupStart();
+            ->where('created_at <', $end->toDateTimeString());
+
+        if ($uri !== null) {
+            $this->countedOnly($builder)->where('uri', $uri);
+        }
+
+        $builder->groupStart();
 
         foreach (array_keys(self::SEARCH_ENGINES) as $i => $suffix) {
             $i === 0 ? $builder->like('referer', $suffix) : $builder->orLike('referer', $suffix);
@@ -338,6 +354,124 @@ class PageVisitModel extends Model
         usort($counts, static fn (array $a, array $b): int => $b['count'] <=> $a['count']);
 
         return array_slice($counts, 0, $limit);
+    }
+
+    /**
+     * 오늘을 끝으로 거슬러 올라가는 $days일 범위. [시작, 끝(미포함, 내일 0시)]
+     *
+     * @return array{0: Time, 1: Time}
+     */
+    public static function dayRange(int $days): array
+    {
+        return [
+            Time::now()->subDays($days - 1)->setTime(0, 0, 0),
+            Time::now()->addDays(1)->setTime(0, 0, 0),
+        ];
+    }
+
+    /**
+     * 기간 내 조회가 많은 글 상위 $limit건 (글 주소 /board/{slug}/{id} 방문 기준).
+     * 404·차단 IP 방문은 뺀다. 삭제돼 글을 찾을 수 없는 주소는 건너뛴다.
+     *
+     * @return list<array{id: int, title: string, uri: string, count: int}>
+     */
+    public function topPosts(Time $start, Time $end, int $limit = 20): array
+    {
+        $builder = $this->db->table($this->table)
+            ->select('uri, COUNT(*) as count')
+            ->where('created_at >=', $start->toDateTimeString())
+            ->where('created_at <', $end->toDateTimeString())
+            ->where("uri REGEXP '^/board/[^/]+/[0-9]+\$'", null, false);
+
+        // 글 주소는 삭제된 글이 섞일 수 있어 여유 있게 가져온 뒤 제목이 있는 글만 남긴다.
+        $rows = $this->countedOnly($builder)
+            ->groupBy('uri')->orderBy('count', 'DESC')->limit($limit * 2)->get()->getResultArray();
+
+        $ids = array_map(static fn (array $r): int => (int) substr((string) $r['uri'], (int) strrpos((string) $r['uri'], '/') + 1), $rows);
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $titles = array_column(
+            $this->db->table('posts')->select('id, title')->whereIn('id', $ids)->get()->getResultArray(),
+            'title',
+            'id',
+        );
+
+        $result = [];
+
+        foreach ($rows as $i => $row) {
+            if (! isset($titles[$ids[$i]])) {
+                continue;
+            }
+            $result[] = ['id' => $ids[$i], 'title' => (string) $titles[$ids[$i]], 'uri' => (string) $row['uri'], 'count' => (int) $row['count']];
+
+            if (count($result) === $limit) {
+                break;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * 글 id 로 제목과 방문 주소(/board/{slug}/{id}). 글이 없으면 null.
+     *
+     * @return array{id: int, title: string, uri: string}|null
+     */
+    public function postTarget(int $postId): ?array
+    {
+        $row = $this->db->table('posts')
+            ->select('posts.id, posts.title, boards.slug')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->where('posts.id', $postId)
+            ->get()
+            ->getRowArray();
+
+        return $row === null ? null : [
+            'id'    => (int) $row['id'],
+            'title' => (string) $row['title'],
+            'uri'   => '/board/' . $row['slug'] . '/' . $row['id'],
+        ];
+    }
+
+    /**
+     * 일별 방문 수를 ISO 주 단위로 합친다. 입력 순서(오래된 날 먼저)를 유지한다.
+     *
+     * @param list<array{key: string, count: int}> $daily
+     *
+     * @return list<array{key: string, count: int}> key 는 2026-W41 형식
+     */
+    public static function toWeekly(array $daily): array
+    {
+        $weeks = [];
+
+        foreach ($daily as $day) {
+            $key         = date('o-\WW', strtotime($day['key']));
+            $weeks[$key] = ($weeks[$key] ?? 0) + $day['count'];
+        }
+
+        return array_map(
+            static fn (string $key, int $count): array => ['key' => $key, 'count' => $count],
+            array_keys($weeks),
+            $weeks,
+        );
+    }
+
+    /**
+     * 집계에 셀 방문만 남긴다: 존재하지 않는 주소(404) 요청과 현재 차단 중인 IP 의 방문은 뺀다.
+     * (봇 User-Agent 는 VisitLogFilter 가 기록 단계에서 이미 거른다.)
+     */
+    private function countedOnly(BaseBuilder $query): BaseBuilder
+    {
+        $now = $this->db->escape(Time::now()->toDateTimeString());
+
+        return $query->where('is_not_found', 0)->where(
+            "NOT EXISTS (SELECT 1 FROM blocked_ips b WHERE b.ip_address = {$this->table}.ip_address AND b.blocked_until > {$now})",
+            null,
+            false,
+        );
     }
 
     public function countOnDate(string $date): int

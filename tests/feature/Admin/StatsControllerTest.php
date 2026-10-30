@@ -6,6 +6,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\BlockedIpModel;
 use App\Models\PageVisitModel;
+use App\Models\PostModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use Tests\Support\AdminTestCase;
 
@@ -104,5 +105,28 @@ final class StatsControllerTest extends AdminTestCase
         $this->withSession($this->adminSession)->post('admin/stats/block-ip', ['ip' => 'not-an-ip']);
 
         $this->assertSame(0, (new BlockedIpModel())->countAllResults());
+    }
+
+    public function testPostStatsShowsRankingTrendAndRejectsUnknownDays(): void
+    {
+        cache()->clean();
+        $boardId = (int) $this->db->table('boards')->where('slug', 'notice')->get()->getRowArray()['id'];
+        $postId  = (int) (new PostModel())->insert([
+            'board_id' => $boardId, 'user_id' => 1, 'title' => '통계 대상 글', 'content' => '본문', 'is_notice' => 0,
+        ]);
+        $logger = new PageVisitModel();
+        $logger->logVisit("/board/notice/{$postId}", '9.9.9.9', 'UA', 'https://search.naver.com/search?query=hello');
+
+        $result = $this->withSession($this->adminSession)->get('admin/stats/posts?days=999');
+
+        $result->assertStatus(200);
+        $result->assertSee('통계 대상 글');
+        $result->assertSee('최근 30일');
+        $result->assertSee('hello');
+    }
+
+    public function testMemberCannotAccessPostStats(): void
+    {
+        $this->withSession($this->memberSession)->get('admin/stats/posts')->assertStatus(302);
     }
 }

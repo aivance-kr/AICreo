@@ -95,5 +95,9 @@ app.baseURL = 'http://creo.test/'
 # GROQ_API_KEY = ''
 # GROQ_MODEL = 'openai/gpt-oss-120b'
 
+# 글 상세 카카오톡 공유 — Kakao Developers 앱의 JavaScript 키 (미설정이면 카카오톡 버튼 숨김)
+# 플랫폼 > Web 에 사이트 도메인을 등록해야 한다.
+# KAKAO_JS_KEY = ''
+
 # 문의 접수 Slack 알림 (Incoming Webhook — 비워두면 알림만 건너뜀)
 SLACK_INQUIRY_WEBHOOK_URL = ''

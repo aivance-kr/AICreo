@@ -432,4 +432,43 @@ final class PostModelTest extends DatabaseTestCase
         $this->assertSame(1, (int) $this->model->find($id)['is_active']);
         $this->assertNull($this->model->find($id)['publish_at']);
     }
+
+    public function testGetArchiveCountsGroupsByMonthAndExcludesNonPublic(): void
+    {
+        cache()->delete('archive_counts');
+        $this->makePost(['created_at' => '2026-03-10 10:00:00']);
+        $this->makePost(['created_at' => '2026-03-20 10:00:00']);
+        $this->makePost(['created_at' => '2025-12-31 23:00:00']);
+        $this->makePost(['created_at' => '2026-03-11 10:00:00', 'is_secret' => 1]);
+        $this->makePost(['created_at' => '2026-03-12 10:00:00', 'is_active' => 0]);
+
+        $this->assertSame([
+            ['year' => 2026, 'month' => 3, 'count' => 2],
+            ['year' => 2025, 'month' => 12, 'count' => 1],
+        ], $this->model->getArchiveCounts());
+    }
+
+    public function testGetArchiveCountsCacheIsClearedOnInsert(): void
+    {
+        cache()->delete('archive_counts');
+        $this->makePost(['created_at' => '2026-03-10 10:00:00']);
+        $this->assertSame(1, $this->model->getArchiveCounts()[0]['count']);
+
+        $this->makePost(['created_at' => '2026-03-11 10:00:00']);
+
+        $this->assertSame(2, $this->model->getArchiveCounts()[0]['count']);
+    }
+
+    public function testGetArchivePostsFiltersByMonthBoundaries(): void
+    {
+        $inFirst = $this->makePost(['title' => '월초', 'created_at' => '2026-03-01 00:00:00']);
+        $inLast  = $this->makePost(['title' => '월말', 'created_at' => '2026-03-31 23:59:59']);
+        $this->makePost(['title' => '다음달', 'created_at' => '2026-04-01 00:00:00']);
+        $this->makePost(['title' => '비밀', 'created_at' => '2026-03-15 00:00:00', 'is_secret' => 1]);
+
+        $result = $this->model->getArchivePosts(2026, 3, 1, 10);
+
+        $this->assertSame(2, $result['total']);
+        $this->assertSame([$inLast, $inFirst], array_map(static fn (array $p): int => (int) $p['id'], $result['posts']));
+    }
 }

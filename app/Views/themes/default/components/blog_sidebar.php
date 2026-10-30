@@ -1,6 +1,6 @@
 <?php
 /**
- * 블로그형 테마 공용 사이드바 내용 — 사이드바 광고 + 많이 본 글 + 게시판 카테고리.
+ * 블로그형 테마 공용 사이드바 내용 — 사이드바 광고 + 많이 본 글 + 월별 아카이브 + 게시판 카테고리.
  * 내용이 없으면 빈 문자열을 낸다(호출 측이 aside 를 그리지 않도록 trim 으로 판정).
  *
  * @var list<array<string, mixed>> $menus
@@ -8,6 +8,7 @@
  * @var list<array<string, mixed>> $sidebarAds
  * @var list<array<string, mixed>> $popularPosts
  * @var string $popularPeriod
+ * @var list<array{year: int, month: int, count: int}> $archiveCounts
  * @var array<string, int> $tagCloud
  * @var bool $withCategories
  */
@@ -61,6 +62,32 @@ if (! empty($withCategories)) {
         <?php endforeach; ?>
     </ol>
 </section>
+<?php endif; ?>
+<?php if (! empty($archiveCounts)): ?>
+<?php
+$archiveByYear = [];
+foreach ($archiveCounts as $row) {
+    $archiveByYear[$row['year']][] = $row;
+}
+?>
+<nav class="side-archive" aria-label="월별 아카이브">
+    <h2 class="side-cats__title">아카이브</h2>
+    <ul class="side-cats__list">
+        <?php foreach (array_slice($archiveCounts, 0, 12) as $row): ?>
+        <li><a href="/archive/<?= (int) $row['year'] ?>/<?= sprintf('%02d', $row['month']) ?>"><?= (int) $row['year'] ?>년 <?= (int) $row['month'] ?>월</a> (<?= (int) $row['count'] ?>)</li>
+        <?php endforeach; ?>
+    </ul>
+    <?php foreach ($archiveByYear as $year => $months): ?>
+    <details>
+        <summary><?= (int) $year ?>년 (<?= array_sum(array_column($months, 'count')) ?>)</summary>
+        <ul class="side-cats__list">
+            <?php foreach ($months as $row): ?>
+            <li><a href="/archive/<?= (int) $row['year'] ?>/<?= sprintf('%02d', $row['month']) ?>"><?= (int) $row['month'] ?>월</a> (<?= (int) $row['count'] ?>)</li>
+            <?php endforeach; ?>
+        </ul>
+    </details>
+    <?php endforeach; ?>
+</nav>
 <?php endif; ?>
 <?php if (! empty($tagCloud)): ?>
 <section class="side-tags" aria-label="태그">

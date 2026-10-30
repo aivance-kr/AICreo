@@ -339,6 +339,8 @@ final class WordpressImporter
                 'views'       => $post->views,
                 'created_at'  => $post->postDate,
                 'updated_at'  => $post->postDate,
+                // 가져온 옛 글은 뉴스레터 대상이 아니다
+                'newsletter_enqueued_at' => date('Y-m-d H:i:s'),
             ];
 
             $this->upsertByWpId($this->postModel, 'wp_post_id', $post->wpPostId, $data);

@@ -25,6 +25,8 @@ class PostModel extends Model
      */
     public const POPULAR_PERIODS = ['all' => '전체', '7d' => '7일', '30d' => '30일'];
 
+    private const ARCHIVE_CACHE_KEY = 'archive_counts';
+    private const ARCHIVE_CACHE_TTL = 3600;
     private const POPULAR_DAYS      = ['7d' => 7, '30d' => 30];
     private const POPULAR_CACHE_TTL = 600;
 
@@ -33,14 +35,14 @@ class PostModel extends Model
     protected $useTimestamps  = true;
     protected $useSoftDeletes = true;
     protected $allowedFields  = [
-        'board_id', 'category_id', 'user_id', 'title', 'content', 'signature', 'tags',
+        'board_id', 'category_id', 'user_id', 'title', 'content', 'signature', 'tags', 'meta_desc',
         'author_name', 'author_password',
-        'is_notice', 'is_secret', 'is_active', 'publish_at', 'ip_address',
+        'is_notice', 'is_secret', 'is_active', 'publish_at', 'newsletter_enqueued_at', 'ip_address',
         'views', 'wp_post_id', 'created_at', 'updated_at',
     ];
-    protected $afterInsert = ['clearSeoCache', 'clearRelatedCache', 'clearTagCountsCache'];
-    protected $afterUpdate = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache', 'clearTagCountsCache'];
-    protected $afterDelete = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache', 'clearTagCountsCache'];
+    protected $afterInsert = ['clearSeoCache', 'clearRelatedCache', 'clearTagCountsCache', 'clearArchiveCache', 'enqueueNewsletter'];
+    protected $afterUpdate = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache', 'clearTagCountsCache', 'clearArchiveCache', 'enqueueNewsletter'];
+    protected $afterDelete = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache', 'clearTagCountsCache', 'clearArchiveCache'];
 
     /**
      * sitemap.xml 용 공개 글 목록 — 비밀글·비활성 게시판 제외.
@@ -128,6 +130,58 @@ class PostModel extends Model
             self::POPULAR_CACHE_TTL,
             fn (): array => $this->getPopular($period, $limit),
         );
+    }
+
+    /**
+     * 공개 글의 연·월별 글 수(최신 월 먼저) — getLatestPublic 과 같은 공개 조건.
+     * 캐시하고 글 저장·삭제 때 clearArchiveCache 로 무효화한다.
+     *
+     * @return list<array{year: int, month: int, count: int}>
+     */
+    public function getArchiveCounts(): array
+    {
+        return cache()->remember(self::ARCHIVE_CACHE_KEY, self::ARCHIVE_CACHE_TTL, function (): array {
+            $rows = $this->select('YEAR(posts.created_at) AS y, MONTH(posts.created_at) AS m, COUNT(*) AS cnt', false)
+                ->join('boards', 'boards.id = posts.board_id', 'inner')
+                ->where('posts.is_secret', 0)
+                ->where('posts.is_active', 1)
+                ->where('boards.is_active', 1)
+                ->where('boards.read_permission', 'guest')
+                ->groupBy('y, m')
+                ->orderBy('y', 'DESC')
+                ->orderBy('m', 'DESC')
+                ->findAll();
+
+            return array_map(
+                static fn (array $r): array => ['year' => (int) $r['y'], 'month' => (int) $r['m'], 'count' => (int) $r['cnt']],
+                $rows,
+            );
+        });
+    }
+
+    /**
+     * 해당 연·월에 작성된 공개 글(최신순) — getLatestPublic 과 같은 공개 조건.
+     *
+     * @return array{posts: list<array<string, mixed>>, total: int}
+     */
+    public function getArchivePosts(int $year, int $month, int $page, int $perPage): array
+    {
+        $from = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $to   = date('Y-m-d H:i:s', (int) strtotime($from . ' +1 month'));
+
+        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->where('posts.is_secret', 0)
+            ->where('posts.is_active', 1)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest')
+            ->where('posts.created_at >=', $from)
+            ->where('posts.created_at <', $to);
+
+        $total = (clone $builder)->countAllResults(false);
+        $posts = $builder->orderBy('posts.id', 'DESC')->findAll($perPage, ($page - 1) * $perPage);
+
+        return ['posts' => $posts, 'total' => $total];
     }
 
     /**
@@ -365,6 +419,50 @@ class PostModel extends Model
     }
 
     /**
+     * 글이 공개 상태가 되면 뉴스레터 발송 큐에 올린다(글당 한 번 — 표식은 enqueuePost 가 관리).
+     * 예약·숨김·비밀글·비공개 게시판 글은 공개될 때까지 대상이 아니고, 회원·비회원이 쓸 수 있는 게시판 글은 구독자에게 메일을 보내는 통로가 되지 않도록 제외한다. 실제 발송은 newsletter:send 가 한다.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function enqueueNewsletter(array $data): array
+    {
+        $ids = array_filter((array) ($data['id'] ?? []));
+        if ($ids === []) {
+            return $data;
+        }
+
+        $rows = $this->db->table('posts p')->select('p.id')
+            ->join('boards b', 'b.id = p.board_id')
+            ->whereIn('p.id', $ids)
+            ->where('p.newsletter_enqueued_at IS NULL')
+            ->where('p.is_active', 1)->where('p.is_secret', 0)->where('p.deleted_at IS NULL')
+            ->where('b.is_active', 1)->where('b.read_permission', 'guest')->where('b.write_permission', 'admin')
+            ->get()->getResultArray();
+
+        $subscribers = new SubscriberModel();
+
+        foreach ($rows as $row) {
+            $subscribers->enqueuePost((int) $row['id']);
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function clearArchiveCache(array $data): array
+    {
+        cache()->delete(self::ARCHIVE_CACHE_KEY);
+
+        return $data;
+    }
+
+    /**
      * @param array<string, mixed> $data
      *
      * @return array<string, mixed>
@@ -539,6 +637,16 @@ class PostModel extends Model
 
         // 예약 글은 토글하면 즉시 공개하고 예약을 푼다
         $this->update($id, ['is_active' => $post['is_active'] ? 0 : 1, 'publish_at' => null]);
+    }
+
+    /**
+     * 메타 설명 입력을 정리한다 — 줄바꿈·연속 공백을 하나로 접고 300자(컬럼 길이)로 자른다. 비면 null(= 본문 앞부분 사용).
+     */
+    public static function normalizeMetaDesc(?string $input): ?string
+    {
+        $text = mb_substr(trim((string) preg_replace('/\s+/u', ' ', (string) $input)), 0, 300);
+
+        return $text === '' ? null : $text;
     }
 
     /**
