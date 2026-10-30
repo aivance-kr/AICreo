@@ -42,7 +42,7 @@ ob_start();
                 <?= $postActions ?>
             </div>
         </div>
-        <?= view('board/_share', ['url' => $canonicalUrl, 'title' => $post['title'], 'kakaoJsKey' => $kakaoJsKey]) ?>
+        <?= view('board/_share', ['url' => $canonicalUrl, 'shortUrl' => $shortUrl, 'title' => $post['title'], 'kakaoJsKey' => $kakaoJsKey]) ?>
         <?php $postTags = \App\Models\PostModel::splitTags($post['tags'] ?? null); ?>
         <?php if ($postTags !== []): ?>
         <div class="mb-1">

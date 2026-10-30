@@ -249,7 +249,8 @@ final class BoardControllerTest extends FeatureTestCase
 
         $result = $this->get("board/qna/{$postId}");
 
-        $result->assertSee('data-url="' . $canonical . '"');
+        // 링크 복사는 짧은 주소, SNS 공유는 canonical
+        $result->assertSee('id="share-btn" data-url="' . base_url((string) $postId) . '"');
         $result->assertSee('twitter.com/intent/tweet?url=' . rawurlencode($canonical));
         $result->assertSee('facebook.com/sharer/sharer.php?u=' . rawurlencode($canonical));
         $result->assertDontSee('data-kakao-share');
