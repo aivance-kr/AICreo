@@ -47,6 +47,29 @@
     <div class="col-auto text-muted small">이동 시 카테고리는 해제됩니다.</div>
 </form>
 
+<form method="post" action="/admin/posts/bulk-category" id="bulk-category-form" class="row g-2 mb-3 align-items-center"
+      onsubmit="return bulkCategoryConfirm(this)">
+    <?= csrf_field() ?>
+    <div class="col-auto">
+        <label class="visually-hidden" for="bulk-target-category">변경할 카테고리</label>
+        <select name="target_category_id" id="bulk-target-category" class="form-select form-select-sm" required>
+            <option value="">변경할 카테고리 선택</option>
+            <?php foreach ($boards as $b): ?>
+            <?php if (empty($categoriesByBoard[(int) $b['id']])): continue; endif; ?>
+            <optgroup label="<?= esc($b['name']) ?>">
+                <?php foreach ($categoriesByBoard[(int) $b['id']] as $c): ?>
+                <option value="<?= $c['id'] ?>"><?= esc($c['name']) ?></option>
+                <?php endforeach; ?>
+            </optgroup>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">선택 게시물 카테고리 변경</button>
+    </div>
+    <div class="col-auto text-muted small">선택한 카테고리가 속한 게시판의 글만 바뀝니다.</div>
+</form>
+
 <div class="card">
     <div class="table-responsive">
         <table class="table table-hover mb-0 table-stack">
@@ -160,6 +183,19 @@ function bulkMoveConfirm(form) {
     if (n === 0) { alert('이동할 게시물을 선택해 주세요.'); return false; }
     var sel = form.target_board_id;
     return confirm(n + '개 게시물을 "' + sel.options[sel.selectedIndex].text + '" 게시판으로 이동할까요?');
+}
+function bulkCategoryConfirm(form) {
+    var checked = document.querySelectorAll('.bulk-check:checked');
+    if (checked.length === 0) { alert('변경할 게시물을 선택해 주세요.'); return false; }
+    // 선택한 글 ID 를 이 폼에도 실어 보낸다(체크박스는 이동 폼에 연결돼 있음).
+    form.querySelectorAll('input[name="post_ids[]"]').forEach(function (i) { i.remove(); });
+    checked.forEach(function (c) {
+        var h = document.createElement('input');
+        h.type = 'hidden'; h.name = 'post_ids[]'; h.value = c.value;
+        form.appendChild(h);
+    });
+    var sel = form.target_category_id;
+    return confirm(checked.length + '개 게시물의 카테고리를 "' + sel.options[sel.selectedIndex].text + '"(으)로 변경할까요?');
 }
 </script>
 

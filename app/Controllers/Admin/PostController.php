@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostFileModel;
 use App\Models\PostModel;
@@ -29,14 +30,24 @@ class PostController extends BaseController
         $result = $this->postModel->getAdminList($page, $perPage, $keyword, $boardId);
         $boards = $this->boardModel->orderBy('sort_order')->findAll();
 
+        $categoriesByBoard = [];
+
+        foreach ($boards as $board) {
+            $categories = (new BoardCategoryModel())->getAllByBoard((int) $board['id']);
+            if ($categories !== []) {
+                $categoriesByBoard[(int) $board['id']] = $categories;
+            }
+        }
+
         return $this->render('admin/posts/list', [
-            'posts'       => $result['posts'],
-            'total'       => $result['total'],
-            'currentPage' => $page,
-            'totalPages'  => (int) ceil($result['total'] / $perPage),
-            'keyword'     => $keyword,
-            'boardId'     => $boardId,
-            'boards'      => $boards,
+            'posts'             => $result['posts'],
+            'total'             => $result['total'],
+            'currentPage'       => $page,
+            'totalPages'        => (int) ceil($result['total'] / $perPage),
+            'keyword'           => $keyword,
+            'boardId'           => $boardId,
+            'boards'            => $boards,
+            'categoriesByBoard' => $categoriesByBoard,
         ]);
     }
 
@@ -70,6 +81,30 @@ class PostController extends BaseController
         $this->postModel->moveToBoard($ids, $targetId);
 
         return redirect()->back()->with('success', count($ids) . '개 게시물을 이동했습니다.');
+    }
+
+    public function bulkCategory(): ResponseInterface|string
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', (array) $this->request->getPost('post_ids')),
+        )));
+        $category = (new BoardCategoryModel())->find((int) $this->request->getPost('target_category_id'));
+
+        if ($ids === []) {
+            return redirect()->back()->with('error', '변경할 게시물을 선택해 주세요.');
+        }
+        if ($category === null) {
+            return redirect()->back()->with('error', '변경할 카테고리를 선택해 주세요.');
+        }
+
+        $changed = $this->postModel->changeCategory($ids, (int) $category['id'], (int) $category['board_id']);
+        $skipped = count($ids) - $changed;
+        $message = $changed . '개 게시물의 카테고리를 "' . $category['name'] . '"(으)로 변경했습니다.';
+        if ($skipped > 0) {
+            $message .= ' 다른 게시판 글 등 ' . $skipped . '개는 건너뛰었습니다.';
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 
     public function toggle(int $id): ResponseInterface|string
