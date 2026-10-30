@@ -119,19 +119,11 @@
 }
 .side-tags__all:hover { color: var(--primary); }
 
-/* ───── 아카이브: 통째로 접어 두고, 연도별로 한 번 더 접는다 ───── */
+/* ───── 카테고리·아카이브: 제목을 눌러 펼친다. 아카이브는 연도별로 한 번 더 접는다 ───── */
+.side-cats summary,
 .side-archive summary { cursor: pointer; }
 .side-archive details details summary {
     cursor: pointer;
     font-size: var(--fs-nav);
     padding: .6rem 0;
 }
-
-/* ───── 카테고리: 6개 넘는 분은 "더 보기" 로 접는다 ───── */
-.side-cats__more summary {
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: var(--fs-nav-label);
-    padding: .6rem 0;
-}
-.side-cats__more summary:hover { color: var(--primary); }
