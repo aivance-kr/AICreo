@@ -39,12 +39,23 @@ if (! empty($withCategories)) {
     <h2 class="side-cats__title">카테고리</h2>
     <?php foreach ($groups as $slug => $group): ?>
         <?php if (count($groups) > 1): ?><h3 class="side-cats__board"><?= esc($group['title']) ?></h3><?php endif; ?>
+        <?php $visibleCats = array_slice($group['categories'], 0, 6); $hiddenCats = array_slice($group['categories'], 6); ?>
         <ul class="side-cats__list">
             <li><a href="/board/<?= esc($slug) ?>">전체</a></li>
-            <?php foreach ($group['categories'] as $category): ?>
+            <?php foreach ($visibleCats as $category): ?>
             <li><a href="/board/<?= esc($slug) ?>?category=<?= esc($category['id']) ?>"><?= esc($category['name']) ?></a></li>
             <?php endforeach; ?>
         </ul>
+        <?php if ($hiddenCats !== []): ?>
+        <details class="side-cats__more">
+            <summary>더 보기 (<?= count($hiddenCats) ?>)</summary>
+            <ul class="side-cats__list">
+                <?php foreach ($hiddenCats as $category): ?>
+                <li><a href="/board/<?= esc($slug) ?>?category=<?= esc($category['id']) ?>"><?= esc($category['name']) ?></a></li>
+                <?php endforeach; ?>
+            </ul>
+        </details>
+        <?php endif; ?>
     <?php endforeach; ?>
 </nav>
 <?php endif; ?>

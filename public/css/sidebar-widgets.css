@@ -126,3 +126,12 @@
     font-size: var(--fs-nav);
     padding: .6rem 0;
 }
+
+/* ───── 카테고리: 6개 넘는 분은 "더 보기" 로 접는다 ───── */
+.side-cats__more summary {
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: var(--fs-nav-label);
+    padding: .6rem 0;
+}
+.side-cats__more summary:hover { color: var(--primary); }
