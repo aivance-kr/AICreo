@@ -60,6 +60,11 @@ $routes->post('board/series-suggest', 'Front\BoardController::seriesSuggest');
 // ─── 문의폼 ───────────────────────────────────────────────────────────────────
 $routes->post('inquiry/submit', 'Front\PageController::inquirySubmit');
 
+// ─── 뉴스레터 구독 ────────────────────────────────────────────────────────────
+$routes->post('newsletter/subscribe', 'Front\NewsletterController::subscribe');
+$routes->get('newsletter/confirm/(:segment)', 'Front\NewsletterController::confirm/$1');
+$routes->match(['get', 'post'], 'newsletter/unsubscribe/(:segment)', 'Front\NewsletterController::unsubscribe/$1');
+
 // ─── 관리자 ──────────────────────────────────────────────────────────────────
 $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): void {
     // 대시보드
@@ -171,6 +176,11 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('popups/(:num)/edit', 'Admin\PopupController::edit/$1');
     $routes->post('popups/(:num)/edit', 'Admin\PopupController::update/$1');
     $routes->post('popups/(:num)/delete', 'Admin\PopupController::delete/$1');
+
+    // 뉴스레터 구독자
+    $routes->get('subscribers', 'Admin\SubscriberController::index');
+    $routes->get('subscribers/export', 'Admin\SubscriberController::export');
+    $routes->post('subscribers/(:num)/delete', 'Admin\SubscriberController::delete/$1');
 
     // 시리즈(연재) 관리
     $routes->get('series', 'Admin\SeriesController::index');

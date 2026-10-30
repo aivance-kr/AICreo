@@ -49,6 +49,8 @@ final class AccessControlTest extends AdminTestCase
             ['admin/boards'],
             ['admin/menus'],
             ['admin/inquiries'],
+            ['admin/subscribers'],
+            ['admin/subscribers/export'],
             ['admin/users'],
             ['admin/settings'],
         ];

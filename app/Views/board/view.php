@@ -171,6 +171,11 @@ ob_start();
 </section>
 <?php endif; ?>
 
+<!-- 뉴스레터 구독 -->
+<section class="card card-body mb-4 position-relative" aria-label="뉴스레터 구독">
+    <?= view('themes/default/components/newsletter_form', ['inputId' => 'post-newsletter-email']) ?>
+</section>
+
 <!-- 댓글 -->
 <div id="comments" class="card mb-4">
     <div class="card-header bg-white">
