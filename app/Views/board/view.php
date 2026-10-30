@@ -31,35 +31,37 @@ ob_start();
     </a>
 </div>
 
-<div class="card mb-4">
-    <div class="card-header bg-white">
+<article class="post">
+    <!-- 1) 제목 블록: 제목 + 메타 한 줄 + 공유 아이콘 -->
+    <header class="post-head">
         <div class="d-flex justify-content-between align-items-start gap-3">
-            <h1 class="board-view-title fw-bold mb-1">
-                <?php if (! empty($post['category_name'])): ?><span class="badge text-bg-secondary"><?= esc($post['category_name']) ?></span> <?php endif; ?>
-                <?= esc($post['title']) ?>
-            </h1>
+            <h1 class="post-title fw-bold"><?= esc($post['title']) ?></h1>
             <div class="d-flex gap-2 flex-shrink-0">
                 <?= $postActions ?>
             </div>
         </div>
-        <?= view('board/_share', ['url' => $canonicalUrl, 'shortUrl' => $shortUrl, 'title' => $post['title'], 'kakaoJsKey' => $kakaoJsKey]) ?>
-        <?php $postTags = \App\Models\PostModel::splitTags($post['tags'] ?? null); ?>
-        <?php if ($postTags !== []): ?>
-        <div class="mb-1">
-            <span class="visually-hidden">태그</span>
-            <?php foreach ($postTags as $tag): ?><a href="/board/<?= esc($board['slug']) ?>?type=tag&amp;keyword=<?= urlencode($tag) ?>" class="badge text-bg-light border text-decoration-none">#<?= esc($tag) ?></a> <?php endforeach; ?>
+        <div class="post-meta">
+            <?php if (! empty($post['category_name'])): ?>
+            <span class="post-meta__item"><span class="visually-hidden">분류 </span><?= esc($post['category_name']) ?></span>
+            <?php endif; ?>
+            <span class="post-meta__item"><span class="visually-hidden">작성자 </span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
+            <span class="post-meta__item"><span class="visually-hidden">작성일 </span><time datetime="<?= esc(substr((string) $post['created_at'], 0, 10), 'attr') ?>"><?= esc(str_replace('-', '.', substr((string) $post['created_at'], 0, 10))) ?></time></span>
+            <span class="post-meta__item"><span class="visually-hidden">조회수 </span>조회 <?= number_format($post['views']) ?></span>
+            <?= view('board/_share', ['url' => $canonicalUrl, 'shortUrl' => $shortUrl, 'title' => $post['title'], 'kakaoJsKey' => $kakaoJsKey]) ?>
         </div>
-        <?php endif; ?>
-        <div class="d-flex gap-3 text-muted small">
-            <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span> <?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
-            <span><i class="bi bi-clock" aria-hidden="true"></i><span class="visually-hidden">작성일 </span> <?= $post['created_at'] ?></span>
-            <span><i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">조회수 </span> <?= number_format($post['views']) ?></span>
-        </div>
+    </header>
+
+    <!-- 2) 보조 영역: 시리즈 + 목차(post-toc.js 가 본문 앞에 끼워 넣어 이 영역 아래에 붙는다) -->
+    <?php if ($seriesNavs !== []): ?>
+    <div class="post-aux">
         <?php foreach ($seriesNavs as $seriesNav): ?>
         <?= view('board/_series_nav', ['seriesNav' => $seriesNav]) ?>
         <?php endforeach; ?>
     </div>
-    <div class="card-body">
+    <?php endif; ?>
+
+    <!-- 3) 본문 -->
+    <div class="post-body">
         <!-- 본문 상단 광고 -->
         <?= view('components/ad_slot', ['ads' => $postTopAds]) ?>
 
@@ -73,23 +75,34 @@ ob_start();
         </div>
         <?php endif; ?>
 
-        <!-- 공감(좋아요) -->
-        <form id="post-like" method="post" action="<?= $postBase ?>/like<?= esc($listQs, 'attr') ?>" class="text-center my-4">
-            <?= csrf_field() ?>
-            <button type="submit" class="btn <?= $liked ? 'btn-danger' : 'btn-outline-danger' ?>" aria-pressed="<?= $liked ? 'true' : 'false' ?>">
-                <i class="bi <?= $liked ? 'bi-heart-fill' : 'bi-heart' ?>" aria-hidden="true"></i>
-                공감 <span class="fw-bold"><?= number_format($likeCount) ?></span>
-            </button>
-        </form>
+        <?php $postTags = \App\Models\PostModel::splitTags($post['tags'] ?? null); ?>
+        <?php if ($postTags !== []): ?>
+        <div class="post-tags">
+            <span class="visually-hidden">태그</span>
+            <?php foreach ($postTags as $tag): ?><a href="/board/<?= esc($board['slug']) ?>?type=tag&amp;keyword=<?= urlencode($tag) ?>" class="badge text-bg-light border text-decoration-none">#<?= esc($tag) ?></a> <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+    </div>
 
-        <!-- 본문 하단 광고 -->
-        <?= view('components/ad_slot', ['ads' => $postBotAds]) ?>
+    <!-- 공감(좋아요) -->
+    <form id="post-like" method="post" action="<?= $postBase ?>/like<?= esc($listQs, 'attr') ?>" class="text-center my-4">
+        <?= csrf_field() ?>
+        <button type="submit" class="btn <?= $liked ? 'btn-danger' : 'btn-outline-danger' ?>" aria-pressed="<?= $liked ? 'true' : 'false' ?>">
+            <i class="bi <?= $liked ? 'bi-heart-fill' : 'bi-heart' ?>" aria-hidden="true"></i>
+            공감 <span class="fw-bold"><?= number_format($likeCount) ?></span>
+        </button>
+    </form>
 
+    <!-- 본문 하단 광고 -->
+    <?= view('components/ad_slot', ['ads' => $postBotAds]) ?>
+
+    <?php $images = array_filter($files, fn($f) => $f['is_image']); ?>
+    <?php $attachments = array_filter($files, fn($f) => !$f['is_image']); ?>
+    <?php if ($images || $attachments): ?>
+    <section class="post-section" aria-label="첨부">
         <!-- 이미지 첨부 -->
-        <?php $images = array_filter($files, fn($f) => $f['is_image']); ?>
         <?php if ($images): ?>
-        <hr>
-        <div class="row g-2 mt-2">
+        <div class="row g-2">
             <?php foreach ($images as $img): ?>
             <div class="col-auto">
                 <a href="/<?= esc($img['file_path']) ?>" target="_blank" rel="noopener">
@@ -103,10 +116,8 @@ ob_start();
         <?php endif; ?>
 
         <!-- 파일 첨부 -->
-        <?php $attachments = array_filter($files, fn($f) => !$f['is_image']); ?>
         <?php if ($attachments): ?>
-        <hr>
-        <div class="file-list">
+        <div class="file-list<?= $images ? ' mt-3' : '' ?>">
             <div class="text-muted small mb-1"><i class="bi bi-paperclip" aria-hidden="true"></i> 첨부파일</div>
             <?php foreach ($attachments as $file): ?>
             <div>
@@ -120,17 +131,20 @@ ob_start();
             <?php endforeach; ?>
         </div>
         <?php endif; ?>
-    </div>
+    </section>
+    <?php endif; ?>
 
     <!-- 수정/삭제 버튼 -->
-    <div class="card-footer bg-white d-flex gap-2 justify-content-end">
+    <?php if (trim($postActions) !== ''): ?>
+    <div class="post-foot d-flex gap-2 justify-content-end">
         <?= $postActions ?>
     </div>
-</div>
+    <?php endif; ?>
+</article>
 
 <?php if ($prevPost || $nextPost): ?>
 <!-- 이전글 / 다음글 -->
-<div class="card mb-4">
+<nav class="post-section post-pager" aria-label="이전·다음 글">
     <div class="list-group list-group-flush">
         <?php if ($nextPost): ?>
         <a href="/board/<?= esc($board['slug']) ?>/<?= $nextPost['id'] ?><?= esc($listQs, 'attr') ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
@@ -145,13 +159,13 @@ ob_start();
         </a>
         <?php endif; ?>
     </div>
-</div>
+</nav>
 <?php endif; ?>
 
 <?php if (! empty($relatedPosts)): ?>
 <!-- 관련 글 -->
-<section class="mb-4" aria-labelledby="related-posts-title">
-    <h2 id="related-posts-title" class="h6 mb-3">이어 읽을 글</h2>
+<section class="post-section" aria-labelledby="related-posts-title">
+    <h2 id="related-posts-title" class="post-section__title">이어 읽을 글</h2>
     <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
         <?php foreach ($relatedPosts as $related): ?>
         <div class="col">
@@ -170,13 +184,14 @@ ob_start();
 <?php endif; ?>
 
 <!-- 댓글 -->
-<div id="comments" class="card mb-4">
-    <div class="card-header bg-white">
-        <h2 class="h6 mb-0">댓글 <?= count($comments) ?>개</h2>
-    </div>
-    <div class="list-group list-group-flush">
+<section id="comments" class="post-section" aria-labelledby="comments-title">
+    <h2 id="comments-title" class="post-section__title">댓글 <span class="text-muted fw-normal"><?= count($comments) ?></span></h2>
+    <?php if ($comments === []): ?>
+    <p class="text-muted small mb-3">아직 댓글이 없습니다. 첫 댓글을 남겨 보세요.</p>
+    <?php else: ?>
+    <div class="list-group list-group-flush mb-3">
         <?php foreach ($comments as $c): ?>
-        <div class="list-group-item comment-box ps-3">
+        <div class="list-group-item comment-box px-0">
             <div class="d-flex justify-content-between">
                 <strong class="small"><?= esc($c['user_nickname'] ?? mask_name($c['author_name'])) ?></strong>
                 <div class="d-flex align-items-center gap-2">
@@ -194,47 +209,42 @@ ob_start();
         </div>
         <?php endforeach; ?>
     </div>
+    <?php endif; ?>
 
     <!-- 댓글 작성 -->
-    <div class="card-footer bg-white">
-        <form method="post" action="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/comment<?= esc($listQs, 'attr') ?>">
-            <?= csrf_field() ?>
-            <?php if (! session()->get('user_id')): ?>
-            <div class="row g-2 mb-2">
-                <div class="col-sm-3">
-                    <label class="visually-hidden" for="comment-author-name">이름</label>
-                    <input type="text" name="author_name" id="comment-author-name" class="form-control form-control-sm"
-                           placeholder="이름" required autocomplete="name">
-                </div>
-                <div class="col-sm-3">
-                    <label class="visually-hidden" for="comment-author-password">비밀번호</label>
-                    <input type="password" name="author_password" id="comment-author-password" class="form-control form-control-sm"
-                           placeholder="비밀번호" required autocomplete="new-password">
+    <form method="post" action="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/comment<?= esc($listQs, 'attr') ?>">
+        <?= csrf_field() ?>
+        <?php if (! session()->get('user_id')): ?>
+        <div class="row g-2 mb-2">
+            <div class="col-sm-4">
+                <label class="visually-hidden" for="comment-author-name">이름</label>
+                <input type="text" name="author_name" id="comment-author-name" class="form-control"
+                       placeholder="이름" required autocomplete="name">
+            </div>
+            <div class="col-sm-4">
+                <label class="visually-hidden" for="comment-author-password">비밀번호</label>
+                <input type="password" name="author_password" id="comment-author-password" class="form-control"
+                       placeholder="비밀번호" required autocomplete="new-password">
+            </div>
+            <div class="col-sm-4">
+                <label class="visually-hidden" for="comment-captcha-answer">스팸 방지 계산</label>
+                <div class="input-group">
+                    <span class="input-group-text" aria-hidden="true"><?= esc($guestCommentCaptcha['question']) ?></span>
+                    <input type="text" inputmode="numeric" name="captcha_answer" id="comment-captcha-answer" class="form-control"
+                           placeholder="답" required autocomplete="off" aria-label="스팸 방지 계산 답">
                 </div>
             </div>
-            <div class="row g-2 mb-2">
-                <div class="col-sm-3">
-                    <label class="visually-hidden" for="comment-captcha-answer">스팸 방지 계산</label>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text" aria-hidden="true"><?= esc($guestCommentCaptcha['question']) ?></span>
-                        <input type="text" inputmode="numeric" name="captcha_answer" id="comment-captcha-answer" class="form-control"
-                               placeholder="답" required autocomplete="off" aria-label="스팸 방지 계산 답">
-                    </div>
-                </div>
-                <div class="visually-hidden" aria-hidden="true">
-                    <label for="comment-website">웹사이트</label>
-                    <input type="text" name="website" id="comment-website" tabindex="-1" autocomplete="off">
-                </div>
+            <div class="visually-hidden" aria-hidden="true">
+                <label for="comment-website">웹사이트</label>
+                <input type="text" name="website" id="comment-website" tabindex="-1" autocomplete="off">
             </div>
-            <?php endif; ?>
-            <div class="d-flex gap-2">
-                <label class="visually-hidden" for="comment-content">댓글 내용</label>
-                <textarea name="content" id="comment-content" class="form-control form-control-sm" rows="2" placeholder="댓글을 입력하세요" required></textarea>
-                <button class="btn btn-primary btn-sm px-3">등록</button>
-            </div>
-        </form>
-    </div>
-</div>
+        </div>
+        <?php endif; ?>
+        <label class="visually-hidden" for="comment-content">댓글 내용</label>
+        <textarea name="content" id="comment-content" class="form-control mb-2" rows="3" placeholder="댓글을 입력하세요" required></textarea>
+        <div class="text-end"><button class="btn btn-primary px-4">댓글 등록</button></div>
+    </form>
+</section>
 
 <!-- 비회원 수정/삭제 모달 -->
 <div class="modal fade" id="guestModal" tabindex="-1" aria-labelledby="guestModalLabel" aria-hidden="true">
