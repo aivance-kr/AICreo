@@ -462,6 +462,20 @@ final class BoardControllerTest extends FeatureTestCase
         $this->assertStringContainsString("/board/free/{$otherB}", $all);
     }
 
+    public function testViewKeepsCategoryAndPageInListEditAndFormLinks(): void
+    {
+        $boardId = $this->boardId('free');
+        $catId   = (int) (new BoardCategoryModel())->insert(['board_id' => $boardId, 'slug' => 'cat-q', 'name' => '큐'], true);
+        $postId  = (int) (new PostModel())->insert(['board_id' => $boardId, 'title' => '유지 글', 'content' => '본문', 'is_notice' => 0, 'category_id' => $catId]);
+
+        $html = html_entity_decode((string) $this->get("board/free/{$postId}?category={$catId}&page=3")->getBody(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $qs   = "?category={$catId}&page=3";
+
+        $this->assertStringContainsString('href="/board/free' . $qs . '"', $html);
+        $this->assertStringContainsString("/board/free/{$postId}/comment{$qs}", $html);
+        $this->assertStringContainsString("/board/free/{$postId}/like{$qs}", $html);
+    }
+
     public function testViewHidesPrevNextBlockWhenNoAdjacentPosts(): void
     {
         $postModel = new PostModel();

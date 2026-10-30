@@ -3,7 +3,7 @@
 
 <div class="container py-4">
 <div class="mb-2">
-    <a href="/board/<?= esc($board['slug']) ?>" class="text-decoration-none text-muted small">
+    <a href="/board/<?= esc($board['slug']) ?><?= esc($listQs, 'attr') ?>" class="text-decoration-none text-muted small">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= esc($board['name']) ?> 목록
     </a>
 </div>
@@ -20,7 +20,7 @@
         <?php endif; ?>
 
         <form method="post"
-              action="<?= $post ? "/board/{$board['slug']}/{$post['id']}/edit" : "/board/{$board['slug']}/write" ?>"
+              action="<?= $post ? "/board/{$board['slug']}/{$post['id']}/edit" . esc($listQs, 'attr') : "/board/{$board['slug']}/write" ?>"
               enctype="multipart/form-data"
               data-autosave-key="post-draft:<?= esc($board['slug'], 'attr') ?>:<?= $post ? (int) $post['id'] : 'new' ?>"
               data-autosave-edit="<?= $post ? '1' : '0' ?>">
@@ -202,7 +202,7 @@
             <?php endif; ?>
 
             <div class="d-flex gap-2 justify-content-end">
-                <a href="/board/<?= esc($board['slug']) ?>" class="btn btn-outline-secondary btn-sm">취소</a>
+                <a href="/board/<?= esc($board['slug']) ?><?= esc($listQs, 'attr') ?>" class="btn btn-outline-secondary btn-sm">취소</a>
                 <button type="submit" class="btn btn-primary btn-sm"><?= $post ? '수정 완료' : '등록' ?></button>
             </div>
         </form>
