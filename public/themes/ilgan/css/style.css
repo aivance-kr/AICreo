@@ -3,13 +3,18 @@ body {
     --primary: #c8201a;            /* 흰 배경 대비 5.9:1 */
     --bs-primary: var(--primary);
     --bs-primary-rgb: 200, 32, 26;
-    --focus-ring-color: #c8201a;
+    --focus-ring-color: var(--primary);
     --text-strong: #14161a;
     --text-body: #272a30;
     --text-muted: #555b66;         /* 흰 배경 7:1 */
     --border-subtle: #d9dce1;
     --border-hairline: #e8eaee;
     --il-serif: 'Noto Serif KR', 'Nanum Myeongjo', serif;
+    --il-tint: #f4f5f7;            /* 광고·보조 면 */
+    /* 신문 지면 = 직각. Bootstrap 컴포넌트(버튼·입력·알림·배지)의 둥근 모서리도 함께 거둔다 */
+    --bs-border-radius: 0;
+    --bs-border-radius-sm: 0;
+    --bs-border-radius-lg: 0;
     background: var(--surface-raised);
     color: var(--text-body);
     font-family: var(--font-sans);
@@ -72,9 +77,8 @@ a { color: inherit; }
    "광고" 라벨은 항상 보이게 두고(애드센스: 광고와 콘텐츠 구분), 슬롯별 최소 높이를 예약해
    광고가 늦게 로드돼도 본문이 밀리지 않게 한다(CLS). 채워지지 않은 슬롯은 접는다. */
 .ad-unit {
-    background: #f4f5f7;
-    border: 1px solid #d9dce1;
-    border-radius: 0;
+    background: var(--il-tint);
+    border: 1px solid var(--border-subtle);
     clear: both;
     margin: 1.75rem 0;
     min-height: 110px;
@@ -98,7 +102,7 @@ a { color: inherit; }
 /* ───── 사이드바 카테고리 ───── */
 .side-cats { margin-top: 2rem; }
 .side-cats__title {
-    border-bottom: 2px solid #14161a;
+    border-bottom: 2px solid var(--text-strong);
     color: var(--text-strong);
     font-size: var(--fs-nav-label);
     font-weight: 700;
@@ -117,6 +121,16 @@ a { color: inherit; }
     text-decoration: none;
 }
 .side-cats__list a:hover { color: var(--primary); }
+
+/* ───── 사이드바 위젯 — 공용(sidebar-widgets.css)의 알약·그림자를 직각·잉크 선으로 덮어쓴다 ───── */
+.side-popular__periods { background: none; border: 0; border-bottom: 1px solid var(--border-subtle); border-radius: 0; gap: 1rem; padding: 0; }
+.side-popular__periods a { border-radius: 0; flex: 0 0 auto; padding: .4rem 0; }
+.side-popular__periods a[aria-current="true"] { background: none; box-shadow: inset 0 -2px 0 var(--primary); color: var(--primary); }
+.side-popular__list a::before { color: var(--text-strong); font-family: var(--il-serif); font-weight: 900; }
+.side-popular__list li:nth-child(-n+3) a::before { color: var(--primary); }
+.side-tags__cloud a { background: none; border-radius: 0; }
+.side-tags__cloud [data-level="4"] { border-color: var(--text-strong); }
+.series-nav { border-radius: 0; }
 
 /* ───── 푸터 정보 블록 ───── */
 .site-footer__desc { margin: 0 0 .75rem; }
