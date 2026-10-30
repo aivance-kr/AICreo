@@ -86,17 +86,22 @@ final class NewsletterMailer
             $email->setHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
 
             if (! $email->send(false)) {
-                log_message('error', '[Newsletter] 발송 실패 to=' . $to);
+                log_message('error', '[Newsletter] 발송 실패 to=' . self::mask($to));
 
                 return false;
             }
 
             return true;
         } catch (Throwable $e) {
-            log_message('error', '[Newsletter] 발송 예외 to=' . $to . ' ' . $e->getMessage());
+            log_message('error', '[Newsletter] 발송 예외 to=' . self::mask($to) . ' ' . $e::class);
 
             return false;
         }
+    }
+
+    private static function mask(string $email): string
+    {
+        return (string) preg_replace('/^(.).*(@.*)$/u', '$1***$2', $email);
     }
 
     private function siteName(): string

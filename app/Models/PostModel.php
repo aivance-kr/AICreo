@@ -420,7 +420,7 @@ class PostModel extends Model
 
     /**
      * 글이 공개 상태가 되면 뉴스레터 발송 큐에 올린다(글당 한 번 — 표식은 enqueuePost 가 관리).
-     * 예약·숨김·비밀글·비공개 게시판 글은 공개될 때까지 대상이 아니다. 실제 발송은 newsletter:send 가 한다.
+     * 예약·숨김·비밀글·비공개 게시판 글은 공개될 때까지 대상이 아니고, 회원·비회원이 쓸 수 있는 게시판 글은 구독자에게 메일을 보내는 통로가 되지 않도록 제외한다. 실제 발송은 newsletter:send 가 한다.
      *
      * @param array<string, mixed> $data
      *
@@ -438,7 +438,7 @@ class PostModel extends Model
             ->whereIn('p.id', $ids)
             ->where('p.newsletter_enqueued_at IS NULL')
             ->where('p.is_active', 1)->where('p.is_secret', 0)->where('p.deleted_at IS NULL')
-            ->where('b.is_active', 1)->where('b.read_permission', 'guest')
+            ->where('b.is_active', 1)->where('b.read_permission', 'guest')->where('b.write_permission', 'admin')
             ->get()->getResultArray();
 
         $subscribers = new SubscriberModel();

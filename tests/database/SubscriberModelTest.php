@@ -157,6 +157,16 @@ final class SubscriberModelTest extends DatabaseTestCase
         $this->assertSame(0, $this->deliveryCount());
     }
 
+    public function testPostOnMemberWritableBoardIsNotQueued(): void
+    {
+        $this->confirmedSubscriber('ok@example.com');
+        $this->db->table('boards')->where('id', $this->boardId)->update(['write_permission' => 'member']);
+
+        $this->makePost();
+
+        $this->assertSame(0, $this->deliveryCount());
+    }
+
     public function testScheduledPostIsQueuedWhenPublishDueRuns(): void
     {
         $this->confirmedSubscriber('ok@example.com');
