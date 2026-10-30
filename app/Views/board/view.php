@@ -26,7 +26,7 @@ ob_start();
 <?php $postActions = ob_get_clean(); ?>
 
 <div class="mb-2">
-    <a href="/board/<?= esc($board['slug']) ?>" class="text-decoration-none text-muted small">
+    <a href="/board/<?= esc($board['slug']) ?><?= $currentCategory ? '?category=' . $currentCategory : '' ?>" class="text-decoration-none text-muted small">
         <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= esc($board['name']) ?> 목록
     </a>
 </div>
