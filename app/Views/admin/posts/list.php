@@ -16,6 +16,20 @@
         </select>
     </div>
     <div class="col-auto">
+        <label class="visually-hidden" for="post-category">카테고리 필터</label>
+        <select name="category_id" id="post-category" class="form-select form-select-sm">
+            <option value="">전체 카테고리</option>
+            <?php foreach ($boards as $b): ?>
+            <?php if (empty($categoriesByBoard[(int) $b['id']])): continue; endif; ?>
+            <optgroup label="<?= esc($b['name']) ?>">
+                <?php foreach ($categoriesByBoard[(int) $b['id']] as $c): ?>
+                <option value="<?= $c['id'] ?>" <?= $categoryId === (int) $c['id'] ? 'selected' : '' ?>><?= esc($c['name']) ?></option>
+                <?php endforeach; ?>
+            </optgroup>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="col-auto">
         <label class="visually-hidden" for="post-search">제목 또는 작성자 검색</label>
         <input type="text" name="q" id="post-search" class="form-control form-control-sm" placeholder="제목 / 작성자 검색"
                value="<?= esc($keyword) ?>">
@@ -47,6 +61,29 @@
     <div class="col-auto text-muted small">이동 시 카테고리는 해제됩니다.</div>
 </form>
 
+<form method="post" action="/admin/posts/bulk-category" id="bulk-category-form" class="row g-2 mb-3 align-items-center"
+      onsubmit="return bulkCategoryConfirm(this)">
+    <?= csrf_field() ?>
+    <div class="col-auto">
+        <label class="visually-hidden" for="bulk-target-category">변경할 카테고리</label>
+        <select name="target_category_id" id="bulk-target-category" class="form-select form-select-sm" required>
+            <option value="">변경할 카테고리 선택</option>
+            <?php foreach ($boards as $b): ?>
+            <?php if (empty($categoriesByBoard[(int) $b['id']])): continue; endif; ?>
+            <optgroup label="<?= esc($b['name']) ?>">
+                <?php foreach ($categoriesByBoard[(int) $b['id']] as $c): ?>
+                <option value="<?= $c['id'] ?>"><?= esc($c['name']) ?></option>
+                <?php endforeach; ?>
+            </optgroup>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">선택 게시물 카테고리 변경</button>
+    </div>
+    <div class="col-auto text-muted small">선택한 카테고리가 속한 게시판의 글만 바뀝니다.</div>
+</form>
+
 <div class="card">
     <div class="table-responsive">
         <table class="table table-hover mb-0 table-stack">
@@ -57,6 +94,7 @@
                     </th>
                     <th scope="col">ID</th>
                     <th scope="col">게시판</th>
+                    <th scope="col">카테고리</th>
                     <th scope="col">제목</th>
                     <th scope="col">작성자</th>
                     <th scope="col">조회</th>
@@ -67,7 +105,7 @@
             </thead>
             <tbody>
                 <?php if (empty($posts)): ?>
-                <tr><td colspan="9" class="text-center text-muted py-4">게시물이 없습니다.</td></tr>
+                <tr><td colspan="10" class="text-center text-muted py-4">게시물이 없습니다.</td></tr>
                 <?php endif; ?>
                 <?php foreach ($posts as $p): ?>
                 <tr>
@@ -77,6 +115,7 @@
                     </td>
                     <td data-label="ID" class="text-muted small"><?= $p['id'] ?></td>
                     <td data-label="게시판"><span class="badge bg-light text-dark border"><?= esc($p['board_name']) ?></span></td>
+                    <td data-label="카테고리" class="small"><?= esc($p['category_name'] ?? '-') ?></td>
                     <td data-label="제목">
                         <?php if ($p['is_notice']): ?>
                             <span class="badge bg-warning text-dark me-1">공지</span>
@@ -125,7 +164,7 @@
 <nav class="mt-3">
     <ul class="pagination pagination-sm justify-content-center">
         <?php
-        $qs = http_build_query(array_filter(['q' => $keyword, 'board_id' => $boardId ?: '']));
+        $qs = http_build_query(array_filter(['q' => $keyword, 'board_id' => $boardId ?: '', 'category_id' => $categoryId ?: '']));
         $qs = $qs ? '&' . $qs : '';
         // 현재 페이지가 속한 10개 단위 블록만 노출
         $blockSize  = 10;
@@ -160,6 +199,19 @@ function bulkMoveConfirm(form) {
     if (n === 0) { alert('이동할 게시물을 선택해 주세요.'); return false; }
     var sel = form.target_board_id;
     return confirm(n + '개 게시물을 "' + sel.options[sel.selectedIndex].text + '" 게시판으로 이동할까요?');
+}
+function bulkCategoryConfirm(form) {
+    var checked = document.querySelectorAll('.bulk-check:checked');
+    if (checked.length === 0) { alert('변경할 게시물을 선택해 주세요.'); return false; }
+    // 선택한 글 ID 를 이 폼에도 실어 보낸다(체크박스는 이동 폼에 연결돼 있음).
+    form.querySelectorAll('input[name="post_ids[]"]').forEach(function (i) { i.remove(); });
+    checked.forEach(function (c) {
+        var h = document.createElement('input');
+        h.type = 'hidden'; h.name = 'post_ids[]'; h.value = c.value;
+        form.appendChild(h);
+    });
+    var sel = form.target_category_id;
+    return confirm(checked.length + '개 게시물의 카테고리를 "' + sel.options[sel.selectedIndex].text + '"(으)로 변경할까요?');
 }
 </script>
 
