@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" role="img" aria-labelledby="t d">
+  <title id="t">CI4를 기본 도구로 쓰는 이유</title>
+  <desc id="d">중심의 CodeIgniter 4 아래에 이해 가능한 구조, 가벼운 의존성, 내장 도구, 빠른 납품, 장기 유지보수 다섯 가지 이유가 연결된 다이어그램</desc>
+  <rect width="960" height="420" fill="#f7f8fa"/>
+  <g stroke="#9aa5b1" stroke-width="2" fill="none">
+    <path d="M480 190 L150 120"/><path d="M480 190 L480 100"/><path d="M480 190 L810 120"/>
+    <path d="M480 230 L270 320"/><path d="M480 230 L690 320"/>
+  </g>
+  <rect x="380" y="170" width="200" height="80" rx="14" fill="#dd4814"/>
+  <text x="480" y="208" text-anchor="middle" font-family="sans-serif" font-size="26" font-weight="700" fill="#fff">CodeIgniter 4</text>
+  <text x="480" y="234" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#ffe3da">나의 기본 도구</text>
+  <g font-family="sans-serif" text-anchor="middle">
+    <rect x="40" y="80" width="220" height="80" rx="12" fill="#fff" stroke="#c5ccd4"/>
+    <text x="150" y="115" font-size="18" font-weight="700" fill="#222">한눈에 읽히는 구조</text>
+    <text x="150" y="140" font-size="14" fill="#555">요청 → 필터 → 컨트롤러 → 모델</text>
+    <rect x="370" y="20" width="220" height="80" rx="12" fill="#fff" stroke="#c5ccd4"/>
+    <text x="480" y="55" font-size="18" font-weight="700" fill="#222">가벼운 의존성</text>
+    <text x="480" y="80" font-size="14" fill="#555">composer 한 번이면 끝</text>
+    <rect x="700" y="80" width="220" height="80" rx="12" fill="#fff" stroke="#c5ccd4"/>
+    <text x="810" y="115" font-size="18" font-weight="700" fill="#222">필요한 건 다 내장</text>
+    <text x="810" y="140" font-size="14" fill="#555">spark · 마이그레이션 · 캐시</text>
+    <rect x="160" y="300" width="220" height="80" rx="12" fill="#fff" stroke="#c5ccd4"/>
+    <text x="270" y="335" font-size="18" font-weight="700" fill="#222">빠른 납품</text>
+    <text x="270" y="360" font-size="14" fill="#555">단순 홈페이지 3~5일</text>
+    <rect x="580" y="300" width="220" height="80" rx="12" fill="#fff" stroke="#c5ccd4"/>
+    <text x="690" y="335" font-size="18" font-weight="700" fill="#222">오래 가는 유지보수</text>
+    <text x="690" y="360" font-size="14" fill="#555">내가 다 아는 코드</text>
+  </g>
+</svg>
