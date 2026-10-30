@@ -698,16 +698,44 @@ class PostModel extends Model
     }
 
     /**
+     * 게시물의 카테고리를 일괄 변경한다. 카테고리는 게시판별이므로 해당 게시판의 글만 바꾸고 나머지는 건너뛴다.
+     * update() 경유로 afterUpdate 훅(SEO·관련 글·시리즈 캐시)이 실행된다.
+     *
+     * @param list<int> $ids
+     *
+     * @return int 변경한 글 수
+     */
+    public function changeCategory(array $ids, int $categoryId, int $boardId): int
+    {
+        $targets = array_map('intval', array_column(
+            $this->select('id')->whereIn('id', $ids)->where('board_id', $boardId)->findAll(),
+            'id',
+        ));
+
+        if ($targets === []) {
+            return 0;
+        }
+
+        $this->update($targets, ['category_id' => $categoryId]);
+
+        return count($targets);
+    }
+
+    /**
      * @return array{posts: list<array<string, mixed>>, total: int}
      */
-    public function getAdminList(int $page, int $perPage, string $keyword = '', int $boardId = 0): array
+    public function getAdminList(int $page, int $perPage, string $keyword = '', int $boardId = 0, int $categoryId = 0): array
     {
-        $builder = $this->select('posts.*, boards.name as board_name, boards.slug as board_slug, users.nickname as user_nickname')
+        $builder = $this->select('posts.*, boards.name as board_name, boards.slug as board_slug, board_categories.name as category_name, users.nickname as user_nickname')
             ->join('boards', 'boards.id = posts.board_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->join('users', 'users.id = posts.user_id', 'left');
 
         if ($boardId > 0) {
             $builder->where('posts.board_id', $boardId);
+        }
+        if ($categoryId > 0) {
+            $builder->where('posts.category_id', $categoryId);
         }
         if ($keyword !== '') {
             $builder->groupStart()
