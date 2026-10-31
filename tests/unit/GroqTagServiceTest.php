@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use App\Libraries\Ai\GroqRateLimitedException;
 use App\Libraries\Ai\GroqTagService;
 use CodeIgniter\Test\CIUnitTestCase;
 use RuntimeException;
@@ -93,6 +94,23 @@ final class GroqTagServiceTest extends CIUnitTestCase
         $svc = new GroqTagService('k', null, static fn (): string => throw new RuntimeException('timeout'));
 
         $this->assertSame([], $svc->extract('제목', '본문'));
+    }
+
+    public function testRateLimitExposesRetryAfter(): void
+    {
+        $svc = new GroqTagService('k', null, static fn (): string => throw new GroqRateLimitedException(7));
+
+        $this->assertSame([], $svc->extract('제목', '본문'));
+        $this->assertSame('HTTP 429', $svc->lastError());
+        $this->assertSame(7, $svc->retryAfter());
+
+        $noHeader = new GroqTagService('k', null, static fn (): string => throw new GroqRateLimitedException());
+        $noHeader->extract('제목', '본문');
+        $this->assertSame(0, $noHeader->retryAfter());
+
+        $ok = new GroqTagService('k', null, fn (): string => $this->reply('{"tags":["a"]}'));
+        $ok->extract('제목', '본문');
+        $this->assertNull($ok->retryAfter());
     }
 
     public function testMalformedReplyReturnsEmpty(): void

@@ -16,6 +16,9 @@ use CodeIgniter\CLI\CLI;
 class GeneratePostTagsCommand extends BaseCommand
 {
     private const MAX_CONSECUTIVE_FAILURES = 5;
+    private const MAX_RATE_LIMIT_RETRIES   = 3;
+    private const DEFAULT_RETRY_WAIT       = 20; // Retry-After 가 없을 때(초)
+    private const MAX_RETRY_WAIT           = 120; // 이보다 길면 분·일 단위 한도 소진으로 보고 중단(초)
 
     protected $group       = 'Blog';
     protected $name        = 'posts:generate-tags';
@@ -69,7 +72,24 @@ class GeneratePostTagsCommand extends BaseCommand
         $done = $failed = $streak = 0;
 
         foreach ($rows as $row) {
-            $tags = PostModel::normalizeTags(implode(',', $service->extract((string) $row['title'], (string) $row['content'])));
+            $tags = null;
+
+            for ($attempt = 0; $attempt <= self::MAX_RATE_LIMIT_RETRIES; $attempt++) {
+                $tags = PostModel::normalizeTags(implode(',', $service->extract((string) $row['title'], (string) $row['content'])));
+                $wait = $service->retryAfter();
+                if ($tags !== null || $wait === null || $attempt === self::MAX_RATE_LIMIT_RETRIES) {
+                    break;
+                }
+                // 429: 한도가 풀릴 때까지 기다렸다가 같은 글을 다시 시도한다. 너무 오래 걸리면(일일 한도 등) 중단.
+                $wait = $wait > 0 ? $wait : self::DEFAULT_RETRY_WAIT;
+                if ($wait > self::MAX_RETRY_WAIT) {
+                    CLI::error(sprintf('Groq 호출 한도 소진(%d초 후 재시도 가능). 한도가 풀린 뒤 다시 실행하세요.', $wait));
+
+                    break 2;
+                }
+                CLI::write(sprintf('#%d 호출 한도(429) — %d초 대기 후 재시도 (%d/%d)', $row['id'], $wait, $attempt + 1, self::MAX_RATE_LIMIT_RETRIES), 'yellow');
+                sleep($wait);
+            }
 
             if ($tags === null) {
                 $failed++;
