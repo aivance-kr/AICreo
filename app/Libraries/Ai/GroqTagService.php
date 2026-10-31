@@ -31,6 +31,11 @@ class GroqTagService
     private ?string $lastError = null;
 
     /**
+     * 마지막 extract() 가 429 로 실패했을 때만 값이 있다(Retry-After 초, 헤더가 없으면 0). 아니면 null.
+     */
+    private ?int $retryAfter = null;
+
+    /**
      * @var Closure(string, array<string, mixed>): string|null 테스트용 HTTP 대체 (url, curlrequest 옵션 → 응답 본문)
      */
     private ?Closure $http;
@@ -52,6 +57,11 @@ class GroqTagService
         return $this->lastError;
     }
 
+    public function retryAfter(): ?int
+    {
+        return $this->retryAfter;
+    }
+
     /**
      * 제목·본문(HTML)에서 태그 최대 5개를 뽑는다. 실패 시 빈 배열.
      *
@@ -59,7 +69,8 @@ class GroqTagService
      */
     public function extract(string $title, string $contentHtml): array
     {
-        $this->lastError = null;
+        $this->lastError  = null;
+        $this->retryAfter = null;
 
         $title = mb_substr(trim($title), 0, self::MAX_TITLE_LEN);
         $text  = $this->plainText($contentHtml);
@@ -93,6 +104,12 @@ class GroqTagService
             $body = $this->http !== null
                 ? ($this->http)(self::ENDPOINT, $options)
                 : $this->post($options);
+        } catch (GroqRateLimitedException $e) {
+            $this->lastError  = 'HTTP 429';
+            $this->retryAfter = $e->retryAfter ?? 0;
+            log_message('error', 'Groq 태그 추출 HTTP 429 (Retry-After ' . ($e->retryAfter ?? '없음') . ')');
+
+            return [];
         } catch (Throwable $e) {
             $this->lastError = '호출 예외: ' . mb_substr($e->getMessage(), 0, 120);
             log_message('error', 'Groq 태그 추출 실패: ' . $e->getMessage());
@@ -109,6 +126,11 @@ class GroqTagService
     private function post(array $options): string
     {
         $response = service('curlrequest')->post(self::ENDPOINT, $options);
+        if ($response->getStatusCode() === 429) {
+            $header = $response->getHeaderLine('Retry-After');
+
+            throw new GroqRateLimitedException(ctype_digit($header) ? (int) $header : null);
+        }
         if ($response->getStatusCode() !== 200) {
             $this->lastError = 'HTTP ' . $response->getStatusCode();
             log_message('error', 'Groq 태그 추출 HTTP ' . $response->getStatusCode() . ' ' . mb_substr($response->getBody(), 0, 300));
