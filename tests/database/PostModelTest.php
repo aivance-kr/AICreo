@@ -364,6 +364,31 @@ final class PostModelTest extends DatabaseTestCase
         $this->assertSame([$byCategory], array_column($this->model->getRelated($current), 'id'));
     }
 
+    public function testGetRelatedUsesTitleSimilarityWhenNoTagsOrCategory(): void
+    {
+        cache()->clean();
+        $current = $this->makePost(['title' => '라라벨 큐 워커 운영 가이드']);
+        $similar = $this->makePost(['title' => '라라벨 큐 장애 대응']);
+        $this->makePost(['title' => '맛집 탐방기']);
+        $this->makePost(['title' => '최신 무관한 글']);
+
+        $this->assertSame([$similar], array_column($this->model->getRelated($current), 'id'));
+    }
+
+    public function testSetTagsSilentlySavesTagsAndInvalidatesRelatedCache(): void
+    {
+        cache()->clean();
+        $current = $this->makePost(['title' => '현재', 'tags' => 'php']);
+        $target  = $this->makePost(['title' => '태그없음']);
+        $this->assertSame([], $this->model->getRelated($current));
+
+        $this->assertTrue($this->model->setTagsSilently($target, 'php,ci4'));
+        $this->model->clearTaggingCaches();
+
+        $this->assertSame('php,ci4', $this->model->find($target)['tags']);
+        $this->assertSame([$target], array_column($this->model->getRelated($current), 'id'));
+    }
+
     public function testGetRelatedIsEmptyWithoutTagsOrCategory(): void
     {
         cache()->clean();
