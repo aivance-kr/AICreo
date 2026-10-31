@@ -34,6 +34,43 @@ final class GroqTagServiceTest extends CIUnitTestCase
         $this->assertSame(['PHP', '코드이그나이터', 'a b', 'c', 'd'], $svc->extract('제목', '<p>본문</p>'));
     }
 
+    public function testReportsReasonWhenNoTagsCouldBeExtracted(): void
+    {
+        $disabled = new GroqTagService('', null, static fn (): string => throw new RuntimeException('호출되면 안 됨'));
+        $disabled->extract('제목', '<p>본문</p>');
+        $this->assertSame('GROQ_API_KEY 미설정', $disabled->lastError());
+
+        $emptyTags = new GroqTagService('k', 'm', fn (): string => $this->reply('{"tags":[]}'));
+        $this->assertSame([], $emptyTags->extract('제목', '<p>본문</p>'));
+        $this->assertSame('모델이 태그를 하나도 돌려주지 않음', $emptyTags->lastError());
+
+        $badContent = new GroqTagService('k', 'm', fn (): string => $this->reply('태그는 없습니다'));
+        $this->assertSame([], $badContent->extract('제목', '<p>본문</p>'));
+        $this->assertSame('content 가 {"tags":[...]} 형식이 아님', $badContent->lastError());
+
+        $notJson = new GroqTagService('k', 'm', static fn (): string => 'oops');
+        $this->assertSame([], $notJson->extract('제목', '<p>본문</p>'));
+        $this->assertSame('응답이 JSON 이 아님', $notJson->lastError());
+
+        $thrown = new GroqTagService('k', 'm', static fn (): string => throw new RuntimeException('시간 초과'));
+        $this->assertSame([], $thrown->extract('제목', '<p>본문</p>'));
+        $this->assertSame('호출 예외: 시간 초과', $thrown->lastError());
+    }
+
+    public function testLastErrorIsClearedAfterSuccess(): void
+    {
+        $replies = ['{"tags":[]}', '{"tags":["PHP"]}'];
+        $svc     = new GroqTagService('k', 'm', function () use (&$replies): string {
+            return $this->reply((string) array_shift($replies));
+        });
+
+        $svc->extract('제목', '<p>본문</p>');
+        $this->assertNotNull($svc->lastError());
+
+        $this->assertSame(['PHP'], $svc->extract('제목', '<p>본문</p>'));
+        $this->assertNull($svc->lastError());
+    }
+
     public function testSendsPlainTextAndAuthHeader(): void
     {
         $captured = [];

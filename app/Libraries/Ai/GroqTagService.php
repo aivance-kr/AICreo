@@ -26,6 +26,11 @@ class GroqTagService
     private string $model;
 
     /**
+     * 마지막 extract() 가 태그를 못 뽑은 이유(성공이면 null). 일괄 태깅 등에서 실패 사유를 보여 주는 용도.
+     */
+    private ?string $lastError = null;
+
+    /**
      * @var Closure(string, array<string, mixed>): string|null 테스트용 HTTP 대체 (url, curlrequest 옵션 → 응답 본문)
      */
     private ?Closure $http;
@@ -42,6 +47,11 @@ class GroqTagService
         return $this->apiKey !== '';
     }
 
+    public function lastError(): ?string
+    {
+        return $this->lastError;
+    }
+
     /**
      * 제목·본문(HTML)에서 태그 최대 5개를 뽑는다. 실패 시 빈 배열.
      *
@@ -49,9 +59,13 @@ class GroqTagService
      */
     public function extract(string $title, string $contentHtml): array
     {
+        $this->lastError = null;
+
         $title = mb_substr(trim($title), 0, self::MAX_TITLE_LEN);
         $text  = $this->plainText($contentHtml);
         if (! $this->isEnabled() || ($title === '' && $text === '')) {
+            $this->lastError = $this->isEnabled() ? '제목·본문이 비어 있음' : 'GROQ_API_KEY 미설정';
+
             return [];
         }
 
@@ -80,6 +94,7 @@ class GroqTagService
                 ? ($this->http)(self::ENDPOINT, $options)
                 : $this->post($options);
         } catch (Throwable $e) {
+            $this->lastError = '호출 예외: ' . mb_substr($e->getMessage(), 0, 120);
             log_message('error', 'Groq 태그 추출 실패: ' . $e->getMessage());
 
             return [];
@@ -95,6 +110,7 @@ class GroqTagService
     {
         $response = service('curlrequest')->post(self::ENDPOINT, $options);
         if ($response->getStatusCode() !== 200) {
+            $this->lastError = 'HTTP ' . $response->getStatusCode();
             log_message('error', 'Groq 태그 추출 HTTP ' . $response->getStatusCode() . ' ' . mb_substr($response->getBody(), 0, 300));
 
             return '';
@@ -108,9 +124,23 @@ class GroqTagService
      */
     private function parseTags(string $body): array
     {
-        $reply = json_decode($body, true)['choices'][0]['message']['content'] ?? null;
-        $tags  = is_string($reply) ? (json_decode($reply, true)['tags'] ?? null) : null;
+        if ($body === '') {
+            return []; // HTTP 오류는 post() 가 사유를 이미 남겼다.
+        }
+
+        $decoded = json_decode($body, true);
+        $reply   = is_array($decoded) ? ($decoded['choices'][0]['message']['content'] ?? null) : null;
+        $tags    = is_string($reply) ? (json_decode($reply, true)['tags'] ?? null) : null;
         if (! is_array($tags)) {
+            if (! is_array($decoded)) {
+                $this->lastError = '응답이 JSON 이 아님';
+            } elseif (! is_string($reply)) {
+                $this->lastError = '응답에 content 없음';
+            } else {
+                $this->lastError = 'content 가 {"tags":[...]} 형식이 아님';
+            }
+            log_message('error', 'Groq 태그 추출 응답 이상(' . $this->lastError . '): ' . mb_substr($body, 0, 300));
+
             return [];
         }
 
@@ -130,6 +160,10 @@ class GroqTagService
             if (count($result) === self::MAX_TAGS) {
                 break;
             }
+        }
+
+        if ($result === []) {
+            $this->lastError = '모델이 태그를 하나도 돌려주지 않음';
         }
 
         return array_values($result);
