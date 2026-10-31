@@ -60,7 +60,9 @@ final class GroqTagServiceTest extends CIUnitTestCase
     public function testLastErrorIsClearedAfterSuccess(): void
     {
         $replies = ['{"tags":[]}', '{"tags":["PHP"]}'];
-        $svc     = new GroqTagService('k', 'm', fn (): string => $this->reply((string) array_shift($replies)));
+        $svc     = new GroqTagService('k', 'm', function () use (&$replies): string {
+            return $this->reply((string) array_shift($replies));
+        });
 
         $svc->extract('제목', '<p>본문</p>');
         $this->assertNotNull($svc->lastError());
