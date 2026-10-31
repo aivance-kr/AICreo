@@ -463,6 +463,25 @@ class PostModel extends Model
     }
 
     /**
+     * 일괄 태깅용 — 글의 태그만 모델 콜백(뉴스레터 큐 적재 등) 없이 저장한다. updated_at 도 건드리지 않는다.
+     * 모델 update() 를 쓰면 옛 글이 뉴스레터 발송 대상으로 올라갈 수 있다. 끝나면 clearTaggingCaches() 를 한 번 호출한다.
+     */
+    public function setTagsSilently(int $postId, string $tags): bool
+    {
+        return $this->db->table($this->table)->where('id', $postId)->update(['tags' => $tags]);
+    }
+
+    /**
+     * 태그가 바뀐 뒤 관련 글·태그 집계·RSS·sitemap 캐시를 한꺼번에 무효화한다.
+     */
+    public function clearTaggingCaches(): void
+    {
+        $this->clearRelatedCache([]);
+        $this->clearTagCountsCache([]);
+        $this->clearSeoCache([]);
+    }
+
+    /**
      * 저장된 태그 문자열을 배열로 푼다.
      *
      * @return list<string>
