@@ -338,6 +338,7 @@ class PostModel extends Model
         $currentGrams = self::titleGrams((string) $current['title']);
 
         $matches = [];
+
         foreach (self::splitTags($current['tags']) as $tag) {
             $matches[] = 'FIND_IN_SET(' . $this->db->escape($tag) . ', posts.tags) > 0';
         }
@@ -346,6 +347,7 @@ class PostModel extends Model
         }
 
         $candidates = [];
+
         foreach ($matches === [] ? [null] : [implode(' OR ', $matches), null] as $condition) {
             $builder = $this->select('posts.id, posts.title, posts.tags, posts.category_id, boards.slug AS board_slug')
                 ->join('boards', 'boards.id = posts.board_id', 'inner')
@@ -359,21 +361,24 @@ class PostModel extends Model
             }
             /** @var list<array<string, mixed>> $found */
             $found = $builder->orderBy('posts.id', 'DESC')->findAll(self::RELATED_POOL_SIZE);
+
             foreach ($found as $row) {
                 $candidates[(int) $row['id']] = $row;
             }
         }
 
         $scored = [];
+
         foreach ($candidates as $id => $row) {
             $score = 0;
+
             foreach (self::splitTags($row['tags']) as $tag) {
                 if (in_array(mb_strtolower($tag), $currentTags, true)) {
                     $score += 3;
                 }
             }
             if ($current['category_id'] !== null && (int) $row['category_id'] === (int) $current['category_id']) {
-                $score += 1;
+                $score++;
             }
             $shared = count(array_intersect_key($currentGrams, self::titleGrams((string) $row['title'])));
             if ($shared >= 2) {
@@ -418,6 +423,7 @@ class PostModel extends Model
     private static function titleGrams(string $title): array
     {
         $grams = [];
+
         foreach (preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($title), -1, PREG_SPLIT_NO_EMPTY) ?: [] as $word) {
             for ($i = 0, $n = mb_strlen($word) - 1; $i < $n; $i++) {
                 $grams[mb_substr($word, $i, 2)] = true;
@@ -468,7 +474,7 @@ class PostModel extends Model
      */
     public function setTagsSilently(int $postId, string $tags): bool
     {
-        return $this->db->table($this->table)->where('id', $postId)->update(['tags' => $tags]);
+        return $this->db->table($this->table)->where('id', $postId)->update(['tags' => $tags]) === true;
     }
 
     /**
