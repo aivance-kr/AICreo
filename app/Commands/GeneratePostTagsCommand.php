@@ -74,7 +74,7 @@ class GeneratePostTagsCommand extends BaseCommand
             if ($tags === null) {
                 $failed++;
                 $streak++;
-                CLI::write(sprintf('#%d 실패(태그 없음/호출 오류)', $row['id']), 'yellow');
+                CLI::write(sprintf('#%d 실패: %s', $row['id'], $service->lastError() ?? '알 수 없음'), 'yellow');
                 if ($streak >= self::MAX_CONSECUTIVE_FAILURES) {
                     CLI::error('연속 실패가 많아 중단합니다. 네트워크·키·한도를 확인하세요.');
 
