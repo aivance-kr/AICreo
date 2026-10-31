@@ -77,7 +77,8 @@ class BaseController extends Controller
         $sidebarAds = ($isBlogTheme && $adSafe) ? (new AdModel())->getActiveByPosition('sidebar') : [];
 
         // 사이드바 "많이 본 글" — 블로그형 테마에서만. 기간은 ?popular=all|7d|30d (기본 7d)
-        $popularPeriod = (string) $this->request->getGet('popular');
+        $popularRaw    = $this->request->getGet('popular');
+        $popularPeriod = is_string($popularRaw) ? $popularRaw : ''; // ?popular[]=x 배열 값은 무시
         $popularPeriod = isset(PostModel::POPULAR_PERIODS[$popularPeriod]) ? $popularPeriod : '7d';
         $popularPosts  = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getPopularCached($popularPeriod, 5) : [];
 
