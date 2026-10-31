@@ -11,6 +11,7 @@ class PostModel extends Model
     public const MAX_TAG_LENGTH             = 30;
     private const RELATED_CACHE_VERSION_KEY = 'related_posts_version';
     private const RELATED_CACHE_TTL         = 3600;
+    private const RELATED_POOL_SIZE         = 200;
     private const TAG_COUNTS_CACHE_KEY      = 'public_tag_counts';
     private const TAG_COUNTS_CACHE_TTL      = 3600;
 
@@ -302,8 +303,8 @@ class PostModel extends Model
     }
 
     /**
-     * 상세 하단 "이어 읽을 글" — 같은 태그를 하나라도 공유하거나 같은 카테고리인 다른 공개 글.
-     * 태그 겹침 수가 많은 글이 먼저, 같으면 최신 글이 먼저. 공개 조건은 getLatestPublic 과 같다.
+     * 상세 하단 "이어 읽을 글" — 같은 태그·카테고리·비슷한 제목을 가진 다른 공개 글.
+     * 관련도 점수가 높은 글이 먼저, 같으면 최신 글이 먼저. 공개 조건은 getLatestPublic 과 같다.
      * 결과는 캐시하고 글 저장·삭제 때 clearRelatedCache 로 무효화한다.
      *
      * @return list<array{id: int, title: string, board_slug: string, thumb: string|null}>
@@ -320,57 +321,116 @@ class PostModel extends Model
     }
 
     /**
+     * 후보(태그·카테고리 일치 글 + 최근 글)를 점수로 매겨 상위 글을 고른다.
+     * 점수: 공유 태그 1개당 3, 같은 카테고리 1, 제목 공유 글자쌍 수(최대 6). 점수가 같으면 최신 글.
+     * 태그·카테고리가 없는 옛 글도 제목이 비슷하면 후보가 되어, 모든 글에 같은 최신 글만 나오지 않는다.
+     *
      * @return list<array{id: int, title: string, board_slug: string, thumb: string|null}>
      */
     private function queryRelated(int $postId, int $limit): array
     {
-        $current = $this->select('tags, category_id')->find($postId);
+        $current = $this->select('title, tags, category_id')->find($postId);
         if ($current === null) {
             return [];
         }
 
-        $matches  = [];
-        $overlaps = [];
+        $currentTags  = array_map('mb_strtolower', self::splitTags($current['tags']));
+        $currentGrams = self::titleGrams((string) $current['title']);
+
+        $matches = [];
 
         foreach (self::splitTags($current['tags']) as $tag) {
-            $expr       = 'FIND_IN_SET(' . $this->db->escape($tag) . ', posts.tags) > 0';
-            $matches[]  = $expr;
-            $overlaps[] = "({$expr})";
+            $matches[] = 'FIND_IN_SET(' . $this->db->escape($tag) . ', posts.tags) > 0';
         }
         if ($current['category_id'] !== null) {
             $matches[] = 'posts.category_id = ' . (int) $current['category_id'];
         }
-        if ($matches === []) {
+
+        $candidates = [];
+
+        foreach ($matches === [] ? [null] : [implode(' OR ', $matches), null] as $condition) {
+            $builder = $this->select('posts.id, posts.title, posts.tags, posts.category_id, boards.slug AS board_slug')
+                ->join('boards', 'boards.id = posts.board_id', 'inner')
+                ->where('posts.id !=', $postId)
+                ->where('posts.is_secret', 0)
+                ->where('posts.is_active', 1)
+                ->where('boards.is_active', 1)
+                ->where('boards.read_permission', 'guest');
+            if ($condition !== null) {
+                $builder->where('(' . $condition . ')', null, false);
+            }
+            /** @var list<array<string, mixed>> $found */
+            $found = $builder->orderBy('posts.id', 'DESC')->findAll(self::RELATED_POOL_SIZE);
+
+            foreach ($found as $row) {
+                $candidates[(int) $row['id']] = $row;
+            }
+        }
+
+        $scored = [];
+
+        foreach ($candidates as $id => $row) {
+            $score = 0;
+
+            foreach (self::splitTags($row['tags']) as $tag) {
+                if (in_array(mb_strtolower($tag), $currentTags, true)) {
+                    $score += 3;
+                }
+            }
+            if ($current['category_id'] !== null && (int) $row['category_id'] === (int) $current['category_id']) {
+                $score++;
+            }
+            $shared = count(array_intersect_key($currentGrams, self::titleGrams((string) $row['title'])));
+            if ($shared >= 2) {
+                $score += min($shared, 6);
+            }
+            if ($score > 0) {
+                $scored[] = ['id' => $id, 'score' => $score, 'row' => $row];
+            }
+        }
+
+        usort($scored, static fn (array $a, array $b): int => [$b['score'], $b['id']] <=> [$a['score'], $a['id']]);
+        $top = array_slice($scored, 0, $limit);
+        if ($top === []) {
             return [];
         }
 
-        $builder = $this->select('posts.id, posts.title, posts.content, boards.slug AS board_slug')
-            ->join('boards', 'boards.id = posts.board_id', 'inner')
-            ->where('posts.id !=', $postId)
-            ->where('posts.is_secret', 0)
-            ->where('posts.is_active', 1)
-            ->where('boards.is_active', 1)
-            ->where('boards.read_permission', 'guest')
-            ->where('(' . implode(' OR ', $matches) . ')', null, false);
-        // 태그 겹침 수가 많은 글 먼저 (태그가 없는 글은 카테고리 일치만으로 후보가 되므로 건너뛴다)
-        if ($overlaps !== []) {
-            $builder->orderBy(implode(' + ', $overlaps), 'DESC', false);
-        }
-        /** @var list<array<string, mixed>> $rows */
-        $rows = $builder->orderBy('posts.id', 'DESC')->findAll($limit);
+        $contents = array_column(
+            $this->select('id, content')->whereIn('id', array_column($top, 'id'))->findAll(),
+            'content',
+            'id',
+        );
 
         helper('image');
 
-        return array_map(static function (array $row): array {
-            $thumb = self::extractThumbnail($row['content']);
+        return array_map(static function (array $item) use ($contents): array {
+            $thumb = self::extractThumbnail($contents[$item['id']] ?? null);
 
             return [
-                'id'         => (int) $row['id'],
-                'title'      => (string) $row['title'],
-                'board_slug' => (string) $row['board_slug'],
+                'id'         => $item['id'],
+                'title'      => (string) $item['row']['title'],
+                'board_slug' => (string) $item['row']['board_slug'],
                 'thumb'      => $thumb === null ? null : content_thumb_url($thumb),
             ];
-        }, $rows);
+        }, $top);
+    }
+
+    /**
+     * 제목을 공백 단위 단어로 나눠 단어마다 연속 두 글자쌍을 뽑는다(조사가 붙는 한국어도 비교되도록). 키가 글자쌍인 집합.
+     *
+     * @return array<string, true>
+     */
+    private static function titleGrams(string $title): array
+    {
+        $grams = [];
+
+        foreach (preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($title), -1, PREG_SPLIT_NO_EMPTY) ?: [] as $word) {
+            for ($i = 0, $n = mb_strlen($word) - 1; $i < $n; $i++) {
+                $grams[mb_substr($word, $i, 2)] = true;
+            }
+        }
+
+        return $grams;
     }
 
     /**
@@ -406,6 +466,25 @@ class PostModel extends Model
         }
 
         return $tags === [] ? null : implode(',', array_slice($tags, 0, self::MAX_TAGS));
+    }
+
+    /**
+     * 일괄 태깅용 — 글의 태그만 모델 콜백(뉴스레터 큐 적재 등) 없이 저장한다. updated_at 도 건드리지 않는다.
+     * 모델 update() 를 쓰면 옛 글이 뉴스레터 발송 대상으로 올라갈 수 있다. 끝나면 clearTaggingCaches() 를 한 번 호출한다.
+     */
+    public function setTagsSilently(int $postId, string $tags): bool
+    {
+        return $this->db->table($this->table)->where('id', $postId)->update(['tags' => $tags]) === true;
+    }
+
+    /**
+     * 태그가 바뀐 뒤 관련 글·태그 집계·RSS·sitemap 캐시를 한꺼번에 무효화한다.
+     */
+    public function clearTaggingCaches(): void
+    {
+        $this->clearRelatedCache([]);
+        $this->clearTagCountsCache([]);
+        $this->clearSeoCache([]);
     }
 
     /**
