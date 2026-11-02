@@ -182,3 +182,98 @@ footer a:hover {
     cursor: pointer;
     user-select: none;
 }
+
+/* ─── 홈 기본 화면(AICreo 소개) ─────────────────────────────────
+   views/pages/_aicreo_intro.php. 색은 전부 토큰이라 테마가 덮어쓴다. */
+.intro-hero {
+    background: var(--dark);
+    color: var(--on-dark-strong);
+    padding: 4.5rem 0 4rem;
+}
+.intro-eyebrow {
+    color: var(--on-dark-body);
+    font-size: .875rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    margin-bottom: .75rem;
+}
+.intro-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1.25rem;
+}
+.intro-lead {
+    color: var(--on-dark-body);
+    font-size: 1.0625rem;
+    max-width: 40rem;
+    margin-bottom: 1.75rem;
+    word-break: keep-all;
+}
+.intro-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.intro-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0 0;
+}
+.intro-badges li {
+    border: 1px solid var(--on-dark-raised);
+    border-radius: 50rem;
+    color: var(--on-dark-body);
+    font-size: .8125rem;
+    padding: .2rem .8rem;
+}
+.intro-section { padding: 4rem 0; }
+.intro-section-alt { background: var(--surface-body); }
+.intro-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+    word-break: keep-all;
+}
+@media (min-width: 992px) { .intro-heading.text-lg-start { text-align: left; } }
+.intro-card {
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: .75rem;
+    padding: 1.5rem;
+}
+.intro-card-flat { padding: 1.25rem; }
+.intro-card-icon { display: block; color: var(--primary); font-size: 1.75rem; margin-bottom: .75rem; }
+.intro-card-title { font-size: 1.125rem; font-weight: 700; margin-bottom: .5rem; }
+.intro-card-desc { color: var(--text-muted); font-size: .9375rem; margin-bottom: 0; word-break: keep-all; }
+.intro-steps {
+    counter-reset: step;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.intro-steps li {
+    border-top: 3px solid var(--primary);
+    counter-increment: step;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    padding-top: .85rem;
+}
+.intro-step-title::before { content: counter(step) ". "; color: var(--primary); }
+.intro-step-title { font-size: 1.125rem; }
+.intro-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.intro-checks li { padding-left: 1.75rem; position: relative; }
+.intro-checks li::before {
+    content: "\F26E"; /* bi-check-lg */
+    font-family: "bootstrap-icons";
+    color: var(--primary);
+    left: 0;
+    position: absolute;
+}
+.intro-cta { background: var(--dark); color: var(--on-dark-strong); padding: 3.5rem 0; text-align: center; }
+.intro-cta-title { font-size: 1.5rem; font-weight: 700; margin-bottom: .5rem; }
+.intro-cta-desc { color: var(--on-dark-body); margin-bottom: 1.5rem; }
