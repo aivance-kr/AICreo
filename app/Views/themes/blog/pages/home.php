@@ -1,7 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
+<?php if (($settings['show_home_search'] ?? '1') === '1'): ?>
 <?= view('components/search_form', ['keyword' => '']) ?>
+<?php endif; ?>
 
 <!-- 홈 상단 광고 -->
 <?= view('components/ad_slot', ['ads' => $homeTopAds]) ?>
