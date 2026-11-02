@@ -44,11 +44,13 @@ $socialLinks = [
                 </div>
             </div>
         </div>
+        <?php if (($settings['show_footer_newsletter'] ?? '1') === '1'): ?>
         <div class="row mt-4">
             <div class="col-md-6 position-relative">
                 <?= view('themes/default/components/newsletter_form', ['inputId' => 'footer-newsletter-email', 'dark' => true]) ?>
             </div>
         </div>
+        <?php endif; ?>
         <hr class="border-secondary mt-4">
         <div class="d-flex justify-content-between align-items-center small text-white-50">
             <span><?= esc($settings['copyright'] ?? '') ?></span>
