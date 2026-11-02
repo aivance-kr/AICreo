@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
+use App\Libraries\Seo\HomeIntro;
+use App\Libraries\Seo\JsonLdBuilder;
 use App\Libraries\ThemeView;
 use App\Models\AdModel;
 use App\Models\BannerModel;
@@ -38,11 +40,27 @@ class HomeController extends BaseController
         $homePage          = (new PageModel())->getBySlug('home');
         $showLatestNotices = ($this->viewData['settings']['home_show_latest_notices'] ?? '1') === '1';
 
+        $settings = $this->viewData['settings'] ?? [];
+        $ld       = new JsonLdBuilder();
+        $homeUrl  = base_url('/');
+
+        // 기본 소개 화면일 때만 제품(SoftwareApplication)·FAQ JSON-LD 와 정답형 메타 설명을 쓴다.
+        $introDesc = ($settings['site_desc'] ?? '') ?: HomeIntro::DESCRIPTION;
+        $jsonLd    = $homePage === null
+            ? [
+                $ld->softwareApplication($settings['site_name'] ?? 'AICreo', HomeIntro::DESCRIPTION, $homeUrl, 'https://github.com/aivance-kr/AICreo'),
+                $ld->faqPage(HomeIntro::faqs(), $homeUrl),
+            ]
+            : [];
+
         return $this->render('pages/home', [
-            'page' => [
+            'jsonLd' => $jsonLd,
+            'faqs'   => HomeIntro::faqs(),
+            'page'   => [
                 'title'          => $homePage['title'] ?? $this->viewData['settings']['site_name'] ?? '',
                 'meta_title'     => ($homePage['meta_title'] ?? '') ?: ($homePage['title'] ?? $this->viewData['settings']['site_name'] ?? ''),
-                'meta_desc'      => ($homePage['meta_desc'] ?? '') ?: ($this->viewData['settings']['site_desc'] ?? ''),
+                'meta_desc'      => ($homePage['meta_desc'] ?? '') ?: ($homePage === null ? $introDesc : ($settings['site_desc'] ?? '')),
+                'canonical'      => $homeUrl,
                 'content'        => $homePage['content'] ?? '',
                 'is_custom_home' => $homePage !== null,
             ],

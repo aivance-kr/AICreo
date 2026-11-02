@@ -133,4 +133,21 @@ final class JsonLdBuilderTest extends CIUnitTestCase
     {
         $this->assertSame('', $this->ld->render([]));
     }
+
+    public function testFaqPageMapsQuestionsAndAnswers(): void
+    {
+        $node = $this->ld->faqPage([['q' => '질문?', 'a' => '답.']], 'https://example.test/');
+
+        $this->assertSame('FAQPage', $node['@type']);
+        $this->assertSame('질문?', $node['mainEntity'][0]['name']);
+        $this->assertSame('답.', $node['mainEntity'][0]['acceptedAnswer']['text']);
+    }
+
+    public function testSoftwareApplicationNode(): void
+    {
+        $node = $this->ld->softwareApplication('AICreo', '설명', 'https://example.test/', 'https://github.com/x/y');
+
+        $this->assertSame('SoftwareApplication', $node['@type']);
+        $this->assertSame('https://github.com/x/y', $node['codeRepository']);
+    }
 }
