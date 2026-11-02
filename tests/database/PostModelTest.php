@@ -88,9 +88,31 @@ final class PostModelTest extends DatabaseTestCase
         $id = $this->makePost();
         $this->assertSame(0, (int) $this->model->find($id)['views']);
 
-        $this->model->incrementView($id);
+        $this->assertTrue($this->model->incrementView($id, 'ip:a'));
 
         $this->assertSame(1, (int) $this->model->find($id)['views']);
+    }
+
+    public function testIncrementViewCountsSameViewerOncePerDay(): void
+    {
+        $id = $this->makePost();
+
+        $this->assertTrue($this->model->incrementView($id, 'ip:a'));
+        $this->assertFalse($this->model->incrementView($id, 'ip:a'));
+        $this->assertTrue($this->model->incrementView($id, 'ip:b'));
+
+        $this->assertSame(2, (int) $this->model->find($id)['views']);
+    }
+
+    public function testIncrementViewCountsAgainOnNextDay(): void
+    {
+        $id = $this->makePost();
+        $this->model->incrementView($id, 'ip:a');
+        $this->db->table('post_views')->update(['viewed_on' => date('Y-m-d', strtotime('-1 day'))]);
+
+        $this->assertTrue($this->model->incrementView($id, 'ip:a'));
+
+        $this->assertSame(2, (int) $this->model->find($id)['views']);
     }
 
     public function testSoftDeleteHidesPostFromDefaultQuery(): void
