@@ -157,15 +157,15 @@ class BoardController extends BaseController
             return $loaded;
         }
 
-        (new PostLikeModel())->toggle($postId, $this->likeVoterKey());
+        (new PostLikeModel())->toggle($postId, $this->visitorKey());
 
         return redirect()->to("/board/{$boardSlug}/{$postId}" . $this->listQuery() . '#post-like');
     }
 
     /**
-     * 회원은 user_id, 비회원은 IP 해시로 중복 좋아요를 구분한다.
+     * 회원은 user_id, 비회원은 IP 해시로 방문자를 구분한다 (중복 좋아요·조회수 중복 방지).
      */
-    private function likeVoterKey(): string
+    private function visitorKey(): string
     {
         $userId = session()->get('user_id');
 
@@ -182,7 +182,7 @@ class BoardController extends BaseController
         }
         ['board' => $board, 'post' => $post] = $loaded;
 
-        $this->postModel->incrementView($postId);
+        $this->postModel->incrementView($postId, $this->visitorKey());
         $likeModel = new PostLikeModel();
 
         $files    = $this->fileModel->getByPost($postId);
@@ -239,7 +239,7 @@ class BoardController extends BaseController
             'files'               => $files,
             'comments'            => $comments,
             'likeCount'           => $likeModel->countByPost($postId),
-            'liked'               => $likeModel->hasLiked($postId, $this->likeVoterKey()),
+            'liked'               => $likeModel->hasLiked($postId, $this->visitorKey()),
             'currentCategory'     => $categoryId,
             'listQs'              => $this->listQuery(),
             'prevPost'            => $prevPost,

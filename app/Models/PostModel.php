@@ -656,9 +656,28 @@ class PostModel extends Model
             ->find($id);
     }
 
-    public function incrementView(int $id): void
+    /**
+     * 같은 방문자(회원 id 또는 IP 해시)는 글당 하루 한 번만 조회수를 올린다.
+     * post_views 의 (글, 방문자) 행 하나가 마지막으로 센 날짜를 들고 있고, 날짜가 오늘보다 이전일 때만 갱신된다.
+     * 동시 요청이 와도 INSERT ... ON DUPLICATE KEY 한 문장이라 한 번만 센다.
+     *
+     * @return bool 조회수를 올렸으면 true
+     */
+    public function incrementView(int $id, string $viewerKey): bool
     {
+        $this->db->query(
+            'INSERT INTO post_views (post_id, viewer_key, viewed_on) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE viewed_on = IF(viewed_on < VALUES(viewed_on), VALUES(viewed_on), viewed_on)',
+            [$id, $viewerKey, date('Y-m-d')],
+        );
+        // 새 행이면 1, 날짜가 바뀌어 갱신됐으면 2, 오늘 이미 센 방문자면 0
+        if ($this->db->affectedRows() === 0) {
+            return false;
+        }
+
         $this->db->query('UPDATE posts SET views = views + 1 WHERE id = ?', [$id]);
+
+        return true;
     }
 
     /**
