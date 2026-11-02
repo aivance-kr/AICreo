@@ -41,6 +41,22 @@ final class SettingTest extends AdminTestCase
         $result->assertSee('직접 업로드');
     }
 
+    public function testAdminCanToggleHomeSearchAndFooterNewsletter(): void
+    {
+        $this->withSession($this->adminSession)->get('admin/settings/general')->assertSee('메인 검색창 노출');
+        $this->withSession($this->adminSession)->get('admin/settings/footer')->assertSee('푸터 새 글 알림 받기 노출');
+
+        $home = $this->get('/');
+        $this->assertStringContainsString('id="site-search-q"', $home->getBody());
+        $this->assertStringContainsString('newsletter/subscribe', $home->getBody());
+
+        (new SettingModel())->saveSettings(['show_home_search' => '0', 'show_footer_newsletter' => '0']);
+
+        $home = $this->get('/');
+        $this->assertStringNotContainsString('id="site-search-q"', $home->getBody());
+        $this->assertStringNotContainsString('newsletter/subscribe', $home->getBody());
+    }
+
     public function testAdminCanToggleLatestHomeNotices(): void
     {
         $result = $this->withSession($this->adminSession)->get('admin/settings/general');

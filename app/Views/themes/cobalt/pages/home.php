@@ -1,7 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
+<?php if (($settings['show_home_search'] ?? '1') === '1'): ?>
 <?= view('components/search_form', ['keyword' => '']) ?>
+<?php endif; ?>
 
 <?php
 /** 홈 인피드 광고를 넣을 위치(목록 n번째 뒤) */

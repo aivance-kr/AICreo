@@ -27,12 +27,14 @@ $socialLinks = [
         <?php endforeach; ?>
         <li><a href="<?= esc(site_url('rss'), 'attr') ?>"><i class="bi bi-rss-fill" aria-hidden="true"></i><span class="visually-hidden">RSS 구독</span></a></li>
     </ul>
+    <?php if (($settings['show_footer_newsletter'] ?? '1') === '1'): ?>
     <div class="site-footer__newsletter position-relative mb-3">
         <?= view('themes/default/components/newsletter_form', [
             'inputId' => 'footer-newsletter-email',
             'dark'    => in_array($settings['active_theme'] ?? 'default', ['cobalt', 'devnotes'], true),
         ]) ?>
     </div>
+    <?php endif; ?>
     <p class="site-footer__copy">
         <?= esc($settings['copyright'] ?? '') ?>
         <?php if (! empty($settings['business_num'])): ?> · 사업자번호 <?= esc($settings['business_num']) ?><?php endif; ?>
