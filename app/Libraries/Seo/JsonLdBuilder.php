@@ -117,6 +117,48 @@ class JsonLdBuilder
     }
 
     /**
+     * 소프트웨어(SoftwareApplication) 노드 — 기본 홈의 제품 정의용.
+     *
+     * @return array<string, mixed>
+     */
+    public function softwareApplication(string $name, string $description, string $url, string $codeRepository): array
+    {
+        return [
+            '@type'               => 'SoftwareApplication',
+            '@id'                 => $url . '#software',
+            'name'                => $name,
+            'description'         => $description,
+            'url'                 => $url,
+            'applicationCategory' => 'DeveloperApplication',
+            'operatingSystem'     => 'Linux, macOS, Windows',
+            'programmingLanguage' => 'PHP',
+            'license'             => 'https://opensource.org/licenses/MIT',
+            'codeRepository'      => $codeRepository,
+            'publisher'           => ['@id' => base_url(self::ORG_ID)],
+        ];
+    }
+
+    /**
+     * FAQPage 노드. 질문·답변 원문은 화면에 보이는 것과 같아야 한다.
+     *
+     * @param list<array{q: string, a: string}> $faqs
+     *
+     * @return array<string, mixed>
+     */
+    public function faqPage(array $faqs, string $url): array
+    {
+        return [
+            '@type'      => 'FAQPage',
+            'url'        => $url,
+            'mainEntity' => array_map(static fn (array $f): array => [
+                '@type'          => 'Question',
+                'name'           => $f['q'],
+                'acceptedAnswer' => ['@type' => 'Answer', 'text' => $f['a']],
+            ], $faqs),
+        ];
+    }
+
+    /**
      * 게시글(posts) BlogPosting 노드.
      *
      * @param array<string, mixed>      $post

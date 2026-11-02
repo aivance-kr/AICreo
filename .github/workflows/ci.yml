@@ -111,7 +111,7 @@ jobs:
           # (버전 없는 php-intl 등은 다른 버전을 끌어와 쓰는 php 에 안 붙을 수 있다).
           V="$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')"
           MISSING=""
-          for item in mbstring:mbstring intl:intl mysql:mysqli xml:dom curl:curl zip:zip sqlite3:sqlite3; do
+          for item in mbstring:mbstring intl:intl mysql:mysqli xml:dom curl:curl zip:zip sqlite3:sqlite3 gd:gd; do
             php -m | grep -qix "${item#*:}" || MISSING="$MISSING php${V}-${item%%:*}"
           done
           # 커버리지 드라이버(pcov/xdebug)가 없으면 phpunit 이 경고 → failOnWarning 으로 실패한다.
@@ -129,7 +129,7 @@ jobs:
         run: |
           php --version
           composer --version
-          php -r '$required = ["intl", "mbstring", "mysqli"]; if (!extension_loaded("xdebug") && !extension_loaded("pcov")) { fwrite(STDERR, "커버리지 드라이버(xdebug/pcov)가 없습니다.\n"); exit(1); } foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
+          php -r '$required = ["intl", "mbstring", "mysqli", "gd"]; if (!extension_loaded("xdebug") && !extension_loaded("pcov")) { fwrite(STDERR, "커버리지 드라이버(xdebug/pcov)가 없습니다.\n"); exit(1); } foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3

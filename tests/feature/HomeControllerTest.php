@@ -42,4 +42,16 @@ final class HomeControllerTest extends FeatureTestCase
     {
         $this->get('/?popular[]=7d')->assertOK();
     }
+
+    public function testDefaultHomeHasSeoAndGeoMarkup(): void
+    {
+        $body = $this->get('/')->getBody();
+
+        $this->assertSame(1, substr_count($body, '<h1'));
+        $this->assertStringContainsString('rel="canonical"', $body);
+        $this->assertStringContainsString('property="og:title"', $body);
+        $this->assertStringContainsString('name="twitter:card"', $body);
+        $this->assertStringContainsString('"FAQPage"', $body);
+        $this->assertStringContainsString('"SoftwareApplication"', $body);
+    }
 }

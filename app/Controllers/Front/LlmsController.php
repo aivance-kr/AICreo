@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
+use App\Libraries\Seo\HomeIntro;
 use App\Models\BoardModel;
 use App\Models\PageModel;
 use App\Models\SettingModel;
@@ -41,6 +42,16 @@ class LlmsController extends BaseController
         if (! empty($settings['site_desc'])) {
             $lines[] = '';
             $lines[] = '> ' . $settings['site_desc'];
+        }
+
+        // 기본 소개 홈일 때만 정답형 FAQ 를 싣는다(관리자가 home 을 저장하면 그 내용이 우선).
+        if ((new PageModel())->getBySlug('home') === null) {
+            $lines[] = '';
+            $lines[] = '## 자주 묻는 질문';
+
+            foreach (HomeIntro::faqs() as $faq) {
+                $lines[] = '- ' . $faq['q'] . ' ' . $faq['a'];
+            }
         }
 
         // 주요 페이지 (발행)
