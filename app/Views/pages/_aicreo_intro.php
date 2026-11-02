@@ -4,6 +4,7 @@
  * 색은 모두 var(--토큰)이라 테마가 덮어쓴다. 수치·고객 사례는 넣지 않는다(저장소에 없는 사실).
  *
  * @var array<string, mixed> $settings
+ * @var list<array{q: string, a: string}> $faqs
  */
 $repoUrl = 'https://github.com/aivance-kr/AICreo';
 
@@ -128,6 +129,21 @@ $steps = [
         </div>
     </div>
 </section>
+
+<!-- 자주 묻는 질문 (FAQPage JSON-LD 와 같은 원문) -->
+<?php if (! empty($faqs)): ?>
+<section class="intro-section" aria-labelledby="intro-faq">
+    <div class="container">
+        <h2 id="intro-faq" class="intro-heading">자주 묻는 질문</h2>
+        <dl class="intro-faq">
+            <?php foreach ($faqs as $faq): ?>
+            <dt class="intro-card-title"><?= esc($faq['q']) ?></dt>
+            <dd class="intro-card-desc"><?= esc($faq['a']) ?></dd>
+            <?php endforeach; ?>
+        </dl>
+    </div>
+</section>
+<?php endif; ?>
 
 <!-- CTA -->
 <section class="intro-cta">

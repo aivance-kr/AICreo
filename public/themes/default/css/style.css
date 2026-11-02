@@ -277,3 +277,8 @@ footer a:hover {
 .intro-cta { background: var(--dark); color: var(--on-dark-strong); padding: 3.5rem 0; text-align: center; }
 .intro-cta-title { font-size: 1.5rem; font-weight: 700; margin-bottom: .5rem; }
 .intro-cta-desc { color: var(--on-dark-body); margin-bottom: 1.5rem; }
+
+/* 홈 FAQ */
+.intro-faq { max-width: 52rem; margin: 0 auto; }
+.intro-faq dt { margin-top: 1.25rem; }
+.intro-faq dd { margin: .25rem 0 0; }
