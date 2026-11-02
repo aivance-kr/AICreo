@@ -37,4 +37,9 @@ final class HomeControllerTest extends FeatureTestCase
         $this->assertStringContainsString('노출 공지', $body);
         $this->assertStringNotContainsString('숨김 공지', $body);
     }
+
+    public function testPopularParamAsArrayDoesNotBreakPage(): void
+    {
+        $this->get('/?popular[]=7d')->assertOK();
+    }
 }
