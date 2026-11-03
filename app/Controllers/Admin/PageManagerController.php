@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\AdminLogModel;
 use App\Models\PageModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\I18n;
 
 class PageManagerController extends BaseController
 {
@@ -31,7 +32,8 @@ class PageManagerController extends BaseController
     public function store(): ResponseInterface|string
     {
         $rules = [
-            'slug'  => 'required|alpha_dash|is_unique[pages.slug]',
+            // 언어 코드는 /en/... 접두어와 겹치므로 슬러그로 쓸 수 없다
+            'slug'  => 'required|alpha_dash|is_unique[pages.slug]|not_in_list[' . implode(',', config(I18n::class)->locales()) . ']',
             'title' => 'required',
         ];
         if (! $this->validate($rules)) {
