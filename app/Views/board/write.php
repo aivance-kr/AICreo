@@ -9,8 +9,13 @@
 </div>
 
 <div class="card">
-    <div class="card-header bg-white">
+    <div class="card-header bg-white d-flex align-items-center">
         <h1 class="h6 mb-0"><?= $post ? '게시글 수정' : '글쓰기' ?></h1>
+        <?php if ($post && session()->get('user_role') === 'admin'): ?>
+        <a href="/admin/posts/<?= (int) $post['id'] ?>/revisions" class="small text-decoration-none ms-auto">
+            <i class="bi bi-clock-history" aria-hidden="true"></i> 수정 이력
+        </a>
+        <?php endif; ?>
     </div>
     <div class="card-body">
         <?php if (session()->has('errors')): ?>
