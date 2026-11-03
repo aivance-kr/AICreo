@@ -14,6 +14,7 @@ use App\Models\PostCommentModel;
 use App\Models\PostFileModel;
 use App\Models\PostLikeModel;
 use App\Models\PostModel;
+use App\Models\PostRevisionModel;
 use App\Models\SeriesModel;
 use App\Models\SignatureModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
@@ -475,6 +476,11 @@ class BoardController extends BaseController
                 $changes['publish_at'] = null;
                 $changes['is_active']  = 1;
             }
+        }
+
+        // 덮어쓰기 전 상태를 수정 이력으로 남긴다
+        if (PostRevisionModel::changed($post, $changes)) {
+            (new PostRevisionModel())->record($post, (int) session()->get('user_id') ?: null);
         }
 
         $this->postModel->update($postId, $changes);

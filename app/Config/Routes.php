@@ -92,6 +92,11 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('boards/(:num)/posts', 'Admin\BoardManagerController::posts/$1');
     $routes->post('posts/(:num)/delete', 'Admin\BoardManagerController::deletePost/$1');
 
+    // 글 수정 이력
+    $routes->get('posts/(:num)/revisions', 'Admin\PostRevisionController::index/$1');
+    $routes->get('posts/(:num)/revisions/(:num)', 'Admin\PostRevisionController::show/$1/$2');
+    $routes->post('posts/(:num)/revisions/(:num)/restore', 'Admin\PostRevisionController::restore/$1/$2');
+
     // 게시판 카테고리 관리 (게시판마다 별도 관리)
     $routes->get('boards/(:num)/categories', 'Admin\BoardManagerController::categories/$1');
     $routes->post('boards/(:num)/categories', 'Admin\BoardManagerController::storeCategory/$1');
@@ -146,6 +151,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     // 접속 통계
     $routes->get('stats', 'Admin\StatsController::index');
     $routes->get('stats/posts', 'Admin\StatsController::posts');
+    $routes->get('stats/paths', 'Admin\StatsController::paths');
     $routes->get('stats/day/(:segment)', 'Admin\StatsController::day/$1');
     $routes->post('stats/block-ip', 'Admin\StatsController::blockIp');
 

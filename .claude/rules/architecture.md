@@ -88,6 +88,11 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 시리즈 관리는 `/admin/series`(수정 화면에서 글 검색·번호 일괄 입력으로 글 추가), 글에 지정은 운영자만 글쓰기·수정 화면에서 체크박스+순서(비우면 맨 뒤), 공개 목록은 `/series`, 소개 페이지는 `/series/{slug}`.
 - 글쓰기·수정 화면의 "AI 추천" 버튼은 `POST board/series-suggest`(운영자 전용)로 `GroqSeriesService`(`service('groqSeries')`, `GROQ_API_KEY` 공유)에 제목·본문과 `SeriesModel::suggestionCandidates()` 를 보내 어울리는 시리즈를 체크해 준다. 저장은 하지 않으며 후보에 없는 번호는 걸러낸다.
 
+## 글 수정 이력
+
+- `post_revisions` 테이블(글·저장한 사용자·제목·본문·메타 설명). `Front\BoardController::update()` 가 제목·본문·메타 설명이 실제로 바뀌었을 때만(`PostRevisionModel::changed()`) 덮어쓰기 **직전** 상태를 `PostRevisionModel::record()` 로 남긴다. 글당 `MAX_PER_POST`(50)개를 넘으면 오래된 것부터 지운다. 글 삭제(소프트)는 이력을 건드리지 않는다.
+- 운영자 전용 화면: 글 수정 화면의 "수정 이력" 링크 → `/admin/posts/{id}/revisions`(목록), `.../revisions/{rid}`(현재 글과 줄 단위 비교 — `App\Libraries\LineDiff`), `POST .../restore`(복구). 복구는 `PostRevisionModel::restore()` 가 복구 직전 글을 새 이력으로 남긴 뒤 글을 덮어쓴다.
+
 ## 글 AI 제안
 
 - 글쓰기·수정 화면의 "AI 제안" 버튼(운영자 전용)은 `POST board/ai-suggest` → `GroqPostAssistService`(`service('groqPostAssist')`, `GROQ_API_KEY` 공유, 타임아웃 5초)로 요약(메타 설명)·태그 후보·제목 후보를 받는다. 저장은 하지 않으며, 화면에서 "적용"을 누른 항목만 입력란에 채우고 폼 저장 때 반영된다.
@@ -100,6 +105,7 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 자동 차단: `php spark ip:auto-block` — 최근 3시간 방문 로그에서 1시간 안에 404(`page_visits.is_not_found=1`)를 3회 이상 낸 IP를 30일간 차단하고, 만료된 차단을 정리한다. **서버 crontab에 1시간마다 등록해야 한다** (예: `0 * * * * cd /path/to/app && php spark ip:auto-block`).
 - 즉시 차단: 404 로 스캐너 전형 경로(`*.php`·`.phtml`·`.asp(x)`·`.jsp`·`.cgi`, `wp-admin`·`wp-login`·`xmlrpc`·`.env`·`.git`)를 요청한 IP 는 `NotFoundVisitExceptionHandler::isScannerPath()` 가 그 즉시 30일 차단한다(cron 대기 없음). 방문자 브라우저를 이용한 오차단 방지로 Referer·Sec-Fetch-Site 헤더가 있거나 `admin/*` 인 요청은 즉시 차단하지 않고 일배치에 맡긴다. `wp-content/uploads/*.jpg` 같은 정적 파일은 옛 글의 깨진 링크일 수 있어 제외.
 - 수동 차단: 관리자 일별 방문기록(`/admin/stats/day/{date}`)의 IP별 차단 버튼.
+- 이동 경로 통계(`/admin/stats/paths`): 순수 클래스 `App\Libraries\PathAnalyzer` 가 `page_visits`(IP+UA, 30분 무활동=새 세션)로 진입·이탈·페이지 간 이동·경로를 집계한다. 스키마 변경 없음, 10분 캐시. 이식 방법은 `docs/analytics-paths-porting.md`.
 - 404 표시는 `NotFoundVisitExceptionHandler`가 한다(404는 일반 after 필터가 돌지 않고, 라우트 미매칭 주소는 before 필터도 돌지 않기 때문).
 - Cloudflare 뒤에서 실제 접속자 IP 를 받도록 `Config\App` 생성자가 `proxyIPs` 에 `App\Libraries\CloudflareIps` 대역(`CF-Connecting-IP`)을 등록한다. 엣지 IP 가 아닌 곳에서 온 요청의 헤더는 무시된다. Cloudflare 대역이 바뀌면 `CloudflareIps::RANGES` 를 갱신한다.
 - `BlockedIpModel::block()` 은 Cloudflare 엣지 IP 를 차단하지 않고 `false` 를 돌려준다(정상 방문자 오차단 방지).

@@ -437,6 +437,27 @@ class PageVisitModel extends Model
     }
 
     /**
+     * 이동 경로 분석용 방문 행(오래된 순). 404·차단 IP 방문은 뺀다.
+     * 행이 $limit 를 넘으면 앞쪽 $limit 건만 돌려주고 truncated 를 true 로 표시한다.
+     *
+     * @return array{rows: list<array{uri: string, ip_address: string, user_agent: string|null, created_at: string}>, truncated: bool}
+     */
+    public function visitsForPaths(Time $start, Time $end, int $limit = 50000): array
+    {
+        $builder = $this->db->table($this->table)
+            ->select('uri, ip_address, user_agent, created_at')
+            ->where('created_at >=', $start->toDateTimeString())
+            ->where('created_at <', $end->toDateTimeString());
+
+        /** @var list<array{uri: string, ip_address: string, user_agent: string|null, created_at: string}> $rows */
+        $rows = $this->countedOnly($builder)->orderBy('id', 'ASC')->limit($limit + 1)->get()->getResultArray();
+
+        $truncated = count($rows) > $limit;
+
+        return ['rows' => $truncated ? array_slice($rows, 0, $limit) : $rows, 'truncated' => $truncated];
+    }
+
+    /**
      * 일별 방문 수를 ISO 주 단위로 합친다. 입력 순서(오래된 날 먼저)를 유지한다.
      *
      * @param list<array{key: string, count: int}> $daily
