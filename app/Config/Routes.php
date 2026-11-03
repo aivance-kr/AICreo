@@ -175,6 +175,13 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->post('blocked-ips/(:num)/delete', 'Admin\BlockedIpController::delete/$1');
     $routes->get('logs', 'Admin\AdminLogController::index');
 
+    // 리다이렉트 관리
+    $routes->get('redirects', 'Admin\RedirectController::index');
+    $routes->post('redirects', 'Admin\RedirectController::store');
+    $routes->post('redirects/(:num)', 'Admin\RedirectController::update/$1');
+    $routes->post('redirects/(:num)/toggle', 'Admin\RedirectController::toggle/$1');
+    $routes->post('redirects/(:num)/delete', 'Admin\RedirectController::delete/$1');
+
     // 회원 관리
     $routes->get('users', 'Admin\UserController::index');
     $routes->get('users/(:num)/edit', 'Admin\UserController::edit/$1');

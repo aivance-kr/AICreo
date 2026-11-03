@@ -26,6 +26,7 @@ class AdminLogModel extends Model
         'setting'    => '설정',
         'user'       => '회원',
         'blocked_ip' => '차단 IP',
+        'redirect'   => '리다이렉트',
     ];
 
     /**

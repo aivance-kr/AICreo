@@ -26,10 +26,13 @@ class RedirectFilter implements FilterInterface
         $oldPath = $uri->getPath() === '' ? '/' : $uri->getPath();
         $oldPath .= $uri->getQuery() !== '' ? '?' . $uri->getQuery() : '';
 
-        $redirect = (new RedirectModel())->findByOldPath($oldPath);
+        $model    = new RedirectModel();
+        $redirect = $model->findActiveByOldPath($oldPath);
         if ($redirect === null) {
             return null;
         }
+
+        $model->recordHit((int) $redirect['id']);
 
         return redirect()->to($redirect['new_path'], (int) $redirect['status_code']);
     }
