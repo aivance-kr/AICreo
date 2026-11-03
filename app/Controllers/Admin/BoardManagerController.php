@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\AdminLogModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostFileModel;
@@ -116,6 +117,7 @@ class BoardManagerController extends BaseController
 
         (new PostFileModel())->deleteByPost($postId);
         $this->postModel->delete($postId);
+        model(AdminLogModel::class)->record('delete', 'post', $postId, (string) $post['title']);
 
         return redirect()->back()->with('success', '삭제되었습니다.');
     }

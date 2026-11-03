@@ -111,6 +111,12 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - `BlockedIpModel::block()` 은 Cloudflare 엣지 IP 를 차단하지 않고 `false` 를 돌려준다(정상 방문자 오차단 방지).
 - `.env` 의 `security.ipWhitelist`(쉼표 구분)에 든 IP 는 `BlockedIpModel::block()` 이 차단하지 않고 `isBlocked()` 도 항상 false 를 돌려준다(기존 차단 행도 무시). IP 는 공개 저장소에 커밋하지 않고 서버 `.env` 에만 둔다.
 
+## 관리자 활동 로그
+
+- `admin_logs` 테이블(관리자·동작·대상 종류/번호·요약·IP·시각). `AdminLogModel::record()` 가 현재 세션 사용자와 요청 IP 를 채워 남긴다. 컨트롤러에서 쓰기 동작 직후 호출한다(글·페이지·설정·회원·차단 IP, 글 수정 이력 복구). 자동 IP 차단 등 사람이 아닌 동작은 기록하지 않는다.
+- **민감 값은 남기지 않는다.** 설정은 값이 아니라 변경한 항목 이름만(`AdminLogModel::keysSummary()`), 회원은 이메일과 "무엇을 바꿨는지"만 적는다. 요약은 255자로 잘린다.
+- 조회: `/admin/logs`(대상·동작 필터, 요약·IP·이름 검색). 정리: `php spark admin-logs:purge [--days 180]` — **서버 crontab에 하루 1회 등록한다** (예: `0 4 * * * cd /path/to/app && php spark admin-logs:purge`).
+
 ## 예약 발행
 
 - `posts.publish_at`(TIMESTAMP NULL)이 있으면 예약 글이다. 저장 시 `is_active=0` 이라 공개 목록·RSS·sitemap 쿼리에는 원래 걸러진다. 예약 입력은 운영자 전용(글쓰기·수정 화면의 `publish_at`), 미래 시각만 유효하다(`PostModel::normalizePublishAt()`).

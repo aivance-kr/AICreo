@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Libraries\LineDiff;
+use App\Models\AdminLogModel;
 use App\Models\BoardModel;
 use App\Models\PostModel;
 use App\Models\PostRevisionModel;
@@ -60,6 +61,10 @@ class PostRevisionController extends BaseController
         $this->postOrFail($postId);
 
         $restored = $this->revisionModel->restore($postId, $revisionId, (int) session()->get('user_id'));
+
+        if ($restored) {
+            model(AdminLogModel::class)->record('restore', 'post', $postId, '수정 이력 #' . $revisionId . '(으)로 복구');
+        }
 
         return redirect()->to("/admin/posts/{$postId}/revisions")->with(
             $restored ? 'success' : 'error',
