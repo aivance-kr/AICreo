@@ -29,6 +29,8 @@ $renderList = static function (string $title, array $rows, int $days, bool $link
 
 <?= $this->section('content') ?>
 
+<h2 class="h5 mb-3">이동 경로 통계</h2>
+
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <a href="<?= base_url('admin/stats') ?>" class="btn btn-sm btn-outline-secondary">접속 통계</a>
     <div class="btn-group btn-group-sm" role="group" aria-label="기간 선택">
