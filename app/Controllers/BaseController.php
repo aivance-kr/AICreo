@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Libraries\ThemeView;
+use App\Libraries\TwoFactor;
 use App\Models\AdModel;
 use App\Models\BannerModel;
 use App\Models\BoardCategoryModel;
@@ -12,6 +13,7 @@ use App\Models\MenuModel;
 use App\Models\PopupModel;
 use App\Models\PostModel;
 use App\Models\SettingModel;
+use App\Models\UserModel;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -90,6 +92,43 @@ class BaseController extends Controller
 
         // jsonLd 기본값을 항상 [] 로 명시 (Config\View::$saveData=true 공유 렌더러 누출 방지)
         $this->viewData = ['settings' => $settings, 'menus' => $menus, 'boardCategories' => $boardCategories, 'authUser' => $authUser, 'unreadInquiries' => $unreadInquiries, 'subLeftBanners' => $subLeftBanners, 'activePopups' => $activePopups, 'sidebarAds' => $sidebarAds, 'popularPosts' => $popularPosts, 'popularPeriod' => $popularPeriod, 'archiveCounts' => $archiveCounts, 'tagCloud' => $tagCloud, 'jsonLd' => []];
+    }
+
+    /**
+     * 인증(비밀번호·소셜)을 통과한 사용자의 로그인을 마무리한다.
+     * 2단계 인증을 켠 관리자는 세션을 만들지 않고 코드 입력 단계로 보낸다.
+     *
+     * @param array<string, mixed> $user
+     */
+    protected function finishLogin(array $user): ResponseInterface
+    {
+        if ($user['role'] === 'admin' && TwoFactor::isEnabled($user)) {
+            session()->regenerate(true);
+            session()->set(['twofa_user_id' => (int) $user['id'], 'twofa_started' => time()]);
+
+            return redirect()->to('/auth/2fa');
+        }
+
+        return $this->startSession($user);
+    }
+
+    /**
+     * 로그인 세션을 만든다. 2단계 인증까지 끝난 뒤(또는 필요 없는 사용자)에만 호출한다.
+     *
+     * @param array<string, mixed> $user
+     */
+    protected function startSession(array $user): ResponseInterface
+    {
+        session()->regenerate(true);
+        session()->set([
+            'user_id'       => $user['id'],
+            'user_nickname' => $user['nickname'],
+            'user_role'     => $user['role'],
+        ]);
+
+        (new UserModel())->updateLastLogin((int) $user['id']);
+
+        return redirect()->to(session()->getTempdata('redirect_url') ?? '/');
     }
 
     protected function getUserRole(): string
