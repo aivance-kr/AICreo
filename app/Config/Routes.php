@@ -18,6 +18,7 @@ $routes->get('feed', 'Front\FeedController::index');
 $routes->get('rss', 'Front\FeedController::index');
 $routes->get('og/(:num)\\.png', 'Front\OgImageController::post/$1');
 $routes->get('search', 'Front\SearchController::index');
+$routes->get('preview/(:segment)', 'Front\PreviewController::show/$1');
 $routes->get('series', 'Front\SeriesController::index');
 $routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
 $routes->get('archive', 'Front\ArchiveController::index');
@@ -104,6 +105,9 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('posts/(:num)/revisions', 'Admin\PostRevisionController::index/$1');
     $routes->get('posts/(:num)/revisions/(:num)', 'Admin\PostRevisionController::show/$1/$2');
     $routes->post('posts/(:num)/revisions/(:num)/restore', 'Admin\PostRevisionController::restore/$1/$2');
+    $routes->get('posts/(:num)/preview-links', 'Admin\PostPreviewController::index/$1');
+    $routes->post('posts/(:num)/preview-links', 'Admin\PostPreviewController::store/$1');
+    $routes->post('posts/(:num)/preview-links/(:num)/revoke', 'Admin\PostPreviewController::revoke/$1/$2');
 
     // 게시판 카테고리 관리 (게시판마다 별도 관리)
     $routes->get('boards/(:num)/categories', 'Admin\BoardManagerController::categories/$1');
@@ -155,6 +159,13 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     // 전체 댓글 관리
     $routes->get('comments', 'Admin\CommentController::index');
     $routes->post('comments/(:num)/toggle', 'Admin\CommentController::toggle/$1');
+    $routes->post('comments/(:num)/approve', 'Admin\CommentController::approve/$1');
+    $routes->post('comments/(:num)/delete', 'Admin\CommentController::delete/$1');
+
+    // 휴지통
+    $routes->get('trash', 'Admin\TrashController::index');
+    $routes->post('trash/(:segment)/(:num)/restore', 'Admin\TrashController::restore/$1/$2');
+    $routes->post('trash/(:segment)/(:num)/delete', 'Admin\TrashController::purge/$1/$2');
 
     // 접속 통계
     $routes->get('stats', 'Admin\StatsController::index');
@@ -167,6 +178,13 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('blocked-ips', 'Admin\BlockedIpController::index');
     $routes->post('blocked-ips/(:num)/delete', 'Admin\BlockedIpController::delete/$1');
     $routes->get('logs', 'Admin\AdminLogController::index');
+
+    // 리다이렉트 관리
+    $routes->get('redirects', 'Admin\RedirectController::index');
+    $routes->post('redirects', 'Admin\RedirectController::store');
+    $routes->post('redirects/(:num)', 'Admin\RedirectController::update/$1');
+    $routes->post('redirects/(:num)/toggle', 'Admin\RedirectController::toggle/$1');
+    $routes->post('redirects/(:num)/delete', 'Admin\RedirectController::delete/$1');
 
     // 회원 관리
     $routes->get('users', 'Admin\UserController::index');

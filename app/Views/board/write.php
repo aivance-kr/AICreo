@@ -12,9 +12,14 @@
     <div class="card-header bg-white d-flex align-items-center">
         <h1 class="h6 mb-0"><?= $post ? '게시글 수정' : '글쓰기' ?></h1>
         <?php if ($post && session()->get('user_role') === 'admin'): ?>
-        <a href="/admin/posts/<?= (int) $post['id'] ?>/revisions" class="small text-decoration-none ms-auto">
-            <i class="bi bi-clock-history" aria-hidden="true"></i> 수정 이력
-        </a>
+        <span class="ms-auto d-flex gap-3">
+            <a href="/admin/posts/<?= (int) $post['id'] ?>/preview-links" class="small text-decoration-none">
+                <i class="bi bi-link-45deg" aria-hidden="true"></i> 미리보기 링크
+            </a>
+            <a href="/admin/posts/<?= (int) $post['id'] ?>/revisions" class="small text-decoration-none">
+                <i class="bi bi-clock-history" aria-hidden="true"></i> 수정 이력
+            </a>
+        </span>
         <?php endif; ?>
     </div>
     <div class="card-body">
