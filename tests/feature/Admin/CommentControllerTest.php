@@ -53,6 +53,35 @@ final class CommentControllerTest extends AdminTestCase
         $this->assertSame(0, (int) $this->commentModel->find($comment['id'])['is_active']);
     }
 
+    public function testAdminCanApprovePendingComment(): void
+    {
+        $comment = $this->commentModel->first();
+        $this->commentModel->update($comment['id'], ['is_active' => 0, 'is_pending' => 1]);
+
+        $this->withSession($this->adminSession)->post("admin/comments/{$comment['id']}/approve")->assertRedirect();
+
+        $after = $this->commentModel->find($comment['id']);
+        $this->assertSame(1, (int) $after['is_active']);
+        $this->assertSame(0, (int) $after['is_pending']);
+    }
+
+    public function testPendingFilterListsOnlyPendingComments(): void
+    {
+        $comment = $this->commentModel->first();
+        $this->commentModel->update($comment['id'], ['is_active' => 0, 'is_pending' => 1]);
+
+        $this->withSession($this->adminSession)->get('admin/comments?status=pending')->assertSee('승인 대기');
+    }
+
+    public function testAdminCanDeleteComment(): void
+    {
+        $comment = $this->commentModel->first();
+
+        $this->withSession($this->adminSession)->post("admin/comments/{$comment['id']}/delete")->assertRedirect();
+
+        $this->assertNull($this->commentModel->find($comment['id']));
+    }
+
     public function testMemberCannotAccessCommentManagement(): void
     {
         $this->withSession($this->memberSession)->get('admin/comments')->assertStatus(302);

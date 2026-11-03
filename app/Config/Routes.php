@@ -155,6 +155,8 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     // 전체 댓글 관리
     $routes->get('comments', 'Admin\CommentController::index');
     $routes->post('comments/(:num)/toggle', 'Admin\CommentController::toggle/$1');
+    $routes->post('comments/(:num)/approve', 'Admin\CommentController::approve/$1');
+    $routes->post('comments/(:num)/delete', 'Admin\CommentController::delete/$1');
 
     // 휴지통
     $routes->get('trash', 'Admin\TrashController::index');

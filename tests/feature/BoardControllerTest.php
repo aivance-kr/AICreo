@@ -419,6 +419,59 @@ final class BoardControllerTest extends FeatureTestCase
         $this->assertSame(1, (new PostCommentModel())->where('post_id', $postId)->countAllResults());
     }
 
+    public function testGuestCommentWithTooManyLinksGoesToPending(): void
+    {
+        $postId = $this->guestCommentPostId();
+
+        $this->withSession([
+            'guest_comment_captcha_' . $postId => $this->guestCommentCaptcha(5),
+        ])->post("board/qna/{$postId}/comment", [
+            'author_name'     => '비회원',
+            'author_password' => '1234',
+            'content'         => 'https://a.example http://b.example www.c.example',
+            'captcha_answer'  => '5',
+        ]);
+
+        $comment = (new PostCommentModel())->where('post_id', $postId)->first();
+        $this->assertNotNull($comment);
+        $this->assertSame(1, (int) $comment['is_pending']);
+        $this->assertSame(0, (int) $comment['is_active']);
+        $this->assertSame([], (new PostCommentModel())->getByPost($postId));
+    }
+
+    public function testGuestCommentWithBannedWordGoesToPending(): void
+    {
+        $postId = $this->guestCommentPostId();
+
+        $this->withSession([
+            'guest_comment_captcha_' . $postId => $this->guestCommentCaptcha(5),
+        ])->post("board/qna/{$postId}/comment", [
+            'author_name'     => '비회원',
+            'author_password' => '1234',
+            'content'         => '온라인 카지노 추천',
+            'captcha_answer'  => '5',
+        ]);
+
+        $this->assertSame(1, (new PostCommentModel())->countPending());
+    }
+
+    public function testCommentRejectedWhenIpHourlyLimitExceeded(): void
+    {
+        $postId = $this->guestCommentPostId();
+        cache()->save('comment_ip_hour_' . hash('sha256', '0.0.0.0'), 20, 3600);
+
+        $this->withSession([
+            'guest_comment_captcha_' . $postId => $this->guestCommentCaptcha(5),
+        ])->post("board/qna/{$postId}/comment", [
+            'author_name'     => '비회원',
+            'author_password' => '1234',
+            'content'         => '평범한 댓글',
+            'captcha_answer'  => '5',
+        ]);
+
+        $this->assertSame(0, (new PostCommentModel())->where('post_id', $postId)->countAllResults());
+    }
+
     public function testViewShowsPreviousAndNextPostLinks(): void
     {
         $postModel = new PostModel();
