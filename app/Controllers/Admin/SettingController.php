@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\AdminLogModel;
 use App\Models\SettingModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use DirectoryIterator;
@@ -195,6 +196,7 @@ class SettingController extends BaseController
         if ($group === 'theme') {
             $theme = $postData['active_theme'] ?? 'default';
             $this->settingModel->saveSettings(['active_theme' => $theme]);
+            model(AdminLogModel::class)->record('update', 'setting', null, AdminLogModel::keysSummary(['active_theme']));
 
             return redirect()->to('/admin/settings/theme')->with('success', "테마가 '{$theme}'으로 변경되었습니다.");
         }
@@ -204,6 +206,8 @@ class SettingController extends BaseController
         }
 
         $this->settingModel->saveSettings($postData);
+        // 값에는 SMTP 비밀번호·API 키가 섞일 수 있어 항목 이름만 남긴다
+        model(AdminLogModel::class)->record('update', 'setting', null, AdminLogModel::keysSummary(array_map('strval', array_keys($postData))));
 
         return redirect()->to("/admin/settings/{$group}")->with('success', '설정이 저장되었습니다.');
     }

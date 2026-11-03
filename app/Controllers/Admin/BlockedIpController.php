@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\AdminLogModel;
 use App\Models\BlockedIpModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -41,6 +42,7 @@ class BlockedIpController extends BaseController
         }
 
         $this->blockedIpModel->delete($id);
+        model(AdminLogModel::class)->record('unblock', 'blocked_ip', $id, (string) $row['ip_address']);
 
         return redirect()->back()->with('success', "{$row['ip_address']} 차단을 해제했습니다.");
     }

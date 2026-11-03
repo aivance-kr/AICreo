@@ -157,6 +157,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             <a href="/admin/blocked-ips" class="nav-link <?= str_starts_with($uri, 'admin/blocked-ips') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/blocked-ips') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-slash-circle me-2" aria-hidden="true"></i>차단 IP
             </a>
+            <a href="/admin/logs" class="nav-link <?= str_starts_with($uri, 'admin/logs') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/logs') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-journal-text me-2" aria-hidden="true"></i>활동 로그
+            </a>
             <a href="/admin/subscribers" class="nav-link <?= str_starts_with($uri, 'admin/subscribers') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/subscribers') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-envelope-paper me-2" aria-hidden="true"></i>뉴스레터 구독자
             </a>
@@ -182,6 +185,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             </a>
             <a href="/admin/settings/oauth" class="nav-link <?= $isOauthSettings ? 'active' : '' ?>" <?= $isOauthSettings ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-people me-2" aria-hidden="true"></i>소셜 로그인
+            </a>
+            <a href="/admin/security" class="nav-link <?= str_starts_with($uri, 'admin/security') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/security') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-shield-lock me-2" aria-hidden="true"></i>2단계 인증
             </a>
             <a href="/admin/backup" class="nav-link <?= $isBackup ? 'active' : '' ?>" <?= $isBackup ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-database-down me-2" aria-hidden="true"></i>백업 관리

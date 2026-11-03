@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\AdminLogModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostFileModel;
@@ -62,6 +63,7 @@ class PostController extends BaseController
 
         (new PostFileModel())->deleteByPost($id);
         $this->postModel->delete($id);
+        model(AdminLogModel::class)->record('delete', 'post', $id, (string) $post['title']);
 
         return redirect()->back()->with('success', '삭제되었습니다.');
     }
@@ -81,6 +83,7 @@ class PostController extends BaseController
         }
 
         $this->postModel->moveToBoard($ids, $targetId);
+        model(AdminLogModel::class)->record('update', 'post', null, count($ids) . '개 글을 게시판 #' . $targetId . '(으)로 이동: #' . implode(', #', $ids));
 
         return redirect()->back()->with('success', count($ids) . '개 게시물을 이동했습니다.');
     }
@@ -101,6 +104,7 @@ class PostController extends BaseController
 
         $changed = $this->postModel->changeCategory($ids, (int) $category['id'], (int) $category['board_id']);
         $skipped = count($ids) - $changed;
+        model(AdminLogModel::class)->record('update', 'post', null, $changed . '개 글의 카테고리를 "' . $category['name'] . '"(으)로 변경: #' . implode(', #', $ids));
         $message = $changed . '개 게시물의 카테고리를 "' . $category['name'] . '"(으)로 변경했습니다.';
         if ($skipped > 0) {
             $message .= ' 다른 게시판 글 등 ' . $skipped . '개는 건너뛰었습니다.';
@@ -117,6 +121,7 @@ class PostController extends BaseController
         }
 
         $this->postModel->toggleActive($id);
+        model(AdminLogModel::class)->record('toggle', 'post', $id, (string) $post['title']);
 
         return redirect()->back()->with('success', '노출 상태가 변경되었습니다.');
     }

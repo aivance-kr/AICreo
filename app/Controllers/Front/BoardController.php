@@ -7,6 +7,7 @@ use App\Libraries\FileUploader;
 use App\Libraries\HtmlSanitizer;
 use App\Libraries\OgImageGenerator;
 use App\Libraries\Seo\JsonLdBuilder;
+use App\Models\AdminLogModel;
 use App\Models\AdModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
@@ -14,6 +15,7 @@ use App\Models\PostCommentModel;
 use App\Models\PostFileModel;
 use App\Models\PostLikeModel;
 use App\Models\PostModel;
+use App\Models\PostRevisionModel;
 use App\Models\SeriesModel;
 use App\Models\SignatureModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
@@ -366,6 +368,8 @@ class BoardController extends BaseController
             }
         }
 
+        $this->logAdminPost('create', $postId, (string) $data['title']);
+
         // 공개(비밀글 아님 · guest 열람 게시판) 글만 IndexNow 즉시 제출
         if ($publishAt === null && ! $data['is_secret'] && $board['read_permission'] === 'guest') {
             service('indexnow')->submit([base_url("board/{$boardSlug}/{$postId}")]);
@@ -477,8 +481,14 @@ class BoardController extends BaseController
             }
         }
 
+        // 덮어쓰기 전 상태를 수정 이력으로 남긴다
+        if (PostRevisionModel::changed($post, $changes)) {
+            (new PostRevisionModel())->record($post, (int) session()->get('user_id') ?: null);
+        }
+
         $this->postModel->update($postId, $changes);
         $this->saveSeries($postId);
+        $this->logAdminPost('update', $postId, (string) $changes['title']);
 
         // 파일 추가 업로드
         if ($multiFiles) {
@@ -516,9 +526,20 @@ class BoardController extends BaseController
 
         $this->fileModel->deleteByPost($postId);
         $this->postModel->delete($postId);
+        $this->logAdminPost('delete', $postId, (string) $post['title']);
         session()->remove('edit_auth_' . $postId);
 
         return redirect()->to("/board/{$boardSlug}" . $this->listQuery())->with('success', '삭제되었습니다.');
+    }
+
+    /**
+     * 운영자가 쓴 글·고친 글·지운 글만 관리자 활동 로그에 남긴다.
+     */
+    private function logAdminPost(string $action, int $postId, string $title): void
+    {
+        if ($this->getUserRole() === 'admin') {
+            model(AdminLogModel::class)->record($action, 'post', $postId, $title);
+        }
     }
 
     // ─── 파일 다운로드 ───────────────────────────────────────────────────────

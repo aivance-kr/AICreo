@@ -12,6 +12,7 @@ class UserModel extends Model
     protected $allowedFields = [
         'username', 'email', 'password', 'nickname', 'role', 'is_active', 'last_login',
         'social_provider', 'social_id', 'social_token', 'avatar',
+        'totp_secret', 'totp_enabled_at', 'totp_recovery_codes', 'totp_last_step', 'totp_failures', 'totp_locked_until',
     ];
 
     /**
@@ -41,6 +42,8 @@ class UserModel extends Model
             'social_id'       => null,
             'social_token'    => null,
             'avatar'          => null,
+            'totp_secret'     => null,
+            'totp_enabled_at' => null,
         ]);
     }
 }

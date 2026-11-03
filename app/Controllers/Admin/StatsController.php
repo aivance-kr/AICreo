@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Libraries\PathAnalyzer;
+use App\Models\AdminLogModel;
 use App\Models\BlockedIpModel;
 use App\Models\PageVisitModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
@@ -187,6 +188,8 @@ class StatsController extends BaseController
         if (! (new BlockedIpModel())->block($ip, BlockedIpModel::REASON_MANUAL)) {
             return redirect()->back()->with('error', 'Cloudflare IP 는 정상 방문자까지 막을 수 있어 차단할 수 없습니다.');
         }
+
+        model(AdminLogModel::class)->record('block', 'blocked_ip', null, $ip);
 
         return redirect()->back()->with('success', "{$ip} 을(를) " . BlockedIpModel::BLOCK_DAYS . '일간 차단했습니다.');
     }
