@@ -69,7 +69,7 @@ class PageManagerController extends BaseController
     {
         $this->pageModel->delete($id);
 
-        return redirect()->to('/admin/pages')->with('success', '삭제되었습니다.');
+        return redirect()->to('/admin/pages')->with('success', '휴지통으로 이동했습니다.');
     }
 
     /**

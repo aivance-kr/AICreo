@@ -143,6 +143,11 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('comments', 'Admin\CommentController::index');
     $routes->post('comments/(:num)/toggle', 'Admin\CommentController::toggle/$1');
 
+    // 휴지통
+    $routes->get('trash', 'Admin\TrashController::index');
+    $routes->post('trash/(:segment)/(:num)/restore', 'Admin\TrashController::restore/$1/$2');
+    $routes->post('trash/(:segment)/(:num)/delete', 'Admin\TrashController::purge/$1/$2');
+
     // 접속 통계
     $routes->get('stats', 'Admin\StatsController::index');
     $routes->get('stats/posts', 'Admin\StatsController::posts');
