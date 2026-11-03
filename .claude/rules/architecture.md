@@ -80,6 +80,14 @@ series              — 연재 묶음 (slug·title·description·status)
 post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, series_order NULL 허용)
 ```
 
+## 휴지통(소프트 삭제)
+
+- `posts`·`post_comments`·`pages` 는 `deleted_at` 소프트 삭제다. 삭제하면 `deleted_at` 만 채워지므로 **첨부 파일(디스크 포함)·시리즈 소속(`post_series`)은 그대로 남고**, 복원은 `deleted_at` 만 비운다. 공개 목록·RSS·sitemap·검색·캐시 훅은 모델의 소프트 삭제 필터로 삭제 항목을 자동 제외한다. 모델 밖에서 `db->table('posts')` 등으로 직접 조회할 때는 `deleted_at IS NULL` 을 직접 건다.
+- `App\Libraries\TrashManager` 가 목록·복원·영구 삭제·만료 비우기를 맡는다. 글을 영구 삭제할 때만 첨부 파일·댓글·공감·조회 기록·시리즈 소속을 함께 지운다. 컨트롤러는 삭제 시 `deleteByPost()` 를 부르지 않는다.
+- 관리자 화면: `/admin/trash`(글·댓글·페이지 탭, 복원, 영구 삭제).
+- 자동 비움: `php spark trash:empty [--days 30]` 가 보관 기간(기본 30일, `TrashManager::RETENTION_DAYS`)이 지난 항목을 영구 삭제한다. **서버 crontab에 하루 한 번 등록해야 한다** (예: `0 4 * * * cd /path/to/app && php spark trash:empty >> /dev/null 2>&1`). 없으면 휴지통이 비워지지 않는다.
+- WP 가져오기 롤백(`wp:import:rollback`)은 휴지통을 거치지 않고 영구 삭제한다.
+
 ## 시리즈(연재)
 
 - 한 글은 여러 시리즈에 속할 수 있다(`post_series` 피벗). 외래 키는 없고, 시리즈 삭제 시 `SeriesModel` 이 피벗 행만 지운다(글은 남음).
@@ -158,3 +166,9 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - `redirects` 테이블(`old_path` 유일·`new_path`·`status_code` 301/302·`is_active`·`hit_count`). `RedirectFilter`(전역 before)가 GET 요청의 `경로?쿼리` 와 `is_active=1` 행이 일치하면 이동시키고 `hit_count` 를 올린다.
 - 관리자 `/admin/redirects`(등록·수정·켜기/끄기·삭제, 주소 검색). 저장 전 `RedirectModel::validationError()` 가 원 주소 중복과 순환(자기 자신·A→B→A 연쇄, 사용 안 함 행 포함)을 막는다. 대상은 `/경로` 또는 `http(s)://` 만 허용.
 - 같은 화면의 "최근 30일 404 주소"(`PageVisitModel::topNotFound()`)와 일별 방문기록의 404 행에서 원 주소가 채워진 채로 바로 등록한다.
+
+## 댓글 스팸 방지
+
+- 비회원 댓글 방어선: 허니팟(`website`) → 1분 1회 제한 → 산수 캡차 → `CommentSpamFilter`(링크 `MAX_LINKS`=2개 초과·금칙어 포함이면 의심). 의심 댓글은 거절하지 않고 `post_comments.is_pending=1`·`is_active=0` 으로 저장해 공개하지 않는다(회원 댓글은 필터 제외). 금칙어는 `CommentSpamFilter::DEFAULT_BANNED_WORDS`.
+- 모든 작성자 공통으로 IP당 시간당 20건(`BoardController::COMMENT_IP_HOURLY_LIMIT`, 캐시 카운터)을 넘으면 거절한다.
+- 관리자 `/admin/comments?status=pending` 에서 승인(`POST comments/{id}/approve`)·삭제(휴지통)한다. 노출 토글은 대기 상태를 해제한다.

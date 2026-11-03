@@ -155,6 +155,13 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     // 전체 댓글 관리
     $routes->get('comments', 'Admin\CommentController::index');
     $routes->post('comments/(:num)/toggle', 'Admin\CommentController::toggle/$1');
+    $routes->post('comments/(:num)/approve', 'Admin\CommentController::approve/$1');
+    $routes->post('comments/(:num)/delete', 'Admin\CommentController::delete/$1');
+
+    // 휴지통
+    $routes->get('trash', 'Admin\TrashController::index');
+    $routes->post('trash/(:segment)/(:num)/restore', 'Admin\TrashController::restore/$1/$2');
+    $routes->post('trash/(:segment)/(:num)/delete', 'Admin\TrashController::purge/$1/$2');
 
     // 접속 통계
     $routes->get('stats', 'Admin\StatsController::index');

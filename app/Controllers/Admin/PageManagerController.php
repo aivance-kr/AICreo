@@ -74,7 +74,7 @@ class PageManagerController extends BaseController
         $this->pageModel->delete($id);
         model(AdminLogModel::class)->record('delete', 'page', $id, (string) ($page['title'] ?? ''));
 
-        return redirect()->to('/admin/pages')->with('success', '삭제되었습니다.');
+        return redirect()->to('/admin/pages')->with('success', '휴지통으로 이동했습니다.');
     }
 
     /**

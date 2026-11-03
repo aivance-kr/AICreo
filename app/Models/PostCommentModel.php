@@ -13,7 +13,7 @@ class PostCommentModel extends Model
     protected $useSoftDeletes = true;
     protected $allowedFields  = [
         'post_id', 'user_id', 'content',
-        'author_name', 'author_password', 'is_active', 'ip_address',
+        'author_name', 'author_password', 'is_active', 'is_pending', 'ip_address',
         'wp_comment_id', 'created_at',
     ];
 
@@ -33,13 +33,17 @@ class PostCommentModel extends Model
     /**
      * @return array{comments: list<array<string, mixed>>, total: int}
      */
-    public function getAdminList(int $page, int $perPage): array
+    public function getAdminList(int $page, int $perPage, bool $pendingOnly = false): array
     {
         $offset  = ($page - 1) * $perPage;
         $builder = $this->select('post_comments.*, boards.name AS board_name, boards.slug AS board_slug, posts.title AS post_title, users.nickname AS user_nickname')
             ->join('posts', 'posts.id = post_comments.post_id', 'inner')
             ->join('boards', 'boards.id = posts.board_id', 'inner')
             ->join('users', 'users.id = post_comments.user_id', 'left');
+
+        if ($pendingOnly) {
+            $builder->where('post_comments.is_pending', 1);
+        }
 
         $total    = (clone $builder)->countAllResults(false);
         $comments = $builder->orderBy('post_comments.id', 'DESC')->findAll($perPage, $offset);
@@ -54,7 +58,20 @@ class PostCommentModel extends Model
             return;
         }
 
-        $this->update($id, ['is_active' => $comment['is_active'] ? 0 : 1]);
+        $this->update($id, ['is_active' => $comment['is_active'] ? 0 : 1, 'is_pending' => 0]);
+    }
+
+    /**
+     * 승인 대기 댓글을 공개한다.
+     */
+    public function approve(int $id): void
+    {
+        $this->update($id, ['is_active' => 1, 'is_pending' => 0]);
+    }
+
+    public function countPending(): int
+    {
+        return $this->where('is_pending', 1)->countAllResults();
     }
 
     /**
