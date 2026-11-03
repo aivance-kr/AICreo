@@ -133,9 +133,10 @@ final class StatsControllerTest extends AdminTestCase
     public function testPathStatsShowsEntryExitAndFocusedPage(): void
     {
         $now = date('Y-m-d H:i:s');
+
         foreach ([['/', 0], ['/board/notice', 30], ['/contact', 60]] as [$uri, $offset]) {
             $this->db->table('page_visits')->insert([
-                'uri' => $uri, 'ip_address' => '9.9.9.9', 'user_agent' => 'UA-X',
+                'uri'        => $uri, 'ip_address' => '9.9.9.9', 'user_agent' => 'UA-X',
                 'created_at' => date('Y-m-d H:i:s', strtotime($now) - 120 + $offset),
             ]);
         }

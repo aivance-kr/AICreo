@@ -14,17 +14,18 @@ namespace App\Libraries;
  * 같은 방문자의 요청 사이가 $gapSeconds 이상 벌어지면 새 세션으로 본다(기본 30분).
  * 새로고침(연속 같은 주소)은 한 번으로 합친다.
  *
- * @phpstan-type Visit array{uri: string, ip_address: string, user_agent: string|null, created_at: string}
+ * @phpstan-type Visit   array{uri: string, ip_address: string, user_agent: string|null, created_at: string}
  * @phpstan-type Counted list<array{label: string, count: int}>
  */
 final class PathAnalyzer
 {
-    public const ENTRY = '(진입)';
-    public const EXIT  = '(이탈)';
-
+    public const ENTRY               = '(진입)';
+    public const EXIT                = '(이탈)';
     public const DEFAULT_GAP_SECONDS = 1800;
 
-    /** 경로 단위로 보여줄 최대 단계 수 */
+    /**
+     * 경로 단위로 보여줄 최대 단계 수
+     */
     private const PATH_STEPS = 5;
 
     /**
@@ -102,7 +103,7 @@ final class PathAnalyzer
             $pageviews += $n;
             $bounces += $n === 1 ? 1 : 0;
 
-            $entries[$session[0]] = ($entries[$session[0]] ?? 0) + 1;
+            $entries[$session[0]]    = ($entries[$session[0]] ?? 0) + 1;
             $exits[$session[$n - 1]] = ($exits[$session[$n - 1]] ?? 0) + 1;
             $depth[$n >= 5 ? '5+' : (string) $n]++;
 
