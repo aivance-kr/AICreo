@@ -166,6 +166,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     // 차단 IP 목록
     $routes->get('blocked-ips', 'Admin\BlockedIpController::index');
     $routes->post('blocked-ips/(:num)/delete', 'Admin\BlockedIpController::delete/$1');
+    $routes->get('logs', 'Admin\AdminLogController::index');
 
     // 회원 관리
     $routes->get('users', 'Admin\UserController::index');

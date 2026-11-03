@@ -157,6 +157,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             <a href="/admin/blocked-ips" class="nav-link <?= str_starts_with($uri, 'admin/blocked-ips') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/blocked-ips') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-slash-circle me-2" aria-hidden="true"></i>차단 IP
             </a>
+            <a href="/admin/logs" class="nav-link <?= str_starts_with($uri, 'admin/logs') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/logs') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-journal-text me-2" aria-hidden="true"></i>활동 로그
+            </a>
             <a href="/admin/subscribers" class="nav-link <?= str_starts_with($uri, 'admin/subscribers') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/subscribers') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-envelope-paper me-2" aria-hidden="true"></i>뉴스레터 구독자
             </a>

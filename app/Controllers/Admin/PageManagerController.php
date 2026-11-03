@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\AdminLogModel;
 use App\Models\PageModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -37,8 +38,9 @@ class PageManagerController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $data = $this->collectData();
-        $this->pageModel->insert($data);
+        $data   = $this->collectData();
+        $pageId = (int) $this->pageModel->insert($data);
+        model(AdminLogModel::class)->record('create', 'page', $pageId, (string) $data['title']);
 
         if (($data['status'] ?? '') === 'published') {
             service('indexnow')->submit([base_url($data['slug'])]);
@@ -56,6 +58,7 @@ class PageManagerController extends BaseController
     {
         $data = $this->collectData(isUpdate: true);
         $this->pageModel->update($id, $data);
+        model(AdminLogModel::class)->record('update', 'page', $id, (string) $data['title']);
 
         $page = $this->pageModel->find($id);
         if ($page && ($data['status'] ?? '') === 'published') {
@@ -67,7 +70,9 @@ class PageManagerController extends BaseController
 
     public function delete(int $id): ResponseInterface|string
     {
+        $page = $this->pageModel->find($id);
         $this->pageModel->delete($id);
+        model(AdminLogModel::class)->record('delete', 'page', $id, (string) ($page['title'] ?? ''));
 
         return redirect()->to('/admin/pages')->with('success', '삭제되었습니다.');
     }

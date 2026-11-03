@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\AdminLogModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -83,6 +84,8 @@ class UserController extends BaseController
             'is_active' => (int) $this->request->getPost('is_active'),
         ]);
 
+        model(AdminLogModel::class)->record('update', 'user', $id, (string) $user['email'] . ' — 닉네임·역할·상태 변경');
+
         return redirect()->to('/admin/users')->with('success', '회원 정보가 수정되었습니다.');
     }
 
@@ -92,7 +95,9 @@ class UserController extends BaseController
             return redirect()->back()->with('error', '본인 계정은 삭제할 수 없습니다.');
         }
 
+        $user = $this->userModel->find($id);
         $this->userModel->delete($id);
+        model(AdminLogModel::class)->record('delete', 'user', $id, (string) ($user['email'] ?? ''));
 
         return redirect()->to('/admin/users')->with('success', '회원이 삭제되었습니다.');
     }
