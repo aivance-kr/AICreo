@@ -11,9 +11,11 @@
     },
     "require": {
         "php": "^8.5",
+        "bacon/bacon-qr-code": "^3",
         "codeigniter4/framework": "^4.7",
         "ezyang/htmlpurifier": "^4.19",
-        "league/commonmark": "^2.10"
+        "league/commonmark": "^2.10",
+        "spomky-labs/otphp": "^11"
     },
     "require-dev": {
         "codeigniter/coding-standard": "^1.9",

@@ -28,6 +28,8 @@ $routes->get('tags/(:segment)', 'Front\TagController::show/$1');
 // ─── 인증 ────────────────────────────────────────────────────────────────────
 $routes->get('auth/login', 'Front\AuthController::login');
 $routes->post('auth/login', 'Front\AuthController::loginProcess');
+$routes->get('auth/2fa', 'Front\TwoFactorController::form');
+$routes->post('auth/2fa', 'Front\TwoFactorController::verify');
 $routes->get('auth/logout', 'Front\AuthController::logout');
 $routes->get('auth/register', 'Front\AuthController::register');
 $routes->post('auth/register', 'Front\AuthController::registerProcess');
@@ -71,6 +73,12 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     // 대시보드
     $routes->get('', 'Admin\DashboardController::index');
     $routes->get('dashboard', 'Admin\DashboardController::index');
+
+    // 2단계 인증(TOTP)
+    $routes->get('security', 'Admin\SecurityController::index');
+    $routes->post('security/enable', 'Admin\SecurityController::enable');
+    $routes->post('security/disable', 'Admin\SecurityController::disable');
+    $routes->post('security/recovery', 'Admin\SecurityController::recovery');
 
     // 도움말
     $routes->get('help', 'Admin\HelpController::index');

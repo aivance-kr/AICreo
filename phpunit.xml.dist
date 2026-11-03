@@ -29,6 +29,8 @@
 
     <php>
         <server name="app.baseURL" value="http://localhost:8080/"/>
+        <!-- 2단계 인증 시크릿 암호화용 테스트 전용 키(운영 키 아님) -->
+        <server name="encryption.key" value="hex2bin:0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0"/>
         <!-- phpunit.xml 이 위치한 디렉터리 -->
         <const name="HOMEPATH" value="./"/>
         <!-- Paths 설정 파일이 위치한 디렉터리 -->

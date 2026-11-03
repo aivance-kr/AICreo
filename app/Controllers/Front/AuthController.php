@@ -41,15 +41,7 @@ class AuthController extends BaseController
             return redirect()->back()->withInput()->with('error', '이메일 또는 비밀번호가 올바르지 않습니다.');
         }
 
-        session()->set([
-            'user_id'       => $user['id'],
-            'user_nickname' => $user['nickname'],
-            'user_role'     => $user['role'],
-        ]);
-
-        $this->userModel->updateLastLogin($user['id']);
-
-        return redirect()->to(session()->getTempdata('redirect_url') ?? '/');
+        return $this->finishLogin($user);
     }
 
     public function logout(): ResponseInterface|string

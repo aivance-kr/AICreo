@@ -94,15 +94,7 @@ class SocialAuthController extends BaseController
         }
 
         // 로그인 세션 등록
-        session()->set([
-            'user_id'       => $user['id'],
-            'user_nickname' => $user['nickname'],
-            'user_role'     => $user['role'],
-        ]);
-
-        $this->userModel->updateLastLogin($user['id']);
-
-        return redirect()->to(session()->getTempdata('redirect_url') ?? '/');
+        return $this->finishLogin($user);
     }
 
     /**
