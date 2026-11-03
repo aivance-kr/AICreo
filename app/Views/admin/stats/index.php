@@ -41,7 +41,10 @@
 })();
 </script>
 
-<div class="mb-3"><a href="<?= base_url('admin/stats/posts') ?>" class="btn btn-sm btn-outline-primary">글별 조회 통계</a></div>
+<div class="mb-3 d-flex gap-2">
+    <a href="<?= base_url('admin/stats/posts') ?>" class="btn btn-sm btn-outline-primary">글별 조회 통계</a>
+    <a href="<?= base_url('admin/stats/paths') ?>" class="btn btn-sm btn-outline-primary">이동 경로 통계</a>
+</div>
 
 <!-- 통계 카드 -->
 <div class="row g-3 mb-4">

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Libraries\PathAnalyzer;
 use App\Models\BlockedIpModel;
 use App\Models\PageVisitModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
@@ -121,6 +122,34 @@ class StatsController extends BaseController
             'referrers' => $referrers,
             'keywords'  => $keywords,
         ];
+    }
+
+    /**
+     * 이동 경로 통계: 세션(30분 무활동 기준)별 진입·이탈 페이지, 페이지 간 이동, 자주 걷는 경로.
+     * ?page=/주소 를 주면 그 페이지의 직전·직후 이동을 보여준다. 10분 캐시.
+     */
+    public function paths(): string
+    {
+        $days = (int) ($this->request->getGet('days') ?? 30);
+        $days = in_array($days, self::POST_STATS_DAYS, true) ? $days : 30;
+        $page = (string) ($this->request->getGet('page') ?? '');
+        $page = ($page !== '' && $page[0] === '/' && strlen($page) <= 500) ? $page : null;
+
+        $stats = cache()->remember(
+            'admin_path_stats_' . $days . '_' . md5((string) $page),
+            self::POST_STATS_CACHE_TTL,
+            function () use ($days, $page): array {
+                [$start, $end] = PageVisitModel::dayRange($days);
+                $data          = $this->visitModel->visitsForPaths($start, $end);
+
+                return [
+                    'result'    => PathAnalyzer::analyze(PathAnalyzer::buildSessions($data['rows']), $page),
+                    'truncated' => $data['truncated'],
+                ];
+            },
+        );
+
+        return $this->render('admin/stats/paths', $stats + ['days' => $days, 'dayOptions' => self::POST_STATS_DAYS, 'page' => $page]);
     }
 
     public function day(string $date): string

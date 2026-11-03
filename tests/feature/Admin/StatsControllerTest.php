@@ -129,4 +129,28 @@ final class StatsControllerTest extends AdminTestCase
     {
         $this->withSession($this->memberSession)->get('admin/stats/posts')->assertStatus(302);
     }
+
+    public function testPathStatsShowsEntryExitAndFocusedPage(): void
+    {
+        $now = date('Y-m-d H:i:s');
+        foreach ([['/', 0], ['/board/notice', 30], ['/contact', 60]] as [$uri, $offset]) {
+            $this->db->table('page_visits')->insert([
+                'uri' => $uri, 'ip_address' => '9.9.9.9', 'user_agent' => 'UA-X',
+                'created_at' => date('Y-m-d H:i:s', strtotime($now) - 120 + $offset),
+            ]);
+        }
+
+        $result = $this->withSession($this->adminSession)->get('admin/stats/paths?page=' . rawurlencode('/board/notice'));
+
+        $result->assertStatus(200);
+        $result->assertSee('이동 경로 통계');
+        $result->assertSee('진입 페이지');
+        $result->assertSee('/contact');
+        $result->assertSee('어디로 갔나');
+    }
+
+    public function testMemberCannotAccessPathStats(): void
+    {
+        $this->withSession($this->memberSession)->get('admin/stats/paths')->assertStatus(302);
+    }
 }
