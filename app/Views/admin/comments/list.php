@@ -3,8 +3,12 @@
 
 <?= $this->section('content') ?>
 
-<div class="d-flex justify-content-end mb-3 text-muted small">
-    총 <?= number_format($total) ?>건
+<div class="d-flex justify-content-between align-items-center mb-3 small">
+    <div class="btn-group btn-group-sm" role="group" aria-label="댓글 필터">
+        <a href="/admin/comments" class="btn btn-outline-secondary <?= $pendingOnly ? '' : 'active' ?>">전체</a>
+        <a href="/admin/comments?status=pending" class="btn btn-outline-secondary <?= $pendingOnly ? 'active' : '' ?>">승인 대기 (<?= number_format($pendingCount) ?>)</a>
+    </div>
+    <span class="text-muted">총 <?= number_format($total) ?>건</span>
 </div>
 
 <div class="card">
@@ -39,16 +43,31 @@
                     <td data-label="작성자" class="small"><?= esc($comment['user_nickname'] ?? $comment['author_name']) ?></td>
                     <td data-label="작성일" class="small text-muted"><?= date('Y-m-d', strtotime($comment['created_at'])) ?></td>
                     <td data-label="노출">
+                        <?php if ($comment['is_pending']): ?>
+                        <span class="badge bg-warning text-dark">승인 대기</span>
+                        <?php else: ?>
                         <span class="badge <?= $comment['is_active'] ? 'bg-success' : 'bg-secondary' ?>">
                             <?= $comment['is_active'] ? '노출' : '숨김' ?>
                         </span>
+                        <?php endif; ?>
                     </td>
                     <td data-label="" class="cell-actions">
+                        <?php if ($comment['is_pending']): ?>
+                        <form method="post" action="/admin/comments/<?= $comment['id'] ?>/approve" class="d-inline">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn-sm btn-success">승인</button>
+                        </form>
+                        <?php else: ?>
                         <form method="post" action="/admin/comments/<?= $comment['id'] ?>/toggle" class="d-inline">
                             <?= csrf_field() ?>
                             <button type="submit" class="btn btn-sm btn-outline-secondary">
                                 <?= $comment['is_active'] ? '숨기기' : '노출' ?>
                             </button>
+                        </form>
+                        <?php endif; ?>
+                        <form method="post" action="/admin/comments/<?= $comment['id'] ?>/delete" class="d-inline" onsubmit="return confirm('이 댓글을 휴지통으로 이동할까요?');">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
                         </form>
                     </td>
                 </tr>

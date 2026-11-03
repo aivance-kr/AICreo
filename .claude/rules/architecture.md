@@ -160,3 +160,9 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 켠 관리자는 비밀번호·소셜 로그인 모두 `BaseController::finishLogin()` 에서 세션(`user_id`)을 만들지 않고 `twofa_user_id` 만 둔 채 `/auth/2fa` 로 보낸다(5분 유효). 코드가 맞으면 `startSession()` 이 세션을 완성한다. 로그인 경로를 새로 만들면 반드시 `finishLogin()` 을 거칠 것.
 - 로직은 `App\Libraries\TwoFactor`(spomky-labs/otphp, bacon/bacon-qr-code). 시크릿은 CI4 Encrypter 로 암호화해 `users.totp_secret` 에, 복구 코드는 SHA-256 해시만 `totp_recovery_codes` 에 저장한다. 같은 코드 재사용 불가(`totp_last_step`), 연속 5회 실패 시 15분 잠금(`totp_locked_until`), 시크릿·코드는 로그에 남기지 않는다.
 - **배포 전 서버 `.env` 에 `encryption.key` 필수**(`php spark key:generate`). 없으면 설정 화면이 켜기를 막는다. 키를 바꾸면 저장된 시크릿을 복호화할 수 없으니 `Config\Encryption::$previousKeys` 로 이전 키를 유지한다. 테스트용 키는 `phpunit.xml.dist` 에 있다.
+
+## 댓글 스팸 방지
+
+- 비회원 댓글 방어선: 허니팟(`website`) → 1분 1회 제한 → 산수 캡차 → `CommentSpamFilter`(링크 `MAX_LINKS`=2개 초과·금칙어 포함이면 의심). 의심 댓글은 거절하지 않고 `post_comments.is_pending=1`·`is_active=0` 으로 저장해 공개하지 않는다(회원 댓글은 필터 제외). 금칙어는 `CommentSpamFilter::DEFAULT_BANNED_WORDS`.
+- 모든 작성자 공통으로 IP당 시간당 20건(`BoardController::COMMENT_IP_HOURLY_LIMIT`, 캐시 카운터)을 넘으면 거절한다.
+- 관리자 `/admin/comments?status=pending` 에서 승인(`POST comments/{id}/approve`)·삭제(휴지통)한다. 노출 토글은 대기 상태를 해제한다.
