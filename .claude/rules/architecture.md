@@ -152,3 +152,9 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 켠 관리자는 비밀번호·소셜 로그인 모두 `BaseController::finishLogin()` 에서 세션(`user_id`)을 만들지 않고 `twofa_user_id` 만 둔 채 `/auth/2fa` 로 보낸다(5분 유효). 코드가 맞으면 `startSession()` 이 세션을 완성한다. 로그인 경로를 새로 만들면 반드시 `finishLogin()` 을 거칠 것.
 - 로직은 `App\Libraries\TwoFactor`(spomky-labs/otphp, bacon/bacon-qr-code). 시크릿은 CI4 Encrypter 로 암호화해 `users.totp_secret` 에, 복구 코드는 SHA-256 해시만 `totp_recovery_codes` 에 저장한다. 같은 코드 재사용 불가(`totp_last_step`), 연속 5회 실패 시 15분 잠금(`totp_locked_until`), 시크릿·코드는 로그에 남기지 않는다.
 - **배포 전 서버 `.env` 에 `encryption.key` 필수**(`php spark key:generate`). 없으면 설정 화면이 켜기를 막는다. 키를 바꾸면 저장된 시크릿을 복호화할 수 없으니 `Config\Encryption::$previousKeys` 로 이전 키를 유지한다. 테스트용 키는 `phpunit.xml.dist` 에 있다.
+
+## 리다이렉트 관리
+
+- `redirects` 테이블(`old_path` 유일·`new_path`·`status_code` 301/302·`is_active`·`hit_count`). `RedirectFilter`(전역 before)가 GET 요청의 `경로?쿼리` 와 `is_active=1` 행이 일치하면 이동시키고 `hit_count` 를 올린다.
+- 관리자 `/admin/redirects`(등록·수정·켜기/끄기·삭제, 주소 검색). 저장 전 `RedirectModel::validationError()` 가 원 주소 중복과 순환(자기 자신·A→B→A 연쇄, 사용 안 함 행 포함)을 막는다. 대상은 `/경로` 또는 `http(s)://` 만 허용.
+- 같은 화면의 "최근 30일 404 주소"(`PageVisitModel::topNotFound()`)와 일별 방문기록의 404 행에서 원 주소가 채워진 채로 바로 등록한다.
