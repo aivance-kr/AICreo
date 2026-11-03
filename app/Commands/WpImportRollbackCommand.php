@@ -57,7 +57,7 @@ class WpImportRollbackCommand extends BaseCommand
         CLI::write('글 삭제: ' . $postModel->db->affectedRows() . '건');
 
         $pageModel = new PageModel();
-        $pageModel->where('wp_post_id IS NOT NULL')->delete();
+        $pageModel->where('wp_post_id IS NOT NULL')->delete(null, true);
         CLI::write('페이지 삭제: ' . $pageModel->db->affectedRows() . '건');
 
         $categoryModel = new BoardCategoryModel();

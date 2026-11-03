@@ -6,10 +6,11 @@ use CodeIgniter\Model;
 
 class PageModel extends Model
 {
-    protected $table         = 'pages';
-    protected $primaryKey    = 'id';
-    protected $useTimestamps = true;
-    protected $allowedFields = [
+    protected $table          = 'pages';
+    protected $primaryKey     = 'id';
+    protected $useTimestamps  = true;
+    protected $useSoftDeletes = true;
+    protected $allowedFields  = [
         'slug', 'title', 'content', 'layout',
         'meta_title', 'meta_desc', 'og_image', 'sort_order', 'status',
         'wp_post_id', 'created_at', 'updated_at',

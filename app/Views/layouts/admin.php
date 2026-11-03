@@ -163,6 +163,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
             <a href="/admin/subscribers" class="nav-link <?= str_starts_with($uri, 'admin/subscribers') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/subscribers') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-envelope-paper me-2" aria-hidden="true"></i>뉴스레터 구독자
             </a>
+            <a href="/admin/trash" class="nav-link <?= str_starts_with($uri, 'admin/trash') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/trash') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-trash me-2" aria-hidden="true"></i>휴지통
+            </a>
             <a href="/admin/users" class="nav-link <?= str_starts_with($uri, 'admin/users') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/users') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-person-lines-fill me-2" aria-hidden="true"></i>회원 관리
             </a>

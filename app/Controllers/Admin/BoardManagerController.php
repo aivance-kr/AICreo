@@ -6,7 +6,6 @@ use App\Controllers\BaseController;
 use App\Models\AdminLogModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
-use App\Models\PostFileModel;
 use App\Models\PostModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -115,11 +114,10 @@ class BoardManagerController extends BaseController
             return redirect()->back()->with('error', '게시글을 찾을 수 없습니다.');
         }
 
-        (new PostFileModel())->deleteByPost($postId);
         $this->postModel->delete($postId);
         model(AdminLogModel::class)->record('delete', 'post', $postId, (string) $post['title']);
 
-        return redirect()->back()->with('success', '삭제되었습니다.');
+        return redirect()->back()->with('success', '휴지통으로 이동했습니다.');
     }
 
     // 게시판별 카테고리 관리 (게시판마다 별도로 관리)
