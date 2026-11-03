@@ -179,3 +179,11 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 공개 주소 `GET /preview/{토큰}`(`Front\PreviewController`)은 로그인·공개 여부·비밀글·게시판 읽기 권한과 무관하게 `board/view` 를 읽기 전용(`preview=true`: 댓글·공감·공유·수정 버튼·이전/다음·관련 글·첨부 없음)으로 그린다. 조회수는 올리지 않는다. 유효하지 않으면 404.
 - 응답에 `X-Robots-Tag: noindex, nofollow`, `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` 를 붙이고 `preview/*` 는 방문 로그에서 제외한다(주소에 토큰이 있음). 공개 목록·RSS·sitemap 쿼리는 그대로 `is_active=1` 이라 노출되지 않는다.
 - 발급·폐기는 운영자 전용 `/admin/posts/{id}/preview-links`(글 수정 화면의 "미리보기 링크"). 관리자 활동 로그에는 토큰 값 없이 "발급(N일)/폐기"만 남긴다.
+
+## 다국어(i18n) — 1단계 기반
+
+- 설계: `docs/i18n-design.md`. 기본 언어(ko)는 URL 접두어 없음, 그 밖의 사용 언어는 `/{코드}/...`. 켜기: 서버 `.env` 에 `i18n.enabled = ko,en` (기본은 `ko` 만 = 기능 꺼짐, 기존 동작 그대로).
+- `Config\I18n`(기본 언어·사용 언어 목록) → `Config\App` 생성자가 `defaultLocale`/`supportedLocales` 에 반영. 라우트(`Routes.php`)는 공개 화면 라우트를 `$front` 클로저로 묶어 언어별 **리터럴 그룹**(`en/…`)에 다시 등록한다(CI4 `{locale}` 자리표시자는 `/about` 같은 단일 세그먼트 슬러그를 가로채서 쓰지 않는다). 다국어를 켠 경우 `ko/...` 그룹도 등록해 `LocaleFilter` 가 접두어 없는 주소로 301 보낸다(라우트가 매칭돼야 before 필터가 돈다).
+- `LocaleFilter`(전역 before)가 첫 세그먼트가 사용 언어면 `Request::setLocale()`. 헬퍼 `locale_url($path, $locale)`·`html_lang()`(`i18n_helper.php`, 자동 로드). 테마 레이아웃의 `<html lang>` 은 `html_lang()`.
+- 언어 코드(ko·en 등)는 페이지 슬러그로 쓸 수 없다(`PageManagerController::store` 검증).
+- DB: `posts`/`pages` 에 `locale`(기본 ko)·`translation_group_id`, `menus.locale`. 1단계는 컬럼만 추가하고 조회 로직은 아직 locale 을 쓰지 않는다(2단계).
