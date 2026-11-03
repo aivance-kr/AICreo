@@ -55,7 +55,7 @@ final class PathAnalyzer
             $lastAt  = null;
 
             foreach ($hits as [$at, $uri]) {
-                if ($lastAt !== null && $at - $lastAt >= $gapSeconds && $current !== []) {
+                if ($lastAt !== null && $at - $lastAt >= $gapSeconds) {
                     $sessions[] = $current;
                     $current    = [];
                 }
@@ -66,9 +66,7 @@ final class PathAnalyzer
                 $lastAt = $at;
             }
 
-            if ($current !== []) {
-                $sessions[] = $current;
-            }
+            $sessions[] = $current; // $hits 가 비어 있지 않으므로 항상 1건 이상
         }
 
         return $sessions;
