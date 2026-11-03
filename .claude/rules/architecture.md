@@ -166,3 +166,10 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 비회원 댓글 방어선: 허니팟(`website`) → 1분 1회 제한 → 산수 캡차 → `CommentSpamFilter`(링크 `MAX_LINKS`=2개 초과·금칙어 포함이면 의심). 의심 댓글은 거절하지 않고 `post_comments.is_pending=1`·`is_active=0` 으로 저장해 공개하지 않는다(회원 댓글은 필터 제외). 금칙어는 `CommentSpamFilter::DEFAULT_BANNED_WORDS`.
 - 모든 작성자 공통으로 IP당 시간당 20건(`BoardController::COMMENT_IP_HOURLY_LIMIT`, 캐시 카운터)을 넘으면 거절한다.
 - 관리자 `/admin/comments?status=pending` 에서 승인(`POST comments/{id}/approve`)·삭제(휴지통)한다. 노출 토글은 대기 상태를 해제한다.
+
+## 미리보기 공유 링크
+
+- `post_preview_tokens` 테이블(글·64자 hex 토큰·만료·폐기 시각). `PostPreviewTokenModel::issue()` 가 토큰을 만들고(만료 1~90일), `findValid()` 가 미만료·미폐기·삭제 안 된 글일 때만 글을 돌려준다. 폐기해도 행은 남는다.
+- 공개 주소 `GET /preview/{토큰}`(`Front\PreviewController`)은 로그인·공개 여부·비밀글·게시판 읽기 권한과 무관하게 `board/view` 를 읽기 전용(`preview=true`: 댓글·공감·공유·수정 버튼·이전/다음·관련 글·첨부 없음)으로 그린다. 조회수는 올리지 않는다. 유효하지 않으면 404.
+- 응답에 `X-Robots-Tag: noindex, nofollow`, `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` 를 붙이고 `preview/*` 는 방문 로그에서 제외한다(주소에 토큰이 있음). 공개 목록·RSS·sitemap 쿼리는 그대로 `is_active=1` 이라 노출되지 않는다.
+- 발급·폐기는 운영자 전용 `/admin/posts/{id}/preview-links`(글 수정 화면의 "미리보기 링크"). 관리자 활동 로그에는 토큰 값 없이 "발급(N일)/폐기"만 남긴다.
