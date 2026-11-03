@@ -88,6 +88,11 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 시리즈 관리는 `/admin/series`(수정 화면에서 글 검색·번호 일괄 입력으로 글 추가), 글에 지정은 운영자만 글쓰기·수정 화면에서 체크박스+순서(비우면 맨 뒤), 공개 목록은 `/series`, 소개 페이지는 `/series/{slug}`.
 - 글쓰기·수정 화면의 "AI 추천" 버튼은 `POST board/series-suggest`(운영자 전용)로 `GroqSeriesService`(`service('groqSeries')`, `GROQ_API_KEY` 공유)에 제목·본문과 `SeriesModel::suggestionCandidates()` 를 보내 어울리는 시리즈를 체크해 준다. 저장은 하지 않으며 후보에 없는 번호는 걸러낸다.
 
+## 글 수정 이력
+
+- `post_revisions` 테이블(글·저장한 사용자·제목·본문·메타 설명). `Front\BoardController::update()` 가 제목·본문·메타 설명이 실제로 바뀌었을 때만(`PostRevisionModel::changed()`) 덮어쓰기 **직전** 상태를 `PostRevisionModel::record()` 로 남긴다. 글당 `MAX_PER_POST`(50)개를 넘으면 오래된 것부터 지운다. 글 삭제(소프트)는 이력을 건드리지 않는다.
+- 운영자 전용 화면: 글 수정 화면의 "수정 이력" 링크 → `/admin/posts/{id}/revisions`(목록), `.../revisions/{rid}`(현재 글과 줄 단위 비교 — `App\Libraries\LineDiff`), `POST .../restore`(복구). 복구는 `PostRevisionModel::restore()` 가 복구 직전 글을 새 이력으로 남긴 뒤 글을 덮어쓴다.
+
 ## 글 AI 제안
 
 - 글쓰기·수정 화면의 "AI 제안" 버튼(운영자 전용)은 `POST board/ai-suggest` → `GroqPostAssistService`(`service('groqPostAssist')`, `GROQ_API_KEY` 공유, 타임아웃 5초)로 요약(메타 설명)·태그 후보·제목 후보를 받는다. 저장은 하지 않으며, 화면에서 "적용"을 누른 항목만 입력란에 채우고 폼 저장 때 반영된다.
@@ -134,3 +139,10 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 이전 실행이 길어져 겹쳐도 `newsletter_deliveries` 의 (글, 구독자) 유일키 덕에 큐는 중복되지 않지만, 같은 건을 두 프로세스가 동시에 보내 중복 메일이 나갈 수 있다. 겹침이 걱정되면 `* * * * * cd /path/to/app && flock -n /tmp/newsletter.lock php spark newsletter:send >> /dev/null 2>&1` 로 등록한다.
 - 로그: 발송 실패는 `writable/logs/` 에 `[Newsletter]` 로 남는다(주소는 마스킹). 기능 점검은 수동으로 `php spark newsletter:send` 를 한 번 실행해 "완료: 발송 N건, 실패 M건" 이 나오는지 본다.
 - 예약 발행(`posts:publish-scheduled`, 1분)·IP 자동 차단(`ip:auto-block`, 1시간)과 별개의 줄이다.
+
+## 관리자 2단계 인증(TOTP)
+
+- 관리자 본인이 `/admin/security` 에서 켠다: QR(서버에서 SVG 생성, 시크릿이 외부로 나가지 않음) 스캔 → 앱의 6자리 코드 확인 → 복구 코드 8개 발급(그때 한 번만 표시). 끄기·복구 코드 재발급은 인증 코드(끄기는 비밀번호도) 재확인.
+- 켠 관리자는 비밀번호·소셜 로그인 모두 `BaseController::finishLogin()` 에서 세션(`user_id`)을 만들지 않고 `twofa_user_id` 만 둔 채 `/auth/2fa` 로 보낸다(5분 유효). 코드가 맞으면 `startSession()` 이 세션을 완성한다. 로그인 경로를 새로 만들면 반드시 `finishLogin()` 을 거칠 것.
+- 로직은 `App\Libraries\TwoFactor`(spomky-labs/otphp, bacon/bacon-qr-code). 시크릿은 CI4 Encrypter 로 암호화해 `users.totp_secret` 에, 복구 코드는 SHA-256 해시만 `totp_recovery_codes` 에 저장한다. 같은 코드 재사용 불가(`totp_last_step`), 연속 5회 실패 시 15분 잠금(`totp_locked_until`), 시크릿·코드는 로그에 남기지 않는다.
+- **배포 전 서버 `.env` 에 `encryption.key` 필수**(`php spark key:generate`). 없으면 설정 화면이 켜기를 막는다. 키를 바꾸면 저장된 시크릿을 복호화할 수 없으니 `Config\Encryption::$previousKeys` 로 이전 키를 유지한다. 테스트용 키는 `phpunit.xml.dist` 에 있다.
