@@ -39,7 +39,7 @@ class PostModel extends Model
         'board_id', 'category_id', 'user_id', 'title', 'content', 'signature', 'tags', 'meta_desc',
         'author_name', 'author_password',
         'is_notice', 'is_secret', 'is_active', 'publish_at', 'newsletter_enqueued_at', 'ip_address',
-        'views', 'wp_post_id', 'created_at', 'updated_at',
+        'views', 'wp_post_id', 'created_at', 'updated_at', 'locale', 'translation_group_id',
     ];
     protected $afterInsert = ['clearSeoCache', 'clearRelatedCache', 'clearTagCountsCache', 'clearArchiveCache', 'enqueueNewsletter'];
     protected $afterUpdate = ['clearSeoCache', 'clearSeriesCache', 'clearRelatedCache', 'clearTagCountsCache', 'clearArchiveCache', 'enqueueNewsletter'];
@@ -49,11 +49,11 @@ class PostModel extends Model
      * sitemap.xml 용 공개 글 목록 — 비밀글·비활성 게시판 제외.
      * (소프트삭제 글은 모델이 자동 제외)
      *
-     * @return list<array{id:int,updated_at:string|null,board_slug:string}>
+     * @return list<array{id:int,updated_at:string|null,locale:string,translation_group_id:int|null,board_slug:string}>
      */
     public function getPublicForSitemap(): array
     {
-        return $this->select('posts.id, posts.updated_at, boards.slug AS board_slug')
+        return $this->select('posts.id, posts.updated_at, posts.locale, posts.translation_group_id, boards.slug AS board_slug')
             ->join('boards', 'boards.id = posts.board_id', 'inner')
             ->where('posts.is_secret', 0)
             ->where('posts.is_active', 1)
@@ -68,17 +68,18 @@ class PostModel extends Model
      *
      * @return list<array<string, mixed>>
      */
-    public function getLatestPublic(int $limit): array
+    public function getLatestPublic(int $limit, ?string $locale = null): array
     {
-        return $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname')
+        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname')
             ->join('boards', 'boards.id = posts.board_id', 'inner')
             ->join('users', 'users.id = posts.user_id', 'left')
             ->where('posts.is_secret', 0)
             ->where('posts.is_active', 1)
             ->where('boards.is_active', 1)
-            ->where('boards.read_permission', 'guest')
-            ->orderBy('posts.id', 'DESC')
-            ->findAll($limit);
+            ->where('boards.read_permission', 'guest');
+        $this->filterLocale($builder, $locale);
+
+        return $builder->orderBy('posts.id', 'DESC')->findAll($limit);
     }
 
     /**
@@ -209,7 +210,7 @@ class PostModel extends Model
      *
      * @return array{posts: list<array<string, mixed>>, total: int}
      */
-    public function searchPublic(string $keyword, int $page, int $perPage): array
+    public function searchPublic(string $keyword, int $page, int $perPage, ?string $locale = null): array
     {
         $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname')
             ->join('boards', 'boards.id = posts.board_id', 'inner')
@@ -222,6 +223,7 @@ class PostModel extends Model
             ->like('posts.title', $keyword)
             ->orLike('posts.content', $keyword)
             ->groupEnd();
+        $this->filterLocale($builder, $locale);
 
         $total = (clone $builder)->countAllResults(false);
         $posts = $builder->orderBy('posts.id', 'DESC')->findAll($perPage, ($page - 1) * $perPage);
@@ -605,9 +607,42 @@ class PostModel extends Model
     }
 
     /**
+     * 언어 조건을 건다. $locale 이 null 이면 거르지 않는다(관리자·사이트맵).
+     */
+    private function filterLocale(self $builder, ?string $locale, string $column = 'posts.locale'): void
+    {
+        if ($locale !== null) {
+            $builder->where($column, $locale);
+        }
+    }
+
+    /**
+     * 같은 번역 묶음의 공개(활성) 글. 언어 => 글 id. 묶음이 없으면 빈 배열.
+     *
+     * @return array<string, int>
+     */
+    public function publicTranslationsOf(int $postId): array
+    {
+        $group = $this->select('translation_group_id')->find($postId)['translation_group_id'] ?? null;
+
+        if ($group === null) {
+            return [];
+        }
+
+        $rows = $this->select('id, locale')
+            ->where('translation_group_id', $group)
+            ->where('is_active', 1)
+            ->where('is_secret', 0)
+            ->orderBy('id')
+            ->findAll();
+
+        return array_column(array_map(static fn (array $r): array => [(string) $r['locale'], (int) $r['id']], $rows), 1, 0);
+    }
+
+    /**
      * @return array{notices: list<array<string, mixed>>, posts: list<array<string, mixed>>}
      */
-    public function getList(int $boardId, int $page, int $perPage, ?int $categoryId = null): array
+    public function getList(int $boardId, int $page, int $perPage, ?int $categoryId = null, ?string $locale = null): array
     {
         $offset = ($page - 1) * $perPage;
 
@@ -619,6 +654,7 @@ class PostModel extends Model
         if ($categoryId !== null) {
             $noticeBuilder->where('posts.category_id', $categoryId);
         }
+        $this->filterLocale($noticeBuilder, $locale);
         $notices = $noticeBuilder->orderBy('posts.id', 'DESC')->findAll(5);
 
         $postBuilder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name, ' . self::COUNT_SUBQUERIES)
@@ -630,17 +666,19 @@ class PostModel extends Model
         if ($categoryId !== null) {
             $postBuilder->where('posts.category_id', $categoryId);
         }
+        $this->filterLocale($postBuilder, $locale);
         $posts = $postBuilder->orderBy('posts.id', 'DESC')->findAll($perPage, $offset);
 
         return ['notices' => $notices, 'posts' => $posts];
     }
 
-    public function getTotalCount(int $boardId, ?int $categoryId = null): int
+    public function getTotalCount(int $boardId, ?int $categoryId = null, ?string $locale = null): int
     {
         $builder = $this->where('board_id', $boardId)->where('is_notice', 0)->where('is_active', 1);
         if ($categoryId !== null) {
             $builder->where('category_id', $categoryId);
         }
+        $this->filterLocale($builder, $locale);
 
         return $builder->countAllResults();
     }
@@ -685,7 +723,7 @@ class PostModel extends Model
      *
      * @return array<string, mixed>|null
      */
-    public function getPrevious(int $boardId, int $postId, ?int $categoryId = null): ?array
+    public function getPrevious(int $boardId, int $postId, ?int $categoryId = null, ?string $locale = null): ?array
     {
         $builder = $this->select('id, title')
             ->where('board_id', $boardId)
@@ -697,6 +735,7 @@ class PostModel extends Model
         if ($categoryId !== null) {
             $builder->where('category_id', $categoryId);
         }
+        $this->filterLocale($builder, $locale, 'locale');
 
         return $builder->orderBy('id', 'DESC')->first();
     }
@@ -706,7 +745,7 @@ class PostModel extends Model
      *
      * @return array<string, mixed>|null
      */
-    public function getNext(int $boardId, int $postId, ?int $categoryId = null): ?array
+    public function getNext(int $boardId, int $postId, ?int $categoryId = null, ?string $locale = null): ?array
     {
         $builder = $this->select('id, title')
             ->where('board_id', $boardId)
@@ -718,6 +757,7 @@ class PostModel extends Model
         if ($categoryId !== null) {
             $builder->where('category_id', $categoryId);
         }
+        $this->filterLocale($builder, $locale, 'locale');
 
         return $builder->orderBy('id', 'ASC')->first();
     }

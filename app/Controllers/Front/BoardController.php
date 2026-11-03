@@ -77,10 +77,10 @@ class BoardController extends BaseController
             $total   = $result['total'];
             $notices = [];
         } else {
-            $list    = $this->postModel->getList($board['id'], $page, $board['posts_per_page'], $categoryId);
+            $list    = $this->postModel->getList($board['id'], $page, $board['posts_per_page'], $categoryId, $this->request->getLocale());
             $posts   = $list['posts'];
             $notices = $list['notices'];
-            $total   = $this->postModel->getTotalCount($board['id'], $categoryId);
+            $total   = $this->postModel->getTotalCount($board['id'], $categoryId, $this->request->getLocale());
         }
 
         $totalPages = (int) ceil($total / $board['posts_per_page']);
@@ -200,8 +200,8 @@ class BoardController extends BaseController
         if ($categoryId !== null && ! in_array($categoryId, array_map('intval', array_column($this->categoryModel->getByBoard($board['id']), 'id')), true)) {
             $categoryId = null;
         }
-        $prevPost            = $this->postModel->getPrevious($board['id'], $postId, $categoryId);
-        $nextPost            = $this->postModel->getNext($board['id'], $postId, $categoryId);
+        $prevPost            = $this->postModel->getPrevious($board['id'], $postId, $categoryId, $post['locale']);
+        $nextPost            = $this->postModel->getNext($board['id'], $postId, $categoryId, $post['locale']);
         $guestCommentCaptcha = session()->get('user_id') ? null : $this->guestCommentCaptcha($postId);
 
         // 비밀글·비공개 게시판 글은 색인 제외

@@ -9,6 +9,7 @@ use App\Models\BoardModel;
 use App\Models\PageModel;
 use App\Models\PostModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\I18n;
 
 /**
  * 동적 sitemap.xml — 홈·발행 페이지·활성 게시판·공개 글.
@@ -36,7 +37,7 @@ class SitemapController extends BaseController
         $urls[] = ['loc' => base_url('/')];
 
         // 발행 페이지 (동적 슬러그)
-        foreach ((new PageModel())->getPublished() as $page) {
+        foreach ((new PageModel())->getPublished(config(I18n::class)->defaultLocale) as $page) {
             $urls[] = [
                 'loc'     => base_url($page['slug']),
                 'lastmod' => $page['updated_at'] ?? null,
