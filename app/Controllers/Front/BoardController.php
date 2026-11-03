@@ -524,7 +524,6 @@ class BoardController extends BaseController
             return redirect()->back()->with('error', '권한이 없습니다.');
         }
 
-        $this->fileModel->deleteByPost($postId);
         $this->postModel->delete($postId);
         $this->logAdminPost('delete', $postId, (string) $post['title']);
         session()->remove('edit_auth_' . $postId);
