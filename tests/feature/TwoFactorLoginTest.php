@@ -117,17 +117,50 @@ final class TwoFactorLoginTest extends AdminTestCase
         $this->assertStringContainsString('<svg', (string) $result->getBody());
     }
 
-    public function testEnableFlowActivatesWithValidCode(): void
+    /**
+     * @return array<string, mixed> 등록 대기 중(암호화된 시크릿, 10분 유효) 관리자 세션
+     */
+    private function setupSession(string $secret): array
+    {
+        return $this->adminSession + [
+            'totp_setup_secret' => base64_encode(service('encrypter')->encrypt($secret)),
+            '__ci_vars'         => ['totp_setup_secret' => time() + 600],
+        ];
+    }
+
+    public function testEnableFlowActivatesWithValidCodeAndPassword(): void
     {
         (new TwoFactor())->disable(1);
-        $this->withSession($this->adminSession)->get('admin/security');
-        $setup = session()->get('totp_setup_secret');
-        $this->assertIsString($setup);
+        $setup = (new TwoFactor())->generateSecret();
 
-        $this->withSession($this->adminSession + ['totp_setup_secret' => $setup])
-            ->post('admin/security/enable', ['code' => TOTP::createFromSecret($setup)->now()])
+        $this->withSession($this->setupSession($setup))
+            ->post('admin/security/enable', ['code' => TOTP::createFromSecret($setup)->now(), 'password' => 'admin1234!'])
             ->assertRedirectTo('/admin/security');
 
         $this->assertTrue(TwoFactor::isEnabled((new UserModel())->find(1)));
+    }
+
+    public function testEnableRejectsWrongPassword(): void
+    {
+        (new TwoFactor())->disable(1);
+        $setup = (new TwoFactor())->generateSecret();
+
+        $this->withSession($this->setupSession($setup))
+            ->post('admin/security/enable', ['code' => TOTP::createFromSecret($setup)->now(), 'password' => 'wrong'])
+            ->assertRedirectTo('/admin/security');
+
+        $this->assertFalse(TwoFactor::isEnabled((new UserModel())->find(1)));
+    }
+
+    public function testRecoveryReissueRequiresPassword(): void
+    {
+        $this->withSession($this->adminSession)->post('admin/security/recovery', ['code' => $this->code(), 'password' => 'wrong'])
+            ->assertRedirectTo('/admin/security');
+        $before = (new UserModel())->find(1)['totp_recovery_codes'];
+
+        $this->withSession($this->adminSession)->post('admin/security/recovery', ['code' => $this->code(), 'password' => 'admin1234!'])
+            ->assertRedirectTo('/admin/security');
+
+        $this->assertNotSame($before, (new UserModel())->find(1)['totp_recovery_codes']);
     }
 }

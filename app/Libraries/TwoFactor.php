@@ -229,15 +229,18 @@ class TwoFactor
      */
     private function recordFailure(array $user): void
     {
-        $failures = (int) ($user['totp_failures'] ?? 0) + 1;
-        $data     = ['totp_failures' => $failures];
+        $id = (int) $user['id'];
+
+        // 동시 요청이 같은 스냅샷에서 덮어쓰지 못하게 DB 에서 원자적으로 올리고, 잠금 여부도 DB 값으로 판단
+        $this->userModel->builder()->where('id', $id)->set('totp_failures', 'totp_failures + 1', false)->update();
+        $failures = (int) ($this->userModel->builder()->select('totp_failures')->where('id', $id)->get()->getRowArray()['totp_failures'] ?? 0);
 
         if ($failures >= self::MAX_FAILURES) {
-            $data['totp_failures']     = 0;
-            $data['totp_locked_until'] = date('Y-m-d H:i:s', time() + self::LOCK_MINUTES * 60);
+            $this->userModel->update($id, [
+                'totp_failures'     => 0,
+                'totp_locked_until' => date('Y-m-d H:i:s', time() + self::LOCK_MINUTES * 60),
+            ]);
         }
-
-        $this->userModel->update((int) $user['id'], $data);
     }
 
     private function resetFailures(int $userId): void

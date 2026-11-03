@@ -8,13 +8,16 @@ use App\Controllers\BaseController;
 use App\Libraries\TwoFactor;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use Throwable;
 
 /**
  * 관리자 본인 계정의 2단계 인증(TOTP) 설정·해제·복구 코드 재발급.
  */
 class SecurityController extends BaseController
 {
-    private const URL = '/admin/security';
+    private const URL       = '/admin/security';
+    private const SETUP_KEY = 'totp_setup_secret';
+    private const SETUP_TTL = 600;
 
     private readonly UserModel $userModel;
     private readonly TwoFactor $twoFactor;
@@ -34,10 +37,10 @@ class SecurityController extends BaseController
         $secret  = null;
 
         if (! $enabled && $ready) {
-            $secret = session()->get('totp_setup_secret');
-            if (! is_string($secret)) {
+            $secret = $this->setupSecret();
+            if ($secret === null) {
                 $secret = $this->twoFactor->generateSecret();
-                session()->set('totp_setup_secret', $secret);
+                session()->setTempdata(self::SETUP_KEY, base64_encode(service('encrypter')->encrypt($secret)), self::SETUP_TTL);
             }
 
             $issuer = (string) ($this->viewData['settings']['site_name'] ?? 'AICreo');
@@ -58,11 +61,16 @@ class SecurityController extends BaseController
     public function enable(): ResponseInterface
     {
         $user   = $this->currentUser();
-        $secret = session()->get('totp_setup_secret');
+        $secret = TwoFactor::encryptionReady() ? $this->setupSecret() : null;
         $code   = $this->request->getPost('code');
 
-        if (TwoFactor::isEnabled($user) || ! TwoFactor::encryptionReady() || ! is_string($secret)) {
+        if (TwoFactor::isEnabled($user) || $secret === null) {
             return redirect()->to(self::URL);
+        }
+
+        // 세션을 탈취한 쪽이 자기 앱을 묶어 본인을 잠그지 못하도록 비밀번호 재확인
+        if (! $this->passwordOk($user)) {
+            return redirect()->to(self::URL)->with('error', '비밀번호가 올바르지 않습니다.');
         }
 
         $recovery = is_string($code) ? $this->twoFactor->enable((int) $user['id'], $secret, trim($code)) : null;
@@ -70,7 +78,7 @@ class SecurityController extends BaseController
             return redirect()->to(self::URL)->with('error', '확인 코드가 올바르지 않습니다. 앱에 표시된 6자리를 입력해 주세요.');
         }
 
-        session()->remove('totp_setup_secret');
+        session()->removeTempdata(self::SETUP_KEY);
 
         return redirect()->to(self::URL)
             ->with('success', '2단계 인증을 켰습니다. 복구 코드를 안전한 곳에 보관하세요.')
@@ -86,7 +94,7 @@ class SecurityController extends BaseController
         }
 
         $this->twoFactor->disable((int) $user['id']);
-        session()->remove('totp_setup_secret');
+        session()->removeTempdata(self::SETUP_KEY);
 
         return redirect()->to(self::URL)->with('success', '2단계 인증을 껐습니다.');
     }
@@ -95,8 +103,8 @@ class SecurityController extends BaseController
     {
         $user = $this->currentUser();
 
-        if (! $this->confirmed($user, false)) {
-            return redirect()->to(self::URL)->with('error', '인증 코드가 올바르지 않습니다.');
+        if (! $this->confirmed($user, true)) {
+            return redirect()->to(self::URL)->with('error', '비밀번호 또는 인증 코드가 올바르지 않습니다.');
         }
 
         return redirect()->to(self::URL)
@@ -115,15 +123,43 @@ class SecurityController extends BaseController
             return false;
         }
 
-        $code     = $this->request->getPost('code');
-        $password = $this->request->getPost('password');
+        $code = $this->request->getPost('code');
 
-        if ($needPassword && ! empty($user['password'])
-            && (! is_string($password) || ! password_verify($password, (string) $user['password']))) {
+        if ($needPassword && ! $this->passwordOk($user)) {
             return false;
         }
 
         return is_string($code) && $this->twoFactor->attempt($user, $code);
+    }
+
+    /**
+     * 비밀번호가 있는 계정만 확인한다(소셜 전용 계정은 비밀번호가 없어 통과).
+     *
+     * @param array<string, mixed> $user
+     */
+    private function passwordOk(array $user): bool
+    {
+        if (empty($user['password'])) {
+            return true;
+        }
+
+        $password = $this->request->getPost('password');
+
+        return is_string($password) && password_verify($password, (string) $user['password']);
+    }
+
+    private function setupSecret(): ?string
+    {
+        $stored = session()->getTempdata(self::SETUP_KEY);
+        if (! is_string($stored)) {
+            return null;
+        }
+
+        try {
+            return service('encrypter')->decrypt((string) base64_decode($stored, true));
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     /**
