@@ -198,3 +198,8 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - hreflang: 화면이 `$page['alternates']`(언어 => 절대 주소)를 넘기면 `SeoHelper` 가 `<link rel="alternate" hreflang>` 와 `x-default`(기본 언어 주소)를 출력한다. 값은 `App\Libraries\Seo\Alternates::forPost/forPage/forPath`. 번역이 없어 자기 언어뿐이면 빈 배열(출력 없음). 글·홈·페이지에 적용, 목록 화면은 아직.
 - 글 canonical 은 글 자신의 언어 주소(`locale_url(..., $post['locale'])`) — 접두어 없는 주소로 들어와도 중복 색인을 막는다. `og:locale` 은 기본 언어는 `settings.locale`, 그 밖은 코드에서 만든다.
 - sitemap: 다국어를 켜면 `sitemap.xml` 은 `sitemap-{언어}.xml` 색인(`<sitemapindex>`), 각 언어 파일에 `xhtml:link` 대체 주소. 끄면 기존 단일 `<urlset>`. 캐시는 `SitemapCache`(`seo_sitemap`, `seo_sitemap_{locale}`) 한곳에서 지운다 — 모델 훅은 `SitemapCache::clear()` 를 쓴다. 태그 URL 은 기본 언어 sitemap 에만.
+
+### 다국어 4단계 — 관리자 번역 흐름
+- `App\Libraries\TranslationManager`: `createPostTranslation/createPageTranslation($sourceId, $locale)` 가 원본을 복사해 번역본을 만든다(글은 숨김 `is_active=0`, 페이지는 `draft`, 슬러그 동일). 묶음 id 는 원본 행 id — 원본의 묶음이 비어 있으면 이때 채운다. 이미 있는 언어·사용하지 않는 언어면 `null`. `postRows/pageRows` 가 관리자 "번역" 상자(`admin/partials/translations`)용 행을 만든다.
+- 화면: 페이지 수정·글 수정(`board/write`, 관리자만) 상단 "번역" 상자 → `POST /admin/pages|posts/{id}/translate/{언어}` 로 번역본을 만들고 그 수정 화면으로 이동. 페이지·글 목록은 언어 탭/배지(`admin/partials/locale_tabs`), 메뉴 관리는 언어 탭별로 따로 관리(메뉴는 언어별 트리, 상위 메뉴는 같은 언어끼리만). 사용 언어가 하나뿐이면 UI 가 모두 숨는다.
+- 페이지 슬러그 유일성은 `(locale, slug)` — 컨트롤러가 직접 검사(소프트 삭제 행 포함). 새 페이지는 자기 id 를 묶음 id 로 갖는다.

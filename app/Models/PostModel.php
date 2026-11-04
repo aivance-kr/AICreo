@@ -880,7 +880,7 @@ class PostModel extends Model
     /**
      * @return array{posts: list<array<string, mixed>>, total: int}
      */
-    public function getAdminList(int $page, int $perPage, string $keyword = '', int $boardId = 0, int $categoryId = 0): array
+    public function getAdminList(int $page, int $perPage, string $keyword = '', int $boardId = 0, int $categoryId = 0, ?string $locale = null): array
     {
         $builder = $this->select('posts.*, boards.name as board_name, boards.slug as board_slug, board_categories.name as category_name, users.nickname as user_nickname')
             ->join('boards', 'boards.id = posts.board_id', 'left')
@@ -893,6 +893,7 @@ class PostModel extends Model
         if ($categoryId > 0) {
             $builder->where('posts.category_id', $categoryId);
         }
+        $this->filterLocale($builder, $locale);
         if ($keyword !== '') {
             $builder->groupStart()
                 ->like('posts.title', $keyword)
