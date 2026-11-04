@@ -6,6 +6,7 @@ namespace Config;
 
 use App\Filters\AuthFilter;
 use App\Filters\BlockedIpFilter;
+use App\Filters\LocaleFilter;
 use App\Filters\RedirectFilter;
 use App\Filters\VisitLogFilter;
 use CodeIgniter\Config\BaseConfig;
@@ -26,6 +27,7 @@ class Filters extends BaseConfig
         'redirect'  => RedirectFilter::class,
         'visitLog'  => VisitLogFilter::class,
         'blockedIp' => BlockedIpFilter::class,
+        'locale'    => LocaleFilter::class,
     ];
 
     /**
@@ -33,6 +35,7 @@ class Filters extends BaseConfig
      */
     public array $globals = [
         'before' => [
+            'locale',
             'redirect',
             'csrf'     => ['except' => ['api/*', 'board/image-upload', 'admin/media/upload']],
             'visitLog' => ['except' => VisitLogFilter::EXCLUDED_PATHS],

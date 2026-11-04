@@ -6,7 +6,6 @@ use App\Controllers\BaseController;
 use App\Models\AdminLogModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
-use App\Models\PostFileModel;
 use App\Models\PostModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -61,11 +60,10 @@ class PostController extends BaseController
             return redirect()->back()->with('error', '게시글을 찾을 수 없습니다.');
         }
 
-        (new PostFileModel())->deleteByPost($id);
         $this->postModel->delete($id);
         model(AdminLogModel::class)->record('delete', 'post', $id, (string) $post['title']);
 
-        return redirect()->back()->with('success', '삭제되었습니다.');
+        return redirect()->back()->with('success', '휴지통으로 이동했습니다.');
     }
 
     public function bulkMove(): ResponseInterface|string

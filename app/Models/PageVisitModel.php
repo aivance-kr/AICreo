@@ -147,6 +147,30 @@ class PageVisitModel extends Model
     }
 
     /**
+     * 최근 $days 일간 404 를 낸 주소 상위 $limit건. 이미 리다이렉트로 등록된 주소는 뺀다.
+     *
+     * @return list<array{uri: string, count: int}>
+     */
+    public function topNotFound(int $days, int $limit = 20): array
+    {
+        $since = Time::now()->subDays($days)->setTime(0, 0, 0);
+
+        $rows = $this->select('uri, COUNT(*) as count')
+            ->where('is_not_found', 1)
+            ->where('created_at >=', $since->toDateTimeString())
+            ->where('uri NOT IN (SELECT old_path FROM redirects)', null, false)
+            ->groupBy('uri')
+            ->orderBy('count', 'DESC')
+            ->limit($limit)
+            ->findAll();
+
+        return array_map(
+            static fn (array $row): array => ['uri' => (string) $row['uri'], 'count' => (int) $row['count']],
+            $rows,
+        );
+    }
+
+    /**
      * 기간 검색 값을 [시작, 끝(미포함)] 범위로 변환한다. 형식이 틀리면 null.
      *
      * - day: Y-m-d / week: ISO 주차(2026-W41) / month: Y-m / year: Y

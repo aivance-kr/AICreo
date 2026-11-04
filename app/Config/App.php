@@ -101,7 +101,7 @@ class App extends BaseConfig
      * strings (like currency markers, numbers, etc), that your program
      * should run under for this request.
      */
-    public string $defaultLocale = 'en';
+    public string $defaultLocale = 'ko';
 
     /**
      * --------------------------------------------------------------------------
@@ -211,6 +211,11 @@ class App extends BaseConfig
     public function __construct()
     {
         parent::__construct();
+
+        // 사용 언어는 Config\I18n(.env i18n.enabled)이 정한다
+        $i18n                   = new I18n();
+        $this->defaultLocale    = $i18n->defaultLocale;
+        $this->supportedLocales = $i18n->locales();
 
         // 운영 서버는 Cloudflare 뒤에 있다. 엣지 IP 에서 온 요청만 CF-Connecting-IP 를 신뢰한다.
         // .env 등으로 proxyIPs 를 직접 지정했으면 그 값을 우선한다.

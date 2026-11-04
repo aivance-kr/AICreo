@@ -3,6 +3,7 @@
 namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
+use App\Libraries\CommentSpamFilter;
 use App\Libraries\FileUploader;
 use App\Libraries\HtmlSanitizer;
 use App\Libraries\OgImageGenerator;
@@ -23,6 +24,11 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class BoardController extends BaseController
 {
+    /**
+     * IP 당 시간당 댓글 작성 상한
+     */
+    private const COMMENT_IP_HOURLY_LIMIT = 20;
+
     private readonly BoardModel $boardModel;
     private readonly PostModel $postModel;
     private readonly PostFileModel $fileModel;
@@ -524,7 +530,6 @@ class BoardController extends BaseController
             return redirect()->back()->with('error', '권한이 없습니다.');
         }
 
-        $this->fileModel->deleteByPost($postId);
         $this->postModel->delete($postId);
         $this->logAdminPost('delete', $postId, (string) $post['title']);
         session()->remove('edit_auth_' . $postId);
@@ -598,8 +603,17 @@ class BoardController extends BaseController
             return redirect()->back()->with('error', '스팸 방지 답이 일치하지 않습니다.');
         }
 
+        if ($this->isCommentIpOverLimit()) {
+            return redirect()->back()->with('error', '댓글을 너무 자주 등록하고 있습니다. 잠시 후 다시 시도해 주세요.');
+        }
+
+        // 비회원 댓글이 스팸으로 의심되면 공개하지 않고 승인 대기로 둔다
+        $pending = $isGuest && (new CommentSpamFilter())->isSuspicious((string) $this->request->getPost('content'));
+
         $this->commentModel->insert([
             'post_id'         => $postId,
+            'is_active'       => $pending ? 0 : 1,
+            'is_pending'      => $pending ? 1 : 0,
             'user_id'         => session()->get('user_id'),
             'content'         => $this->request->getPost('content'),
             'author_name'     => $isGuest ? $this->request->getPost('author_name') : session()->get('user_nickname'),
@@ -612,7 +626,25 @@ class BoardController extends BaseController
             session()->remove($this->guestCommentCaptchaKey($postId));
         }
 
-        return redirect()->to("/board/{$boardSlug}/{$postId}" . $this->listQuery() . '#comments')->with('success', '댓글이 등록되었습니다.');
+        $message = $pending ? '댓글이 등록되었습니다. 관리자 승인 후 공개됩니다.' : '댓글이 등록되었습니다.';
+
+        return redirect()->to("/board/{$boardSlug}/{$postId}" . $this->listQuery() . '#comments')->with('success', $message);
+    }
+
+    /**
+     * IP 당 시간당 댓글 작성 횟수를 세어 상한 초과 여부를 돌려준다.
+     */
+    private function isCommentIpOverLimit(): bool
+    {
+        $key   = 'comment_ip_hour_' . hash('sha256', $this->request->getIPAddress());
+        $count = (int) cache()->get($key);
+        if ($count >= self::COMMENT_IP_HOURLY_LIMIT) {
+            return true;
+        }
+
+        cache()->save($key, $count + 1, 3600);
+
+        return false;
     }
 
     /**

@@ -24,6 +24,8 @@ ob_start();
     <button class="btn btn-sm btn-outline-danger"    data-bs-toggle="modal" data-bs-target="#guestModal" data-action="delete">삭제</button>
 <?php endif; ?>
 <?php $postActions = ob_get_clean(); ?>
+<?php $preview = $preview ?? false; // 미리보기 공유 링크: 읽기 전용 ?>
+<?php if ($preview): $postActions = ''; endif; ?>
 
 <div class="mb-2">
     <a href="/board/<?= esc($board['slug']) ?><?= esc($listQs, 'attr') ?>" class="text-decoration-none text-muted small">
@@ -47,7 +49,9 @@ ob_start();
             <span class="post-meta__item"><span class="visually-hidden">작성자 </span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
             <span class="post-meta__item"><span class="visually-hidden">작성일 </span><time datetime="<?= esc(substr((string) $post['created_at'], 0, 10), 'attr') ?>"><?= esc(str_replace('-', '.', substr((string) $post['created_at'], 0, 10))) ?></time></span>
             <span class="post-meta__item"><span class="visually-hidden">조회수 </span>조회 <?= number_format($post['views']) ?></span>
+            <?php if (! $preview): ?>
             <?= view('board/_share', ['url' => $canonicalUrl, 'shortUrl' => $shortUrl, 'title' => $post['title'], 'kakaoJsKey' => $kakaoJsKey]) ?>
+            <?php endif; ?>
         </div>
     </header>
 
@@ -124,6 +128,7 @@ ob_start();
     </div>
 
     <!-- 공감(좋아요) -->
+    <?php if (! $preview): ?>
     <form id="post-like" method="post" action="<?= $postBase ?>/like<?= esc($listQs, 'attr') ?>" class="text-center my-4">
         <?= csrf_field() ?>
         <button type="submit" class="btn <?= $liked ? 'btn-danger' : 'btn-outline-danger' ?>" aria-pressed="<?= $liked ? 'true' : 'false' ?>">
@@ -131,6 +136,7 @@ ob_start();
             공감 <span class="fw-bold"><?= number_format($likeCount) ?></span>
         </button>
     </form>
+    <?php endif; ?>
 
     <!-- 본문 하단 광고 -->
     <?= view('components/ad_slot', ['ads' => $postBotAds]) ?>
@@ -184,6 +190,7 @@ ob_start();
 </section>
 <?php endif; ?>
 
+<?php if (! $preview): ?>
 <!-- 댓글 -->
 <section id="comments" class="post-section" aria-labelledby="comments-title">
     <h2 id="comments-title" class="post-section__title">댓글 <span class="text-muted fw-normal"><?= count($comments) ?></span></h2>
@@ -268,6 +275,7 @@ ob_start();
         </div>
     </div>
 </div>
+<?php endif; ?>
 </div>
 
 <?= $this->endSection() ?>
@@ -275,6 +283,7 @@ ob_start();
 <script src="<?= asset_url('js/post-toc.js') ?>" defer></script>
 <script src="<?= asset_url('js/code-highlight.js') ?>" defer></script>
 <script src="<?= asset_url('js/post-share.js') ?>" defer></script>
+<?php if (! $preview): ?>
 <script>
 const guestModal = document.getElementById('guestModal');
 guestModal.addEventListener('show.bs.modal', function(e) {
@@ -283,4 +292,5 @@ guestModal.addEventListener('show.bs.modal', function(e) {
     document.getElementById('guestForm').action = action === 'edit' ? base + '/verify' : base + '/delete';
 });
 </script>
+<?php endif; ?>
 <?= $this->endSection() ?>

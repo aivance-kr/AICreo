@@ -80,6 +80,14 @@ series              — 연재 묶음 (slug·title·description·status)
 post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, series_order NULL 허용)
 ```
 
+## 휴지통(소프트 삭제)
+
+- `posts`·`post_comments`·`pages` 는 `deleted_at` 소프트 삭제다. 삭제하면 `deleted_at` 만 채워지므로 **첨부 파일(디스크 포함)·시리즈 소속(`post_series`)은 그대로 남고**, 복원은 `deleted_at` 만 비운다. 공개 목록·RSS·sitemap·검색·캐시 훅은 모델의 소프트 삭제 필터로 삭제 항목을 자동 제외한다. 모델 밖에서 `db->table('posts')` 등으로 직접 조회할 때는 `deleted_at IS NULL` 을 직접 건다.
+- `App\Libraries\TrashManager` 가 목록·복원·영구 삭제·만료 비우기를 맡는다. 글을 영구 삭제할 때만 첨부 파일·댓글·공감·조회 기록·시리즈 소속을 함께 지운다. 컨트롤러는 삭제 시 `deleteByPost()` 를 부르지 않는다.
+- 관리자 화면: `/admin/trash`(글·댓글·페이지 탭, 복원, 영구 삭제).
+- 자동 비움: `php spark trash:empty [--days 30]` 가 보관 기간(기본 30일, `TrashManager::RETENTION_DAYS`)이 지난 항목을 영구 삭제한다. **서버 crontab에 하루 한 번 등록해야 한다** (예: `0 4 * * * cd /path/to/app && php spark trash:empty >> /dev/null 2>&1`). 없으면 휴지통이 비워지지 않는다.
+- WP 가져오기 롤백(`wp:import:rollback`)은 휴지통을 거치지 않고 영구 삭제한다.
+
 ## 시리즈(연재)
 
 - 한 글은 여러 시리즈에 속할 수 있다(`post_series` 피벗). 외래 키는 없고, 시리즈 삭제 시 `SeriesModel` 이 피벗 행만 지운다(글은 남음).
@@ -152,3 +160,30 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 켠 관리자는 비밀번호·소셜 로그인 모두 `BaseController::finishLogin()` 에서 세션(`user_id`)을 만들지 않고 `twofa_user_id` 만 둔 채 `/auth/2fa` 로 보낸다(5분 유효). 코드가 맞으면 `startSession()` 이 세션을 완성한다. 로그인 경로를 새로 만들면 반드시 `finishLogin()` 을 거칠 것.
 - 로직은 `App\Libraries\TwoFactor`(spomky-labs/otphp, bacon/bacon-qr-code). 시크릿은 CI4 Encrypter 로 암호화해 `users.totp_secret` 에, 복구 코드는 SHA-256 해시만 `totp_recovery_codes` 에 저장한다. 같은 코드 재사용 불가(`totp_last_step`), 연속 5회 실패 시 15분 잠금(`totp_locked_until`), 시크릿·코드는 로그에 남기지 않는다.
 - **배포 전 서버 `.env` 에 `encryption.key` 필수**(`php spark key:generate`). 없으면 설정 화면이 켜기를 막는다. 키를 바꾸면 저장된 시크릿을 복호화할 수 없으니 `Config\Encryption::$previousKeys` 로 이전 키를 유지한다. 테스트용 키는 `phpunit.xml.dist` 에 있다.
+
+## 리다이렉트 관리
+
+- `redirects` 테이블(`old_path` 유일·`new_path`·`status_code` 301/302·`is_active`·`hit_count`). `RedirectFilter`(전역 before)가 GET 요청의 `경로?쿼리` 와 `is_active=1` 행이 일치하면 이동시키고 `hit_count` 를 올린다.
+- 관리자 `/admin/redirects`(등록·수정·켜기/끄기·삭제, 주소 검색). 저장 전 `RedirectModel::validationError()` 가 원 주소 중복과 순환(자기 자신·A→B→A 연쇄, 사용 안 함 행 포함)을 막는다. 대상은 `/경로` 또는 `http(s)://` 만 허용.
+- 같은 화면의 "최근 30일 404 주소"(`PageVisitModel::topNotFound()`)와 일별 방문기록의 404 행에서 원 주소가 채워진 채로 바로 등록한다.
+
+## 댓글 스팸 방지
+
+- 비회원 댓글 방어선: 허니팟(`website`) → 1분 1회 제한 → 산수 캡차 → `CommentSpamFilter`(링크 `MAX_LINKS`=2개 초과·금칙어 포함이면 의심). 의심 댓글은 거절하지 않고 `post_comments.is_pending=1`·`is_active=0` 으로 저장해 공개하지 않는다(회원 댓글은 필터 제외). 금칙어는 `CommentSpamFilter::DEFAULT_BANNED_WORDS`.
+- 모든 작성자 공통으로 IP당 시간당 20건(`BoardController::COMMENT_IP_HOURLY_LIMIT`, 캐시 카운터)을 넘으면 거절한다.
+- 관리자 `/admin/comments?status=pending` 에서 승인(`POST comments/{id}/approve`)·삭제(휴지통)한다. 노출 토글은 대기 상태를 해제한다.
+
+## 미리보기 공유 링크
+
+- `post_preview_tokens` 테이블(글·64자 hex 토큰·만료·폐기 시각). `PostPreviewTokenModel::issue()` 가 토큰을 만들고(만료 1~90일), `findValid()` 가 미만료·미폐기·삭제 안 된 글일 때만 글을 돌려준다. 폐기해도 행은 남는다.
+- 공개 주소 `GET /preview/{토큰}`(`Front\PreviewController`)은 로그인·공개 여부·비밀글·게시판 읽기 권한과 무관하게 `board/view` 를 읽기 전용(`preview=true`: 댓글·공감·공유·수정 버튼·이전/다음·관련 글·첨부 없음)으로 그린다. 조회수는 올리지 않는다. 유효하지 않으면 404.
+- 응답에 `X-Robots-Tag: noindex, nofollow`, `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` 를 붙이고 `preview/*` 는 방문 로그에서 제외한다(주소에 토큰이 있음). 공개 목록·RSS·sitemap 쿼리는 그대로 `is_active=1` 이라 노출되지 않는다.
+- 발급·폐기는 운영자 전용 `/admin/posts/{id}/preview-links`(글 수정 화면의 "미리보기 링크"). 관리자 활동 로그에는 토큰 값 없이 "발급(N일)/폐기"만 남긴다.
+
+## 다국어(i18n) — 1단계 기반
+
+- 설계: `docs/i18n-design.md`. 기본 언어(ko)는 URL 접두어 없음, 그 밖의 사용 언어는 `/{코드}/...`. 켜기: 서버 `.env` 에 `i18n.enabled = ko,en` (기본은 `ko` 만 = 기능 꺼짐, 기존 동작 그대로).
+- `Config\I18n`(기본 언어·사용 언어 목록) → `Config\App` 생성자가 `defaultLocale`/`supportedLocales` 에 반영. 라우트(`Routes.php`)는 공개 화면 라우트를 `$front` 클로저로 묶어 언어별 **리터럴 그룹**(`en/…`)에 다시 등록한다(CI4 `{locale}` 자리표시자는 `/about` 같은 단일 세그먼트 슬러그를 가로채서 쓰지 않는다). 다국어를 켠 경우 `ko/...` 그룹도 등록해 `LocaleFilter` 가 접두어 없는 주소로 301 보낸다(라우트가 매칭돼야 before 필터가 돈다).
+- `LocaleFilter`(전역 before)가 첫 세그먼트가 사용 언어면 `Request::setLocale()`. 헬퍼 `locale_url($path, $locale)`·`html_lang()`(`i18n_helper.php`, 자동 로드). 테마 레이아웃의 `<html lang>` 은 `html_lang()`.
+- 언어 코드(ko·en 등)는 페이지 슬러그로 쓸 수 없다(`PageManagerController::store` 검증).
+- DB: `posts`/`pages` 에 `locale`(기본 ko)·`translation_group_id`, `menus.locale`. 1단계는 컬럼만 추가하고 조회 로직은 아직 locale 을 쓰지 않는다(2단계).

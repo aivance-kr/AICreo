@@ -3,11 +3,44 @@
 declare(strict_types=1);
 
 use CodeIgniter\Router\RouteCollection;
+use Config\I18n;
 
 /** @var RouteCollection $routes */
 
-// ─── 홈 ──────────────────────────────────────────────────────────────────────
-$routes->get('/', 'Front\HomeController::index');
+// ─── 공개 화면 (기본 언어는 접두어 없이, 그 밖의 사용 언어는 /{코드}/ 아래에 같은 라우트를 등록) ──
+$front = static function (RouteCollection $routes): void {
+    $routes->get('/', 'Front\HomeController::index');
+    $routes->get('search', 'Front\SearchController::index');
+    $routes->get('series', 'Front\SeriesController::index');
+    $routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
+    $routes->get('archive', 'Front\ArchiveController::index');
+    $routes->get('archive/(:num)/(:num)', 'Front\ArchiveController::month/$1/$2');
+    $routes->get('tags', 'Front\TagController::index');
+    $routes->get('tags/(:segment)', 'Front\TagController::show/$1');
+    $routes->get('board/(:segment)', 'Front\BoardController::index/$1');
+    $routes->get('board/(:segment)/write', 'Front\BoardController::write/$1');
+    $routes->post('board/(:segment)/write', 'Front\BoardController::store/$1');
+    $routes->get('board/(:segment)/(:num)', 'Front\BoardController::view/$1/$2');
+    $routes->post('board/(:segment)/(:num)/like', 'Front\BoardController::like/$1/$2');
+    $routes->get('board/(:segment)/(:num)/edit', 'Front\BoardController::edit/$1/$2');
+    $routes->post('board/(:segment)/(:num)/edit', 'Front\BoardController::update/$1/$2');
+    $routes->post('board/(:segment)/(:num)/delete', 'Front\BoardController::delete/$1/$2');
+    $routes->post('board/(:segment)/(:num)/verify', 'Front\BoardController::guestVerify/$1/$2');
+    $routes->get('board/file/(:num)/download', 'Front\BoardController::download/$1');
+    $routes->post('board/(:segment)/(:num)/comment', 'Front\BoardController::commentStore/$1/$2');
+    $routes->post('board/(:segment)/(:num)/comment/(:num)/delete', 'Front\BoardController::commentDelete/$1/$2/$3');
+};
+
+$front($routes);
+
+// 다국어를 켠 경우 기본 언어 접두어(/ko/...)도 등록한다 — LocaleFilter 가 접두어 없는 주소로 301 보내려면 라우트가 매칭돼야 한다
+$i18n = config(I18n::class);
+
+if ($i18n->prefixedLocales() !== []) {
+    foreach ($i18n->locales() as $locale) {
+        $routes->group($locale, $front);
+    }
+}
 
 // ─── 크롤러 진입점 (SEO/GEO) — 반드시 catch-all '(:segment)' 보다 위 ─────────────
 $routes->get('sitemap.xml', 'Front\SitemapController::index');
@@ -17,13 +50,7 @@ $routes->get('indexnow-key.txt', 'Front\IndexNowController::key');
 $routes->get('feed', 'Front\FeedController::index');
 $routes->get('rss', 'Front\FeedController::index');
 $routes->get('og/(:num)\\.png', 'Front\OgImageController::post/$1');
-$routes->get('search', 'Front\SearchController::index');
-$routes->get('series', 'Front\SeriesController::index');
-$routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
-$routes->get('archive', 'Front\ArchiveController::index');
-$routes->get('archive/(:num)/(:num)', 'Front\ArchiveController::month/$1/$2');
-$routes->get('tags', 'Front\TagController::index');
-$routes->get('tags/(:segment)', 'Front\TagController::show/$1');
+$routes->get('preview/(:segment)', 'Front\PreviewController::show/$1');
 
 // ─── 인증 ────────────────────────────────────────────────────────────────────
 $routes->get('auth/login', 'Front\AuthController::login');
@@ -40,20 +67,6 @@ $routes->post('auth/withdraw', 'Front\AuthController::withdraw');
 // ─── 소셜 로그인 ──────────────────────────────────────────────────────────────
 $routes->get('auth/social/(:segment)', 'Front\SocialAuthController::redirect/$1');
 $routes->get('auth/social/(:segment)/callback', 'Front\SocialAuthController::callback/$1');
-
-// ─── 게시판 ───────────────────────────────────────────────────────────────────
-$routes->get('board/(:segment)', 'Front\BoardController::index/$1');
-$routes->get('board/(:segment)/write', 'Front\BoardController::write/$1');
-$routes->post('board/(:segment)/write', 'Front\BoardController::store/$1');
-$routes->get('board/(:segment)/(:num)', 'Front\BoardController::view/$1/$2');
-$routes->post('board/(:segment)/(:num)/like', 'Front\BoardController::like/$1/$2');
-$routes->get('board/(:segment)/(:num)/edit', 'Front\BoardController::edit/$1/$2');
-$routes->post('board/(:segment)/(:num)/edit', 'Front\BoardController::update/$1/$2');
-$routes->post('board/(:segment)/(:num)/delete', 'Front\BoardController::delete/$1/$2');
-$routes->post('board/(:segment)/(:num)/verify', 'Front\BoardController::guestVerify/$1/$2');
-$routes->get('board/file/(:num)/download', 'Front\BoardController::download/$1');
-$routes->post('board/(:segment)/(:num)/comment', 'Front\BoardController::commentStore/$1/$2');
-$routes->post('board/(:segment)/(:num)/comment/(:num)/delete', 'Front\BoardController::commentDelete/$1/$2/$3');
 
 // ─── 에디터 이미지 업로드 ─────────────────────────────────────────────────────
 $routes->post('board/image-upload', 'Front\BoardController::imageUpload');
@@ -104,6 +117,9 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('posts/(:num)/revisions', 'Admin\PostRevisionController::index/$1');
     $routes->get('posts/(:num)/revisions/(:num)', 'Admin\PostRevisionController::show/$1/$2');
     $routes->post('posts/(:num)/revisions/(:num)/restore', 'Admin\PostRevisionController::restore/$1/$2');
+    $routes->get('posts/(:num)/preview-links', 'Admin\PostPreviewController::index/$1');
+    $routes->post('posts/(:num)/preview-links', 'Admin\PostPreviewController::store/$1');
+    $routes->post('posts/(:num)/preview-links/(:num)/revoke', 'Admin\PostPreviewController::revoke/$1/$2');
 
     // 게시판 카테고리 관리 (게시판마다 별도 관리)
     $routes->get('boards/(:num)/categories', 'Admin\BoardManagerController::categories/$1');
@@ -155,6 +171,13 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     // 전체 댓글 관리
     $routes->get('comments', 'Admin\CommentController::index');
     $routes->post('comments/(:num)/toggle', 'Admin\CommentController::toggle/$1');
+    $routes->post('comments/(:num)/approve', 'Admin\CommentController::approve/$1');
+    $routes->post('comments/(:num)/delete', 'Admin\CommentController::delete/$1');
+
+    // 휴지통
+    $routes->get('trash', 'Admin\TrashController::index');
+    $routes->post('trash/(:segment)/(:num)/restore', 'Admin\TrashController::restore/$1/$2');
+    $routes->post('trash/(:segment)/(:num)/delete', 'Admin\TrashController::purge/$1/$2');
 
     // 접속 통계
     $routes->get('stats', 'Admin\StatsController::index');
@@ -167,6 +190,13 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('blocked-ips', 'Admin\BlockedIpController::index');
     $routes->post('blocked-ips/(:num)/delete', 'Admin\BlockedIpController::delete/$1');
     $routes->get('logs', 'Admin\AdminLogController::index');
+
+    // 리다이렉트 관리
+    $routes->get('redirects', 'Admin\RedirectController::index');
+    $routes->post('redirects', 'Admin\RedirectController::store');
+    $routes->post('redirects/(:num)', 'Admin\RedirectController::update/$1');
+    $routes->post('redirects/(:num)/toggle', 'Admin\RedirectController::toggle/$1');
+    $routes->post('redirects/(:num)/delete', 'Admin\RedirectController::delete/$1');
 
     // 회원 관리
     $routes->get('users', 'Admin\UserController::index');
@@ -219,4 +249,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
 });
 
 // ─── 동적 페이지 (반드시 마지막에 위치) ──────────────────────────────────────────
+foreach ($i18n->prefixedLocales() !== [] ? $i18n->locales() : [] as $locale) {
+    $routes->get($locale . '/(:segment)', 'Front\PageController::show/$1');
+}
 $routes->get('(:segment)', 'Front\PageController::show/$1');

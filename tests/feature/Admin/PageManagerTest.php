@@ -24,6 +24,16 @@ final class PageManagerTest extends AdminTestCase
         $this->assertSame('회사소개', (new PageModel())->getBySlug('about-us')['title']);
     }
 
+    public function testCreateRejectsLocaleCodeAsSlug(): void
+    {
+        $this->withSession($this->adminSession)->post('admin/pages/create', [
+            'slug'  => 'ko',
+            'title' => '언어 코드 슬러그',
+        ]);
+
+        $this->assertNull((new PageModel())->where('slug', 'ko')->first());
+    }
+
     public function testAdminCreatesHomePage(): void
     {
         $result = $this->withSession($this->adminSession)->post('admin/pages/create', [

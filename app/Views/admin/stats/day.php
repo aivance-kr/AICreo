@@ -21,7 +21,12 @@
                 <?php foreach ($visits as $v): ?>
                 <tr>
                     <td class="text-nowrap"><?= esc(substr((string) $v['created_at'], 11)) ?></td>
-                    <td class="text-break"><?= esc($v['uri']) ?></td>
+                    <td class="text-break"><?= esc($v['uri']) ?>
+                        <?php if ((int) ($v['is_not_found'] ?? 0) === 1): ?>
+                        <span class="badge bg-danger">404</span>
+                        <a href="/admin/redirects?old=<?= esc(rawurlencode((string) $v['uri']), 'attr') ?>" class="small">리다이렉트 등록</a>
+                        <?php endif; ?>
+                    </td>
                     <td class="text-nowrap"><?= esc($v['ip_address']) ?></td>
                     <td class="text-break"><?= $v['referer'] !== null && $v['referer'] !== '' ? esc($v['referer']) : '<span class="text-muted">직접 접속</span>' ?></td>
                     <td class="text-break"><?= esc((string) $v['user_agent']) ?></td>
