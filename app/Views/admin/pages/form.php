@@ -2,6 +2,7 @@
 <?php $pageTitle = $page ? '페이지 수정' : '페이지 추가' ?>
 <?= $this->section('content') ?>
 
+<?= view('admin/partials/translations', ['translationRows' => $translationRows]) ?>
 <div class="card border-0 shadow-sm" style="max-width:800px">
     <div class="card-body p-4">
         <?php if (session()->has('errors')): ?>
@@ -11,6 +12,16 @@
         <form method="post" action="<?= $page ? "/admin/pages/{$page['id']}/edit" : '/admin/pages/create' ?>">
             <?= csrf_field() ?>
             <div class="row g-3">
+                <?php if (! $page && count($locales) > 1): ?>
+                <div class="col-md-6">
+                    <label for="pages-form-locale" class="form-label small">언어</label>
+                    <select id="pages-form-locale" name="locale" class="form-select form-select-sm">
+                        <?php foreach ($locales as $l): ?>
+                            <option value="<?= esc($l, 'attr') ?>" <?= old('locale') === $l ? 'selected' : '' ?>><?= esc(strtoupper($l)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
                 <?php if (! $page): ?>
                 <div class="col-md-6">
                     <label for="pages-form-slug" class="form-label small">슬러그 (영문, -, _) *</label>

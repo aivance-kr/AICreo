@@ -7,7 +7,9 @@ use App\Libraries\CommentSpamFilter;
 use App\Libraries\FileUploader;
 use App\Libraries\HtmlSanitizer;
 use App\Libraries\OgImageGenerator;
+use App\Libraries\Seo\Alternates;
 use App\Libraries\Seo\JsonLdBuilder;
+use App\Libraries\TranslationManager;
 use App\Models\AdminLogModel;
 use App\Models\AdModel;
 use App\Models\BoardCategoryModel;
@@ -21,6 +23,7 @@ use App\Models\SeriesModel;
 use App\Models\SignatureModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\I18n;
 
 class BoardController extends BaseController
 {
@@ -52,13 +55,13 @@ class BoardController extends BaseController
 
     public function index(string $boardSlug): ResponseInterface|string
     {
-        $board = $this->boardModel->getBySlug($boardSlug);
+        $board = $this->boardModel->getBySlug($boardSlug, $this->request->getLocale());
         if (! $board) {
             throw PageNotFoundException::forPageNotFound();
         }
 
         if (! $this->checkPermission($board['read_permission'])) {
-            return redirect()->to('/auth/login')->with('error', '로그인이 필요합니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Board.loginRequired'));
         }
 
         $page       = max(1, (int) ($this->request->getGet('page') ?? 1));
@@ -77,16 +80,16 @@ class BoardController extends BaseController
             $total   = $result['total'];
             $notices = [];
         } else {
-            $list    = $this->postModel->getList($board['id'], $page, $board['posts_per_page'], $categoryId);
+            $list    = $this->postModel->getList($board['id'], $page, $board['posts_per_page'], $categoryId, $this->request->getLocale());
             $posts   = $list['posts'];
             $notices = $list['notices'];
-            $total   = $this->postModel->getTotalCount($board['id'], $categoryId);
+            $total   = $this->postModel->getTotalCount($board['id'], $categoryId, $this->request->getLocale());
         }
 
         $totalPages = (int) ceil($total / $board['posts_per_page']);
 
         // 검색결과·비공개 게시판은 색인 제외, canonical 은 자기 참조(페이지·카테고리 파라미터 포함)
-        $canonical   = base_url('board/' . $board['slug']);
+        $canonical   = locale_url('board/' . $board['slug']);
         $canonicalQs = array_filter(['category' => $categoryId, 'page' => $page > 1 ? $page : null]);
         if ($canonicalQs !== []) {
             $canonical .= '?' . http_build_query($canonicalQs);
@@ -133,8 +136,8 @@ class BoardController extends BaseController
      */
     private function loadReadablePost(string $boardSlug, int $postId): array|ResponseInterface
     {
-        $board = $this->boardModel->getBySlug($boardSlug);
         $post  = $this->postModel->getDetail($postId);
+        $board = $this->boardModel->getBySlug($boardSlug, $post['locale'] ?? null);
 
         if (! $board || ! $post || $post['board_id'] !== $board['id']) {
             throw PageNotFoundException::forPageNotFound();
@@ -145,12 +148,12 @@ class BoardController extends BaseController
         }
 
         if (! $this->checkPermission($board['read_permission'])) {
-            return redirect()->to('/auth/login')->with('error', '로그인이 필요합니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Board.loginRequired'));
         }
 
         // 비밀글 처리
         if ($post['is_secret'] && ! $this->canAccessSecret($post)) {
-            return redirect()->back()->with('error', '비밀글입니다.');
+            return redirect()->back()->with('error', lang('Board.secretPost'));
         }
 
         return ['board' => $board, 'post' => $post];
@@ -200,13 +203,13 @@ class BoardController extends BaseController
         if ($categoryId !== null && ! in_array($categoryId, array_map('intval', array_column($this->categoryModel->getByBoard($board['id']), 'id')), true)) {
             $categoryId = null;
         }
-        $prevPost            = $this->postModel->getPrevious($board['id'], $postId, $categoryId);
-        $nextPost            = $this->postModel->getNext($board['id'], $postId, $categoryId);
+        $prevPost            = $this->postModel->getPrevious($board['id'], $postId, $categoryId, $post['locale']);
+        $nextPost            = $this->postModel->getNext($board['id'], $postId, $categoryId, $post['locale']);
         $guestCommentCaptcha = session()->get('user_id') ? null : $this->guestCommentCaptcha($postId);
 
         // 비밀글·비공개 게시판 글은 색인 제외
         $noindex   = (bool) $post['is_secret'] || $board['read_permission'] !== 'guest';
-        $canonical = base_url('board/' . $board['slug'] . '/' . $post['id']);
+        $canonical = locale_url('board/' . $board['slug'] . '/' . $post['id'], $post['locale']);
 
         // 시리즈(연재) 내비게이션 — 하단 글 번호 기준 이전/다음 글과는 별개로 얹는다
         $seriesNavs = $this->seriesModel->navigationsForPost($postId);
@@ -220,7 +223,7 @@ class BoardController extends BaseController
             $jsonLd = [
                 $ld->blogPosting($post, $canonical, (string) $author, $seriesNavs[0]['series'] ?? null),
                 $ld->breadcrumb([
-                    ['name' => '홈', 'url' => base_url('/')],
+                    ['name' => lang('Board.home'), 'url' => base_url('/')],
                     ['name' => $board['name'], 'url' => base_url('board/' . $board['slug'])],
                     ['name' => $post['title'], 'url' => $canonical],
                 ]),
@@ -262,10 +265,13 @@ class BoardController extends BaseController
             'kakaoJsKey'          => (string) env('KAKAO_JS_KEY', ''),
             'jsonLd'              => $jsonLd,
             'page'                => [
-                'title'     => $post['title'],
-                'meta_desc' => ($post['meta_desc'] ?? '') !== '' ? $post['meta_desc'] : post_excerpt($post['content'], 150),
-                'canonical' => $canonical,
-                'noindex'   => $noindex,
+                'title'        => $post['title'],
+                'meta_desc'    => ($post['meta_desc'] ?? '') !== '' ? $post['meta_desc'] : post_excerpt($post['content'], 150),
+                'canonical'    => $canonical,
+                'locale'       => $post['locale'],
+                'noindex'      => $noindex,
+                'alternates'   => $noindex ? [] : Alternates::forPost($postId),
+                'translatable' => true,
             ] + $ogPage,
         ]);
     }
@@ -274,7 +280,7 @@ class BoardController extends BaseController
 
     public function write(string $boardSlug): ResponseInterface|string
     {
-        $board = $this->boardModel->getBySlug($boardSlug);
+        $board = $this->boardModel->getBySlug($boardSlug, $this->request->getLocale());
         if (! $board) {
             throw PageNotFoundException::forPageNotFound();
         }
@@ -282,7 +288,7 @@ class BoardController extends BaseController
         if (! $this->checkPermission($board['write_permission'])) {
             session()->setTempdata('redirect_url', current_url(), 300);
 
-            return redirect()->to('/auth/login')->with('error', '글쓰기 권한이 없습니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Board.noWritePermission'));
         }
 
         return $this->render('board/write', [
@@ -301,7 +307,7 @@ class BoardController extends BaseController
     {
         $board = $this->boardModel->getBySlug($boardSlug);
         if (! $board || ! $this->checkPermission($board['write_permission'])) {
-            return redirect()->back()->with('error', '권한이 없습니다.');
+            return redirect()->back()->with('error', lang('Board.noPermission'));
         }
 
         $isGuest = ! session()->get('user_id');
@@ -381,7 +387,7 @@ class BoardController extends BaseController
             service('indexnow')->submit([base_url("board/{$boardSlug}/{$postId}")]);
         }
 
-        return redirect()->to("/board/{$boardSlug}/{$postId}")->with('success', '게시글이 등록되었습니다.');
+        return redirect()->to("/board/{$boardSlug}/{$postId}")->with('success', lang('Board.postCreated'));
     }
 
     // ─── 수정 ───────────────────────────────────────────────────────────────
@@ -403,22 +409,23 @@ class BoardController extends BaseController
         } elseif (! $userId && $post['author_password']) {
             // 비회원 게시글: 세션 인증 토큰 없으면 비밀번호 재확인
             if (! session()->get('edit_auth_' . $postId)) {
-                return redirect()->back()->with('error', '수정하려면 비밀번호 확인이 필요합니다.');
+                return redirect()->back()->with('error', lang('Board.passwordRequiredToEdit'));
             }
         } else {
-            return redirect()->back()->with('error', '수정 권한이 없습니다.');
+            return redirect()->back()->with('error', lang('Board.noEditPermission'));
         }
 
         $files = $this->fileModel->getByPost($postId);
 
         return $this->render('board/write', [
-            'board'      => $board,
-            'post'       => $post,
-            'files'      => $files,
-            'categories' => $this->categoryModel->getByBoard($board['id']),
-            'listQs'     => $this->listQuery(),
-            'seriesList' => $this->seriesChoices(),
-            'postSeries' => $this->seriesModel->seriesOfPost($postId),
+            'board'           => $board,
+            'post'            => $post,
+            'files'           => $files,
+            'categories'      => $this->categoryModel->getByBoard($board['id']),
+            'listQs'          => $this->listQuery(),
+            'seriesList'      => $this->seriesChoices(),
+            'postSeries'      => $this->seriesModel->seriesOfPost($postId),
+            'translationRows' => $role === 'admin' && config(I18n::class)->prefixedLocales() !== [] ? (new TranslationManager())->postRows($postId) : [],
         ]);
     }
 
@@ -428,12 +435,12 @@ class BoardController extends BaseController
     {
         $post = $this->postModel->find($postId);
         if (! $post || ! $post['author_password']) {
-            return redirect()->back()->with('error', '잘못된 요청입니다.');
+            return redirect()->back()->with('error', lang('Board.badRequest'));
         }
 
         $inputPw = $this->request->getPost('author_password');
         if (! $inputPw || ! password_verify($inputPw, (string) $post['author_password'])) {
-            return redirect()->back()->with('error', '비밀번호가 틀렸습니다.');
+            return redirect()->back()->with('error', lang('Board.wrongPassword'));
         }
 
         session()->set('edit_auth_' . $postId, true);
@@ -447,7 +454,7 @@ class BoardController extends BaseController
         $post  = $this->postModel->find($postId);
 
         if (! $board || ! $post || (int) $post['board_id'] !== (int) $board['id'] || ! $this->canEditPost($post)) {
-            return redirect()->back()->with('error', '권한이 없습니다.');
+            return redirect()->back()->with('error', lang('Board.noPermission'));
         }
 
         // 파일 사전 검증 (수정 저장 전)
@@ -516,7 +523,7 @@ class BoardController extends BaseController
 
         session()->remove('edit_auth_' . $postId);
 
-        return redirect()->to("/board/{$boardSlug}/{$postId}" . $this->listQuery())->with('success', '수정되었습니다.');
+        return redirect()->to("/board/{$boardSlug}/{$postId}" . $this->listQuery())->with('success', lang('Board.postUpdated'));
     }
 
     // ─── 삭제 ───────────────────────────────────────────────────────────────
@@ -527,14 +534,14 @@ class BoardController extends BaseController
         $post  = $this->postModel->find($postId);
 
         if (! $board || ! $post || ! $this->canEditPost($post)) {
-            return redirect()->back()->with('error', '권한이 없습니다.');
+            return redirect()->back()->with('error', lang('Board.noPermission'));
         }
 
         $this->postModel->delete($postId);
         $this->logAdminPost('delete', $postId, (string) $post['title']);
         session()->remove('edit_auth_' . $postId);
 
-        return redirect()->to("/board/{$boardSlug}" . $this->listQuery())->with('success', '삭제되었습니다.');
+        return redirect()->to("/board/{$boardSlug}" . $this->listQuery())->with('success', lang('Board.postDeleted'));
     }
 
     /**
@@ -553,12 +560,12 @@ class BoardController extends BaseController
     {
         $file = $this->fileModel->find($fileId);
         if (! $file) {
-            return redirect()->back()->with('error', '파일을 찾을 수 없습니다.');
+            return redirect()->back()->with('error', lang('Board.fileNotFound'));
         }
 
         $fullPath = FCPATH . $file['file_path'];
         if (! file_exists($fullPath)) {
-            return redirect()->back()->with('error', '파일이 존재하지 않습니다.');
+            return redirect()->back()->with('error', lang('Board.fileMissing'));
         }
 
         $this->fileModel->incrementDownload($fileId);
@@ -575,7 +582,7 @@ class BoardController extends BaseController
         $board = $this->boardModel->getBySlug($boardSlug);
         // 댓글은 글쓰기 권한이 아니라 읽기 권한을 따른다 (글쓰기 member 게시판도 비회원 댓글 허용)
         if (! $board || ! $this->checkPermission($board['read_permission'])) {
-            return redirect()->back()->with('error', '권한이 없습니다.');
+            return redirect()->back()->with('error', lang('Board.noPermission'));
         }
 
         $isGuest = ! session()->get('user_id');
@@ -590,21 +597,21 @@ class BoardController extends BaseController
         }
 
         if ($isGuest && (string) $this->request->getPost('website') !== '') {
-            return redirect()->back()->with('error', '댓글을 등록할 수 없습니다.');
+            return redirect()->back()->with('error', lang('Board.commentRejected'));
         }
 
         if ($isGuest && cache()->get($this->guestCommentRateLimitKey()) !== null) {
-            return redirect()->back()->with('error', '비회원 댓글은 1분에 한 번만 등록할 수 있습니다.');
+            return redirect()->back()->with('error', lang('Board.guestCommentRate'));
         }
 
         if ($isGuest && ! $this->isValidGuestCommentCaptcha($postId, (string) $this->request->getPost('captcha_answer'))) {
             $this->refreshGuestCommentCaptcha($postId);
 
-            return redirect()->back()->with('error', '스팸 방지 답이 일치하지 않습니다.');
+            return redirect()->back()->with('error', lang('Board.captchaMismatch'));
         }
 
         if ($this->isCommentIpOverLimit()) {
-            return redirect()->back()->with('error', '댓글을 너무 자주 등록하고 있습니다. 잠시 후 다시 시도해 주세요.');
+            return redirect()->back()->with('error', lang('Board.commentTooFrequent'));
         }
 
         // 비회원 댓글이 스팸으로 의심되면 공개하지 않고 승인 대기로 둔다
@@ -626,7 +633,7 @@ class BoardController extends BaseController
             session()->remove($this->guestCommentCaptchaKey($postId));
         }
 
-        $message = $pending ? '댓글이 등록되었습니다. 관리자 승인 후 공개됩니다.' : '댓글이 등록되었습니다.';
+        $message = $pending ? lang('Board.commentPending') : lang('Board.commentPosted');
 
         return redirect()->to("/board/{$boardSlug}/{$postId}" . $this->listQuery() . '#comments')->with('success', $message);
     }
@@ -705,7 +712,7 @@ class BoardController extends BaseController
     {
         $comment = $this->commentModel->find($commentId);
         if (! $comment) {
-            return redirect()->back()->with('error', '댓글을 찾을 수 없습니다.');
+            return redirect()->back()->with('error', lang('Board.commentNotFound'));
         }
 
         $role   = $this->getUserRole();
@@ -715,7 +722,7 @@ class BoardController extends BaseController
             || ($userId && $comment['user_id'] === $userId);
 
         if (! $canDelete) {
-            return redirect()->back()->with('error', '삭제 권한이 없습니다.');
+            return redirect()->back()->with('error', lang('Board.noDeletePermission'));
         }
 
         $this->commentModel->delete($commentId);
@@ -728,21 +735,21 @@ class BoardController extends BaseController
     public function imageUpload(): ResponseInterface|string
     {
         if (! session()->get('user_id')) {
-            return $this->response->setJSON(['error' => '로그인이 필요합니다.'])->setStatusCode(403);
+            return $this->response->setJSON(['error' => lang('Board.loginRequired')])->setStatusCode(403);
         }
 
         $file = $this->request->getFile('file');
         if (! $file || ! $file->isValid()) {
-            return $this->response->setJSON(['error' => '파일을 찾을 수 없습니다.'])->setStatusCode(400);
+            return $this->response->setJSON(['error' => lang('Board.fileNotFound')])->setStatusCode(400);
         }
 
         $ext = strtolower($file->getClientExtension());
         if (! in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
-            return $this->response->setJSON(['error' => '이미지 파일만 허용됩니다.'])->setStatusCode(400);
+            return $this->response->setJSON(['error' => lang('Board.imageOnly')])->setStatusCode(400);
         }
 
         if ($file->getSize() > 10 * 1024 * 1024) {
-            return $this->response->setJSON(['error' => '파일 크기는 10MB 이하여야 합니다.'])->setStatusCode(400);
+            return $this->response->setJSON(['error' => lang('Board.fileSizeLimit')])->setStatusCode(400);
         }
 
         $uploadPath = FCPATH . 'uploads/board/images/' . date('Y/m');
@@ -767,12 +774,12 @@ class BoardController extends BaseController
     public function seriesSuggest(): ResponseInterface
     {
         if ($this->getUserRole() !== 'admin') {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => '권한이 없습니다.', 'csrf_hash' => csrf_hash()]);
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => lang('Board.noPermission'), 'csrf_hash' => csrf_hash()]);
         }
 
         $groq = service('groqSeries');
         if (! $groq->isEnabled()) {
-            return $this->response->setJSON(['success' => false, 'message' => 'AI 추천을 쓰려면 .env 에 GROQ_API_KEY 를 설정해야 합니다.', 'csrf_hash' => csrf_hash()]);
+            return $this->response->setJSON(['success' => false, 'message' => lang('Board.aiSeriesNoKey'), 'csrf_hash' => csrf_hash()]);
         }
 
         $ids = $groq->suggest(
@@ -793,17 +800,17 @@ class BoardController extends BaseController
     public function aiSuggest(): ResponseInterface
     {
         if ($this->getUserRole() !== 'admin') {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => '권한이 없습니다.', 'csrf_hash' => csrf_hash()]);
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => lang('Board.noPermission'), 'csrf_hash' => csrf_hash()]);
         }
 
         $groq = service('groqPostAssist');
         if (! $groq->isEnabled()) {
-            return $this->response->setJSON(['success' => false, 'message' => 'AI 제안을 쓰려면 .env 에 GROQ_API_KEY 를 설정해야 합니다.', 'csrf_hash' => csrf_hash()]);
+            return $this->response->setJSON(['success' => false, 'message' => lang('Board.aiPostNoKey'), 'csrf_hash' => csrf_hash()]);
         }
 
         $suggestion = $groq->suggest((string) $this->request->getPost('title'), (string) $this->request->getPost('content'));
         if ($suggestion === null) {
-            return $this->response->setJSON(['success' => false, 'message' => 'AI 제안을 받지 못했습니다. 잠시 후 다시 시도해 주세요.', 'csrf_hash' => csrf_hash()]);
+            return $this->response->setJSON(['success' => false, 'message' => lang('Board.aiPostFailed'), 'csrf_hash' => csrf_hash()]);
         }
 
         return $this->response->setJSON(['success' => true, 'suggestion' => $suggestion, 'csrf_hash' => csrf_hash()]);

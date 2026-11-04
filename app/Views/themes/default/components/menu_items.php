@@ -31,7 +31,7 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
                     <a class="dropdown-item<?= $isCurrent($child['url'] ?? null) ? ' active' : '' ?>"
                        href="<?= esc($child['url']) ?>" target="<?= esc($child['target']) ?>"<?= $child['target'] === '_blank' ? ' rel="noopener"' : '' ?>
                        <?= $isCurrent($child['url'] ?? null) ? 'aria-current="page"' : '' ?>>
-                        <?= esc($child['title']) ?><?php if ($child['target'] === '_blank'): ?><span class="visually-hidden"> (새 창 열림)</span><?php endif; ?>
+                        <?= esc($child['title']) ?><?php if ($child['target'] === '_blank'): ?><span class="visually-hidden"> <?= esc(lang('Site.newWindow')) ?></span><?php endif; ?>
                     </a>
                 </li>
                 <?php endforeach; ?>
@@ -40,7 +40,7 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
             <a class="nav-link<?= $active ? ' active' : '' ?>" href="<?= esc($menu['url']) ?>"
                target="<?= esc($menu['target']) ?>"<?= $menu['target'] === '_blank' ? ' rel="noopener"' : '' ?>
                <?= $active ? 'aria-current="page"' : '' ?>>
-                <?= esc($menu['title']) ?><?php if ($menu['target'] === '_blank'): ?><span class="visually-hidden"> (새 창 열림)</span><?php endif; ?>
+                <?= esc($menu['title']) ?><?php if ($menu['target'] === '_blank'): ?><span class="visually-hidden"> <?= esc(lang('Site.newWindow')) ?></span><?php endif; ?>
             </a>
         <?php endif; ?>
     </li>

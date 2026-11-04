@@ -10,18 +10,18 @@ $dark    = $dark ?? false;
 ?>
 <form method="post" action="<?= esc(site_url('newsletter/subscribe'), 'attr') ?>" class="newsletter-form">
     <?= csrf_field() ?>
-    <label for="<?= esc($inputId, 'attr') ?>" class="form-label small fw-semibold mb-1">새 글 알림 받기</label>
+    <label for="<?= esc($inputId, 'attr') ?>" class="form-label small fw-semibold mb-1"><?= esc(lang('Site.newsletterTitle')) ?></label>
     <div class="input-group input-group-sm">
-        <input type="email" name="email" id="<?= esc($inputId, 'attr') ?>" class="form-control" placeholder="이메일 주소"
+        <input type="email" name="email" id="<?= esc($inputId, 'attr') ?>" class="form-control" placeholder="<?= esc(lang('Site.emailAddress'), 'attr') ?>"
                required maxlength="190" autocomplete="email" aria-describedby="<?= esc($inputId, 'attr') ?>-privacy">
-        <button type="submit" class="btn <?= $dark ? 'btn-light' : 'btn-primary' ?>">구독</button>
+        <button type="submit" class="btn <?= $dark ? 'btn-light' : 'btn-primary' ?>"><?= esc(lang('Site.subscribe')) ?></button>
     </div>
     <?php /* 허니팟 — 사람은 보지 못하고 봇만 채운다 */ ?>
     <div style="position:absolute;left:-9999px" aria-hidden="true">
-        <label for="<?= esc($inputId, 'attr') ?>-hp">웹사이트</label>
+        <label for="<?= esc($inputId, 'attr') ?>-hp"><?= esc(lang('Site.website')) ?></label>
         <input type="text" name="<?= esc(\App\Controllers\Front\NewsletterController::HONEYPOT_FIELD, 'attr') ?>" id="<?= esc($inputId, 'attr') ?>-hp" value="" tabindex="-1" autocomplete="off">
     </div>
     <p id="<?= esc($inputId, 'attr') ?>-privacy" class="small mb-0 mt-1 <?= $dark ? 'text-white-50' : 'text-muted' ?>">
-        <?= esc(\App\Libraries\NewsletterMailer::PRIVACY_NOTICE) ?>
+        <?= esc(\App\Libraries\NewsletterMailer::privacyNotice()) ?>
     </p>
 </form>

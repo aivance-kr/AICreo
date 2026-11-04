@@ -10,6 +10,9 @@ use Config\I18n;
 // ─── 공개 화면 (기본 언어는 접두어 없이, 그 밖의 사용 언어는 /{코드}/ 아래에 같은 라우트를 등록) ──
 $front = static function (RouteCollection $routes): void {
     $routes->get('/', 'Front\HomeController::index');
+    $routes->get('feed', 'Front\FeedController::index');
+    $routes->get('rss', 'Front\FeedController::index');
+    $routes->get('llms.txt', 'Front\LlmsController::index');
     $routes->get('search', 'Front\SearchController::index');
     $routes->get('series', 'Front\SeriesController::index');
     $routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
@@ -44,11 +47,9 @@ if ($i18n->prefixedLocales() !== []) {
 
 // ─── 크롤러 진입점 (SEO/GEO) — 반드시 catch-all '(:segment)' 보다 위 ─────────────
 $routes->get('sitemap.xml', 'Front\SitemapController::index');
+$routes->get('sitemap-(:segment)\\.xml', 'Front\SitemapController::locale/$1');
 $routes->get('robots.txt', 'Front\RobotsController::index');
-$routes->get('llms.txt', 'Front\LlmsController::index');
 $routes->get('indexnow-key.txt', 'Front\IndexNowController::key');
-$routes->get('feed', 'Front\FeedController::index');
-$routes->get('rss', 'Front\FeedController::index');
 $routes->get('og/(:num)\\.png', 'Front\OgImageController::post/$1');
 $routes->get('preview/(:segment)', 'Front\PreviewController::show/$1');
 
@@ -103,6 +104,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('pages/(:num)/edit', 'Admin\PageManagerController::edit/$1');
     $routes->post('pages/(:num)/edit', 'Admin\PageManagerController::update/$1');
     $routes->post('pages/(:num)/delete', 'Admin\PageManagerController::delete/$1');
+    $routes->post('pages/(:num)/translate/(:segment)', 'Admin\PageManagerController::translate/$1/$2');
 
     // 게시판 관리
     $routes->get('boards', 'Admin\BoardManagerController::index');
@@ -166,6 +168,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->post('posts/bulk-move', 'Admin\PostController::bulkMove');
     $routes->post('posts/bulk-category', 'Admin\PostController::bulkCategory');
     $routes->post('posts/(:num)/toggle', 'Admin\PostController::toggle/$1');
+    $routes->post('posts/(:num)/translate/(:segment)', 'Admin\PostController::translate/$1/$2');
     $routes->post('posts/(:num)/delete', 'Admin\PostController::delete/$1');
 
     // 전체 댓글 관리

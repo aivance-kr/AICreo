@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
+use App\Libraries\Seo\Alternates;
 use App\Libraries\Seo\HomeIntro;
 use App\Libraries\Seo\JsonLdBuilder;
 use App\Libraries\ThemeView;
@@ -33,16 +34,16 @@ class HomeController extends BaseController
         }
 
         $blogPostLimit   = min(100, max(1, (int) ($this->viewData['settings']['blog_home_post_limit'] ?? 10)));
-        $latestBlogPosts = $isBlogTheme ? $postModel->getLatestPublic($blogPostLimit) : [];
+        $latestBlogPosts = $isBlogTheme ? $postModel->getLatestPublic($blogPostLimit, $this->request->getLocale()) : [];
 
         $bannerModel       = new BannerModel();
         $adModel           = new AdModel();
-        $homePage          = (new PageModel())->getBySlug('home');
+        $homePage          = (new PageModel())->getBySlug('home', $this->request->getLocale());
         $showLatestNotices = ($this->viewData['settings']['home_show_latest_notices'] ?? '1') === '1';
 
         $settings = $this->viewData['settings'] ?? [];
         $ld       = new JsonLdBuilder();
-        $homeUrl  = base_url('/');
+        $homeUrl  = locale_url('');
 
         // 기본 소개 화면일 때만 제품(SoftwareApplication)·FAQ JSON-LD 와 정답형 메타 설명을 쓴다.
         $introDesc = ($settings['site_desc'] ?? '') ?: HomeIntro::DESCRIPTION;
@@ -61,6 +62,7 @@ class HomeController extends BaseController
                 'meta_title'     => ($homePage['meta_title'] ?? '') ?: ($homePage['title'] ?? $this->viewData['settings']['site_name'] ?? ''),
                 'meta_desc'      => ($homePage['meta_desc'] ?? '') ?: ($homePage === null ? $introDesc : ($settings['site_desc'] ?? '')),
                 'canonical'      => $homeUrl,
+                'alternates'     => Alternates::forPath(''),
                 'content'        => $homePage['content'] ?? '',
                 'is_custom_home' => $homePage !== null,
             ],

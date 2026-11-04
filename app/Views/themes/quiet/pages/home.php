@@ -28,7 +28,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
                 <span class="qt-meta"><b><?= esc($post['board_name']) ?></b> · <time datetime="<?= esc($post['created_at']) ?>"><?= esc(substr((string) $post['created_at'], 0, 10)) ?></time></span>
                 <h2><?= esc($post['title']) ?></h2>
                 <p><?= esc(post_excerpt($post['content'], 110)) ?></p>
-                <span class="qt-meta"><?= post_read_minutes($post['content']) ?>분 읽기 · <?= esc($author($post)) ?></span>
+                <span class="qt-meta"><?= esc(lang('Site.readMinutesRead', [(string) post_read_minutes($post['content'])])) ?> · <?= esc($author($post)) ?></span>
             </div>
             <?php if ($thumb): ?><img class="qt-item__img" src="<?= esc(content_thumb_url($thumb), 'attr') ?>" alt="" loading="<?= $i < 2 ? 'eager' : 'lazy' ?>"><?php else: ?><div class="qt-item__img qt-item__img--blank" aria-hidden="true"></div><?php endif; ?>
         </a>
@@ -42,7 +42,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
     <?php endforeach; ?>
 </div>
 <?php else: ?>
-    <p class="qt-empty">표시할 공개 글이 아직 없습니다.</p>
+    <p class="qt-empty"><?= esc(lang('Site.noPublicPosts')) ?></p>
 <?php endif; ?>
 
 <?= view('components/ad_slot', ['ads' => $homeBottomAds, 'slot' => 'home_bottom']) ?>

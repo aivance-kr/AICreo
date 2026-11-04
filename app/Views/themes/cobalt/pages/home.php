@@ -23,7 +23,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
                 <span class="cb-tag"><?= esc($post['board_name']) ?></span>
                 <h2><?= esc($post['title']) ?></h2>
                 <p><?= esc(post_excerpt($post['content'], $i === 0 ? 120 : 70)) ?></p>
-                <span class="cb-meta"><time datetime="<?= esc($post['created_at']) ?>"><?= esc(substr((string) $post['created_at'], 0, 10)) ?></time> · <?= post_read_minutes($post['content']) ?>분</span>
+                <span class="cb-meta"><time datetime="<?= esc($post['created_at']) ?>"><?= esc(substr((string) $post['created_at'], 0, 10)) ?></time> · <?= esc(lang('Site.readMinutes', [(string) post_read_minutes($post['content'])])) ?></span>
             </div>
         </a>
     </article>
@@ -36,7 +36,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
     <?php endforeach; ?>
 </div>
 <?php else: ?>
-    <p class="cb-empty">표시할 공개 글이 아직 없습니다.</p>
+    <p class="cb-empty"><?= esc(lang('Site.noPublicPosts')) ?></p>
 <?php endif; ?>
 
 <?= view('components/ad_slot', ['ads' => $homeBottomAds, 'slot' => 'home_bottom']) ?>

@@ -3,6 +3,7 @@
 namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
+use App\Libraries\Seo\Alternates;
 use App\Libraries\Seo\JsonLdBuilder;
 use App\Libraries\SlackInquiryNotifier;
 use App\Models\BoardModel;
@@ -29,7 +30,7 @@ class PageController extends BaseController
      */
     public function show(string $slug): ResponseInterface|string
     {
-        $page = $this->pageModel->getBySlug($slug);
+        $page = $this->pageModel->getBySlug($slug, $this->request->getLocale());
 
         // 짧은 주소(/{게시글ID}) — 같은 슬러그의 페이지가 없을 때만 게시글로 보낸다.
         // 게시글이 다른 게시판으로 옮겨져도 깨지지 않게 301이 아닌 302를 쓴다.
@@ -56,8 +57,8 @@ class PageController extends BaseController
         $ld = new JsonLdBuilder();
 
         return $this->render($viewFile, [
-            'page'   => $page,
-            'jsonLd' => [$ld->webPage($page, base_url($page['slug']))],
+            'page'   => $page + ['alternates' => Alternates::forPage((int) $page['id']), 'translatable' => true],
+            'jsonLd' => [$ld->webPage($page, locale_url($page['slug']))],
         ]);
     }
 
@@ -98,7 +99,7 @@ class PageController extends BaseController
         // 클라이언트 이메일 발송 (설정에서 수신 이메일 읽기)
         $this->sendInquiryEmail();
 
-        return redirect()->back()->with('success', '문의가 접수되었습니다. 빠른 시일 내에 답변드리겠습니다.');
+        return redirect()->back()->with('success', lang('Content.inquiryReceived'));
     }
 
     private function sendInquiryEmail(): void

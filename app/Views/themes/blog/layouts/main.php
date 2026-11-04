@@ -38,7 +38,7 @@
 </head>
 <body>
 
-<a class="skip-link" href="#main-content">본문 바로가기</a>
+<a class="skip-link" href="#main-content"><?= esc(lang('Site.skipToContent')) ?></a>
 
 <?php
 $currentPath = '/' . uri_string();
@@ -48,8 +48,8 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
 <?= $this->include('components/navbar') ?>
 
 <div class="blog-content-shell">
-    <aside class="blog-sidebar" aria-label="주 메뉴">
-        <nav class="blog-navigation" aria-label="사이트 메뉴">
+    <aside class="blog-sidebar" aria-label="<?= esc(lang('Site.mainMenu'), 'attr') ?>">
+        <nav class="blog-navigation" aria-label="<?= esc(lang('Site.siteMenu'), 'attr') ?>">
             <ul>
                 <?php foreach ($menus as $menu): ?>
                     <?php
@@ -77,7 +77,7 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
                                         <a class="<?= $isCurrent($child['url'] ?? null) ? 'is-active' : '' ?>"
                                            href="<?= esc($child['url']) ?>" target="<?= esc($child['target']) ?>"<?= $child['target'] === '_blank' ? ' rel="noopener"' : '' ?>
                                            <?= $isCurrent($child['url'] ?? null) ? 'aria-current="page"' : '' ?>>
-                                            <?= esc($child['title']) ?><?php if ($child['target'] === '_blank'): ?><span class="visually-hidden"> (새 창 열림)</span><?php endif; ?>
+                                            <?= esc($child['title']) ?><?php if ($child['target'] === '_blank'): ?><span class="visually-hidden"> <?= esc(lang('Site.newWindow')) ?></span><?php endif; ?>
                                         </a>
                                     </li>
                                 <?php endforeach; ?>
@@ -86,11 +86,11 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
                             <a class="<?= $active ? 'is-active' : '' ?>" href="<?= esc($menu['url']) ?>"
                                target="<?= esc($menu['target']) ?>"<?= $menu['target'] === '_blank' ? ' rel="noopener"' : '' ?>
                                <?= $active ? 'aria-current="page"' : '' ?>>
-                                <?= esc($menu['title']) ?><?php if ($menu['target'] === '_blank'): ?><span class="visually-hidden"> (새 창 열림)</span><?php endif; ?>
+                                <?= esc($menu['title']) ?><?php if ($menu['target'] === '_blank'): ?><span class="visually-hidden"> <?= esc(lang('Site.newWindow')) ?></span><?php endif; ?>
                             </a>
                             <?php if ($showBoardCategories): ?>
                             <ul class="blog-submenu">
-                                <li><a href="/board/<?= esc($menuBoardSlug) ?>"<?= $currentPath === '/board/' . $menuBoardSlug ? ' aria-current="page"' : '' ?>>전체</a></li>
+                                <li><a href="/board/<?= esc($menuBoardSlug) ?>"<?= $currentPath === '/board/' . $menuBoardSlug ? ' aria-current="page"' : '' ?>><?= esc(lang('Site.all')) ?></a></li>
                                 <?php foreach ($menuCategories as $category): ?>
                                 <li><a href="/board/<?= esc($menuBoardSlug) ?>?category=<?= esc($category['id']) ?>"><?= esc($category['name']) ?></a></li>
                                 <?php endforeach; ?>
@@ -105,11 +105,11 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
         <div class="blog-sidebar-footer">
             <?php if ($authUser['loggedIn']): ?>
                 <span><?= esc($authUser['nickname']) ?></span>
-                <?php if ($authUser['role'] === 'admin'): ?><a href="/admin">관리자</a><?php endif; ?>
-                <a href="/auth/profile">내 정보</a>
-                <a href="/auth/logout">로그아웃</a>
+                <?php if ($authUser['role'] === 'admin'): ?><a href="/admin"><?= esc(lang('Site.admin')) ?></a><?php endif; ?>
+                <a href="/auth/profile"><?= esc(lang('Site.profile')) ?></a>
+                <a href="/auth/logout"><?= esc(lang('Site.logout')) ?></a>
             <?php else: ?>
-                <a href="/auth/login">로그인</a>
+                <a href="/auth/login"><?= esc(lang('Site.login')) ?></a>
             <?php endif; ?>
         </div>
     </aside>
@@ -120,7 +120,7 @@ $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' &&
             <div class="container mt-3">
                 <div class="alert alert-<?= $cls ?> alert-dismissible fade show" role="alert">
                     <?= esc(session($key)) ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="알림 닫기"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?= esc(lang('Site.closeAlert'), 'attr') ?>"></button>
                 </div>
             </div>
             <?php endif; ?>

@@ -3,7 +3,9 @@
 
 <?= $this->section('content') ?>
 
+<?= view('admin/partials/locale_tabs', ['locales' => $locales, 'currentLocale' => $currentLocale]) ?>
 <form method="get" class="row g-2 mb-3" role="search">
+    <?php if ($currentLocale !== null): ?><input type="hidden" name="locale" value="<?= esc($currentLocale, 'attr') ?>"><?php endif; ?>
     <div class="col-auto">
         <label class="visually-hidden" for="post-board">게시판 필터</label>
         <select name="board_id" id="post-board" class="form-select form-select-sm">
@@ -117,6 +119,9 @@
                     <td data-label="게시판"><span class="badge bg-light text-dark border"><?= esc($p['board_name']) ?></span></td>
                     <td data-label="카테고리" class="small"><?= esc($p['category_name'] ?? '-') ?></td>
                     <td data-label="제목">
+                        <?php if (count($locales) > 1): ?>
+                            <span class="badge bg-light text-dark border me-1"><?= esc(strtoupper($p['locale'])) ?></span>
+                        <?php endif; ?>
                         <?php if ($p['is_notice']): ?>
                             <span class="badge bg-warning text-dark me-1">공지</span>
                         <?php endif; ?>

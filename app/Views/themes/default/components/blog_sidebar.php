@@ -35,13 +35,13 @@ if (! empty($withCategories)) {
 ?>
 <?= view('themes/default/components/ad_unit', ['ads' => $sidebarAds ?? [], 'slot' => 'sidebar']) ?>
 <?php if ($groups !== []): ?>
-<nav class="side-cats" aria-label="카테고리">
+<nav class="side-cats" aria-label="<?= esc(lang('Site.categories'), 'attr') ?>">
   <details>
-    <summary class="side-cats__title">카테고리</summary>
+    <summary class="side-cats__title"><?= esc(lang('Site.categories')) ?></summary>
     <?php foreach ($groups as $slug => $group): ?>
         <?php if (count($groups) > 1): ?><h3 class="side-cats__board"><?= esc($group['title']) ?></h3><?php endif; ?>
         <ul class="side-cats__list">
-            <li><a href="/board/<?= esc($slug) ?>">전체</a></li>
+            <li><a href="/board/<?= esc($slug) ?>"><?= esc(lang('Site.all')) ?></a></li>
             <?php foreach ($group['categories'] as $category): ?>
             <li><a href="/board/<?= esc($slug) ?>?category=<?= esc($category['id']) ?>"><?= esc($category['name']) ?></a></li>
             <?php endforeach; ?>
@@ -51,8 +51,8 @@ if (! empty($withCategories)) {
 </nav>
 <?php endif; ?>
 <?php if (! empty($popularPosts)): ?>
-<section class="side-popular" aria-label="많이 본 글">
-    <h2 class="side-cats__title">많이 본 글</h2>
+<section class="side-popular" aria-label="<?= esc(lang('Site.popularPosts'), 'attr') ?>">
+    <h2 class="side-cats__title"><?= esc(lang('Site.popularPosts')) ?></h2>
     <p class="side-popular__periods">
         <?php foreach (\App\Models\PostModel::POPULAR_PERIODS as $key => $label): ?>
         <a href="?popular=<?= esc($key) ?>"<?= ($popularPeriod ?? '7d') === $key ? ' aria-current="true"' : '' ?>><?= esc($label) ?></a>
@@ -72,20 +72,20 @@ foreach ($archiveCounts as $row) {
     $archiveByYear[$row['year']][] = $row;
 }
 ?>
-<nav class="side-archive" aria-label="월별 아카이브">
+<nav class="side-archive" aria-label="<?= esc(lang('Site.monthlyArchive'), 'attr') ?>">
   <details class="side-archive__all">
-    <summary class="side-cats__title">아카이브</summary>
+    <summary class="side-cats__title"><?= esc(lang('Site.archive')) ?></summary>
     <ul class="side-cats__list">
         <?php foreach (array_slice($archiveCounts, 0, 12) as $row): ?>
-        <li><a href="/archive/<?= (int) $row['year'] ?>/<?= sprintf('%02d', $row['month']) ?>"><?= (int) $row['year'] ?>년 <?= (int) $row['month'] ?>월</a> (<?= (int) $row['count'] ?>)</li>
+        <li><a href="/archive/<?= (int) $row['year'] ?>/<?= sprintf('%02d', $row['month']) ?>"><?= esc(lang('Site.archiveYearMonth', [(string) (int) $row['year'], lang('Site.month' . (int) $row['month'])])) ?></a> (<?= (int) $row['count'] ?>)</li>
         <?php endforeach; ?>
     </ul>
     <?php foreach ($archiveByYear as $year => $months): ?>
     <details>
-        <summary><?= (int) $year ?>년 (<?= array_sum(array_column($months, 'count')) ?>)</summary>
+        <summary><?= esc(lang('Site.archiveYear', [(string) (int) $year])) ?> (<?= array_sum(array_column($months, 'count')) ?>)</summary>
         <ul class="side-cats__list">
             <?php foreach ($months as $row): ?>
-            <li><a href="/archive/<?= (int) $row['year'] ?>/<?= sprintf('%02d', $row['month']) ?>"><?= (int) $row['month'] ?>월</a> (<?= (int) $row['count'] ?>)</li>
+            <li><a href="/archive/<?= (int) $row['year'] ?>/<?= sprintf('%02d', $row['month']) ?>"><?= esc(lang('Site.month' . (int) $row['month'])) ?></a> (<?= (int) $row['count'] ?>)</li>
             <?php endforeach; ?>
         </ul>
     </details>
@@ -99,14 +99,14 @@ foreach ($archiveCounts as $row) {
 $tagMin = min($tagCloud);
 $tagSpan = max($tagCloud) - $tagMin;
 ?>
-<section class="side-tags" aria-label="태그">
-    <h2 class="side-cats__title">태그</h2>
+<section class="side-tags" aria-label="<?= esc(lang('Site.tags'), 'attr') ?>">
+    <h2 class="side-cats__title"><?= esc(lang('Site.tags')) ?></h2>
     <ul class="side-tags__cloud">
         <?php foreach ($tagCloud as $name => $count): ?>
         <?php $level = $tagSpan === 0 ? 2 : 1 + (int) floor(($count - $tagMin) / $tagSpan * 3.999); ?>
         <li><a href="/tags/<?= esc(rawurlencode((string) $name), 'attr') ?>" data-level="<?= $level ?>">#<?= esc((string) $name) ?> <small><?= (int) $count ?></small></a></li>
         <?php endforeach; ?>
     </ul>
-    <a class="side-tags__all" href="/tags">전체 태그 보기 →</a>
+    <a class="side-tags__all" href="/tags"><?= esc(lang('Site.allTags')) ?></a>
 </section>
 <?php endif; ?>

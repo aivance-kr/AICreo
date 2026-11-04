@@ -39,7 +39,7 @@
 </head>
 <body>
 
-<a class="skip-link" href="#main-content">본문 바로가기</a>
+<a class="skip-link" href="#main-content"><?= esc(lang('Site.skipToContent')) ?></a>
 
 <?= $this->include('components/navbar') ?>
 
@@ -53,13 +53,13 @@
         return $size ? " width=\"{$size[0]}\" height=\"{$size[1]}\"" : '';
     };
     ?>
-    <aside class="sp-banner-slot d-none d-md-block flex-shrink-0 p-2" aria-label="배너">
+    <aside class="sp-banner-slot d-none d-md-block flex-shrink-0 p-2" aria-label="<?= esc(lang('Site.banner'), 'attr') ?>">
         <?php foreach ($subLeftBanners as $b): ?>
         <?php $alt = trim((string) ($b['alt_text'] ?? '')); ?>
         <?php if ($b['link_url']): ?>
         <a href="<?= esc($b['link_url']) ?>" target="<?= esc($b['link_target']) ?>"<?= $b['link_target'] === '_blank' ? ' rel="noopener"' : '' ?>>
-            <img src="/<?= esc($b['image_path']) ?>" alt="<?= esc($alt !== '' ? $alt : '배너') ?>" class="sp-banner-img"<?= $imgDims($b['image_path']) ?>>
-            <?php if ($b['link_target'] === '_blank'): ?><span class="visually-hidden">(새 창 열림)</span><?php endif; ?>
+            <img src="/<?= esc($b['image_path']) ?>" alt="<?= esc($alt !== '' ? $alt : lang('Site.banner')) ?>" class="sp-banner-img"<?= $imgDims($b['image_path']) ?>>
+            <?php if ($b['link_target'] === '_blank'): ?><span class="visually-hidden"><?= esc(lang('Site.newWindow')) ?></span><?php endif; ?>
         </a>
         <?php else: ?>
         <img src="/<?= esc($b['image_path']) ?>" alt="<?= esc($alt) ?>" class="sp-banner-img"<?= $imgDims($b['image_path']) ?>>
@@ -74,7 +74,7 @@
             <div class="container mt-3">
                 <div class="alert alert-<?= $cls ?> alert-dismissible fade show" role="alert">
                     <?= esc(session($key)) ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="알림 닫기"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?= esc(lang('Site.closeAlert'), 'attr') ?>"></button>
                 </div>
             </div>
             <?php endif; ?>
