@@ -39,6 +39,7 @@ trait EnablesLocales
         Factories::reset('config');
         Services::injectMock('routes', $this->originalRoutes);
         Services::resetSingle('router');
+        Services::resetSingle('language');
         Locale::setDefault('ko');
     }
 }

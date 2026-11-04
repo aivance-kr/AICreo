@@ -32,3 +32,35 @@ if (! function_exists('html_lang')) {
         return service('request')->getLocale();
     }
 }
+
+if (! function_exists('lang_switch_url')) {
+    /**
+     * 언어 전환기의 목적지. 번역이 있으면 그 주소($page['alternates']), 번역 대상 화면(글·페이지)인데 번역이 없으면
+     * 그 언어 홈, 번역과 무관한 화면(목록·검색 등)은 같은 경로·쿼리를 그 언어로 보낸다.
+     *
+     * @param array<string, mixed> $page
+     */
+    function lang_switch_url(string $locale, array $page = []): string
+    {
+        if (isset($page['alternates'][$locale])) {
+            return (string) $page['alternates'][$locale];
+        }
+
+        if (! empty($page['translatable'])) {
+            return locale_url('', $locale);
+        }
+
+        $path = uri_string();
+
+        foreach (config(I18n::class)->locales() as $known) {
+            if ($path === $known || str_starts_with($path, $known . '/')) {
+                $path = ltrim(substr($path, strlen($known)), '/');
+                break;
+            }
+        }
+
+        $query = service('request')->getUri()->getQuery();
+
+        return locale_url($path, $locale) . ($query !== '' ? '?' . $query : '');
+    }
+}

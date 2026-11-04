@@ -265,11 +265,12 @@ class BoardController extends BaseController
             'kakaoJsKey'          => (string) env('KAKAO_JS_KEY', ''),
             'jsonLd'              => $jsonLd,
             'page'                => [
-                'title'      => $post['title'],
-                'meta_desc'  => ($post['meta_desc'] ?? '') !== '' ? $post['meta_desc'] : post_excerpt($post['content'], 150),
-                'canonical'  => $canonical,
-                'noindex'    => $noindex,
-                'alternates' => $noindex ? [] : Alternates::forPost($postId),
+                'title'        => $post['title'],
+                'meta_desc'    => ($post['meta_desc'] ?? '') !== '' ? $post['meta_desc'] : post_excerpt($post['content'], 150),
+                'canonical'    => $canonical,
+                'noindex'      => $noindex,
+                'alternates'   => $noindex ? [] : Alternates::forPost($postId),
+                'translatable' => true,
             ] + $ogPage,
         ]);
     }
