@@ -69,7 +69,7 @@ final class ArchiveControllerTest extends FeatureTestCase
     {
         $this->makePost('일', '2026-03-10 10:00:00');
         $this->makePost('이', '2026-03-11 10:00:00');
-        cache()->delete('archive_counts');
+        PostModel::clearListCaches();
 
         $body = html_entity_decode($this->get('/archive')->getBody(), ENT_QUOTES, 'UTF-8');
 
@@ -80,7 +80,7 @@ final class ArchiveControllerTest extends FeatureTestCase
     public function testBlogThemeSidebarShowsArchiveWidget(): void
     {
         $this->makePost('일', '2026-03-10 10:00:00');
-        cache()->delete('archive_counts');
+        PostModel::clearListCaches();
         $settings = new SettingModel();
         $previous = $settings->getAllAsMap()['active_theme'] ?? 'default';
 

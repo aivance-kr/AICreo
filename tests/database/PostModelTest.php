@@ -483,7 +483,7 @@ final class PostModelTest extends DatabaseTestCase
 
     public function testGetArchiveCountsGroupsByMonthAndExcludesNonPublic(): void
     {
-        cache()->delete('archive_counts');
+        PostModel::clearListCaches();
         $this->makePost(['created_at' => '2026-03-10 10:00:00']);
         $this->makePost(['created_at' => '2026-03-20 10:00:00']);
         $this->makePost(['created_at' => '2025-12-31 23:00:00']);
@@ -498,7 +498,7 @@ final class PostModelTest extends DatabaseTestCase
 
     public function testGetArchiveCountsCacheIsClearedOnInsert(): void
     {
-        cache()->delete('archive_counts');
+        PostModel::clearListCaches();
         $this->makePost(['created_at' => '2026-03-10 10:00:00']);
         $this->assertSame(1, $this->model->getArchiveCounts()[0]['count']);
 

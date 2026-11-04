@@ -17,7 +17,7 @@ final class TagControllerTest extends FeatureTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        cache()->delete('public_tag_counts');
+        PostModel::clearListCaches();
         cache()->delete('seo_sitemap');
     }
 
