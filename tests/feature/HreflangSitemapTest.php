@@ -72,7 +72,7 @@ final class HreflangSitemapTest extends FeatureTestCase
     {
         $body = $this->get('board/notice/' . $this->koOnlyPost)->getBody();
 
-        $this->assertStringNotContainsString('hreflang=', $body);
+        $this->assertStringNotContainsString('rel="alternate" hreflang=', $body);
     }
 
     public function testHomeListsAlternatesForEveryLocale(): void

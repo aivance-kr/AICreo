@@ -57,7 +57,7 @@ class PageController extends BaseController
         $ld = new JsonLdBuilder();
 
         return $this->render($viewFile, [
-            'page'   => $page + ['alternates' => Alternates::forPage((int) $page['id'])],
+            'page'   => $page + ['alternates' => Alternates::forPage((int) $page['id']), 'translatable' => true],
             'jsonLd' => [$ld->webPage($page, locale_url($page['slug']))],
         ]);
     }

@@ -203,3 +203,9 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - `App\Libraries\TranslationManager`: `createPostTranslation/createPageTranslation($sourceId, $locale)` 가 원본을 복사해 번역본을 만든다(글은 숨김 `is_active=0`, 페이지는 `draft`, 슬러그 동일). 묶음 id 는 원본 행 id — 원본의 묶음이 비어 있으면 이때 채운다. 이미 있는 언어·사용하지 않는 언어면 `null`. `postRows/pageRows` 가 관리자 "번역" 상자(`admin/partials/translations`)용 행을 만든다.
 - 화면: 페이지 수정·글 수정(`board/write`, 관리자만) 상단 "번역" 상자 → `POST /admin/pages|posts/{id}/translate/{언어}` 로 번역본을 만들고 그 수정 화면으로 이동. 페이지·글 목록은 언어 탭/배지(`admin/partials/locale_tabs`), 메뉴 관리는 언어 탭별로 따로 관리(메뉴는 언어별 트리, 상위 메뉴는 같은 언어끼리만). 사용 언어가 하나뿐이면 UI 가 모두 숨는다.
 - 페이지 슬러그 유일성은 `(locale, slug)` — 컨트롤러가 직접 검사(소프트 삭제 행 포함). 새 페이지는 자기 id 를 묶음 id 로 갖는다.
+
+### 다국어 5단계 — 전환 UI·고정 문구
+- 전환기: `themes/default/components/lang_switcher` 를 공용 `navbar`(모든 테마가 default 컴포넌트로 폴백)가 포함한다. 사용 언어 둘 이상 + 설정 `show_lang_switcher`(기본 1)일 때만 보인다. 목적지는 `lang_switch_url()` — 화면이 준 `$page['alternates']` 주소 → 번역 대상(`$page['translatable']`, 글·페이지)인데 번역이 없으면 그 언어 홈 → 그 밖의 화면은 같은 경로·쿼리를 그 언어로.
+- 고정 문구: `app/Language/{ko,en}/Site.php`(`lang('Site.login')` 등). 지금은 navbar·검색 폼·뉴스레터 폼만 옮겼다. 다른 뷰의 한글 문구는 필요할 때 같은 키 방식으로 옮긴다. 새 언어를 켜면 `app/Language/{언어}/Site.php` 를 추가한다(없으면 영어 파일로 폴백).
+- `LocaleFilter` 는 요청 로케일과 함께 언어 서비스(`service('language')`)도 맞춘다 — `lang()` 이 이미 만들어진 서비스의 언어를 쓰기 때문.
+- 후속(범위 밖): 피드·llms·OG·게시판 이름 번역, 태그·아카이브·인기글의 언어 구분, 나머지 뷰 문구.
