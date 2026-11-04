@@ -113,8 +113,8 @@ class SitemapController extends BaseController
             ];
         }
 
-        // 태그 목록 — 공개 태그가 있을 때만 (태그별 페이지는 얇은 목록이라 제외, 태그는 아직 언어 구분이 없어 기본 언어만)
-        if ($default && $postModel->getPublicTagCounts() !== []) {
+        // 태그 목록 — 그 언어의 공개 태그가 있을 때만 (태그별 페이지는 얇은 목록이라 제외)
+        if ($postModel->getPublicTagCounts($locale) !== []) {
             $urls[] = ['loc' => locale_url('tags', $locale)];
         }
 

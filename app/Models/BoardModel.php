@@ -81,7 +81,7 @@ class BoardModel extends Model
     {
         SitemapCache::clear();
         LocaleCache::clearLlms();
-        cache()->delete('public_tag_counts');
+        PostModel::clearListCaches();
 
         return $data;
     }

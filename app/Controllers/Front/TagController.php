@@ -17,14 +17,14 @@ class TagController extends BaseController
 
     public function index(): string
     {
-        $tags = (new PostModel())->getPublicTagCounts();
+        $tags = (new PostModel())->getPublicTagCounts($this->request->getLocale());
 
         return $this->render('tags/index', [
             'tags' => $tags,
             'page' => [
                 'title'     => '태그',
                 'meta_desc' => '태그별로 모아 보는 글 목록',
-                'canonical' => base_url('tags'),
+                'canonical' => locale_url('tags'),
                 'noindex'   => $tags === [],
             ],
         ]);
@@ -34,7 +34,7 @@ class TagController extends BaseController
     {
         $tag    = urldecode($tag);
         $page   = max(1, (int) ($this->request->getGet('page') ?? 1));
-        $result = (new PostModel())->searchPublicByTag($tag, $page, self::PER_PAGE);
+        $result = (new PostModel())->searchPublicByTag($tag, $page, self::PER_PAGE, $this->request->getLocale());
         if ($result['total'] === 0) {
             throw PageNotFoundException::forPageNotFound();
         }
@@ -48,7 +48,7 @@ class TagController extends BaseController
             'page'        => [
                 'title'     => '#' . $tag,
                 'meta_desc' => '"' . $tag . '" 태그가 붙은 글 ' . $result['total'] . '개',
-                'canonical' => base_url('tags/' . rawurlencode($tag)),
+                'canonical' => locale_url('tags/' . rawurlencode($tag)),
                 'noindex'   => $page > 1,
             ],
         ]);

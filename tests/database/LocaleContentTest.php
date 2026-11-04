@@ -9,6 +9,7 @@ use App\Models\MenuModel;
 use App\Models\PageModel;
 use App\Models\PostModel;
 use Tests\Support\DatabaseTestCase;
+use Tests\Support\EnablesLocales;
 
 /**
  * 글·페이지·메뉴의 언어별 조회와 번역 묶음 (#566 2단계).
@@ -17,14 +18,23 @@ use Tests\Support\DatabaseTestCase;
  */
 final class LocaleContentTest extends DatabaseTestCase
 {
+    use EnablesLocales;
+
     private int $boardId;
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->enableLocales();
         $this->boardId = (int) (new BoardModel())->getBySlug('notice')['id'];
         $this->db->table('menus')->where('id >', 0)->delete();
         (new MenuModel())->clearCache();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->restoreLocales();
+        parent::tearDown();
     }
 
     /**
@@ -73,6 +83,58 @@ final class LocaleContentTest extends DatabaseTestCase
         $this->assertSame(1, $result['total']);
         $this->assertSame($en, (int) $result['posts'][0]['id']);
         $this->assertSame(2, $model->searchPublic('shared-word', 1, 10)['total']);
+    }
+
+    public function testTagsAreFilteredAndCachedPerLocale(): void
+    {
+        $this->makePost('ko', null, ['tags' => 'alpha,common']);
+        $this->makePost('en', null, ['tags' => 'beta,common']);
+        $model = new PostModel();
+
+        $this->assertSame(['alpha' => 1, 'common' => 1], $model->getPublicTagCounts('ko'));
+        $this->assertSame(['beta' => 1, 'common' => 1], $model->getPublicTagCounts('en'));
+        $this->assertSame(['common' => 2, 'alpha' => 1, 'beta' => 1], $model->getPublicTagCounts());
+        $this->assertSame(['beta' => 1], $model->getTagCloud(1, 'en'));
+        $this->assertSame(1, $model->searchPublicByTag('beta', 1, 10, 'en')['total']);
+        $this->assertSame(0, $model->searchPublicByTag('beta', 1, 10, 'ko')['total']);
+
+        // 글 변경 시 언어별 캐시가 모두 무효화된다
+        $this->makePost('en', null, ['tags' => 'gamma']);
+        $this->assertArrayHasKey('gamma', $model->getPublicTagCounts('en'));
+        $this->assertArrayNotHasKey('gamma', $model->getPublicTagCounts('ko'));
+    }
+
+    public function testArchiveIsFilteredAndCachedPerLocale(): void
+    {
+        $this->makePost('ko', null, ['created_at' => '2026-03-10 10:00:00']);
+        $this->makePost('en', null, ['created_at' => '2026-04-10 10:00:00']);
+        $model = new PostModel();
+
+        $this->assertSame([['year' => 2026, 'month' => 4, 'count' => 1]], $model->getArchiveCounts('en'));
+        $this->assertSame(1, $model->getArchivePosts(2026, 4, 1, 10, 'en')['total']);
+        $this->assertSame(0, $model->getArchivePosts(2026, 4, 1, 10, 'ko')['total']);
+
+        $this->makePost('en', null, ['created_at' => '2026-04-11 10:00:00']);
+        $this->assertSame(2, $model->getArchiveCounts('en')[0]['count']);
+    }
+
+    public function testPopularIsFilteredByLocale(): void
+    {
+        $this->makePost('ko', null, ['views' => 9]);
+        $en    = $this->makePost('en', null, ['views' => 1]);
+        $model = new PostModel();
+
+        $this->assertSame([$en], array_map('intval', array_column($model->getPopular('all', 10, 'en'), 'id')));
+        $this->assertSame([$en], array_map('intval', array_column($model->getPopularCached('all', 10, 'en'), 'id')));
+    }
+
+    public function testRelatedStaysInSameLocale(): void
+    {
+        $ko1 = $this->makePost('ko', null, ['tags' => 'shared']);
+        $this->makePost('en', null, ['tags' => 'shared']);
+        $ko2 = $this->makePost('ko', null, ['tags' => 'shared']);
+
+        $this->assertSame([$ko2], array_column((new PostModel())->getRelated($ko1), 'id'));
     }
 
     public function testPrevNextStayInSameLocale(): void
