@@ -7,7 +7,7 @@
 <div class="card border-0 shadow-sm" style="max-width:700px">
     <div class="card-body p-4">
         <table class="table table-borderless small mb-4">
-            <tr><th scope="row" style="width:80px" class="text-muted">이름</th><td><?= esc($inquiry['name']) ?></td></tr>
+            <tr><th scope="row" style="width:120px" class="text-muted">이름</th><td><?= esc($inquiry['name']) ?></td></tr>
             <tr><th scope="row" class="text-muted">이메일</th><td><a href="mailto:<?= esc($inquiry['email']) ?>"><?= esc($inquiry['email']) ?></a></td></tr>
             <?php if ($inquiry['phone']): ?>
             <tr><th scope="row" class="text-muted">연락처</th><td><?= esc($inquiry['phone']) ?></td></tr>
@@ -15,6 +15,15 @@
             <?php if ($inquiry['subject']): ?>
             <tr><th scope="row" class="text-muted">제목</th><td><?= esc($inquiry['subject']) ?></td></tr>
             <?php endif; ?>
+            <?php foreach ($extra as $i => $item): ?>
+            <tr><th scope="row" class="text-muted"><?= esc($item['label']) ?></th><td>
+                <?php if (isset($item['file'])): ?>
+                <a href="/admin/inquiries/<?= (int) $inquiry['id'] ?>/file/<?= (int) $i ?>"><i class="bi bi-paperclip" aria-hidden="true"></i> <span class="visually-hidden">첨부 파일</span> <?= esc($item['value']) ?></a>
+                <?php else: ?>
+                <span style="white-space:pre-wrap"><?= esc($item['value']) ?></span>
+                <?php endif; ?>
+            </td></tr>
+            <?php endforeach; ?>
             <tr><th scope="row" class="text-muted">날짜</th><td><?= $inquiry['created_at'] ?></td></tr>
         </table>
         <div class="border rounded p-3 bg-light" style="white-space:pre-wrap"><?= esc($inquiry['message']) ?></div>

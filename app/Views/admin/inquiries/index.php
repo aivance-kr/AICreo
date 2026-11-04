@@ -16,6 +16,10 @@
             <?php endif; ?>
         </a>
     </li>
+    <li class="nav-item ms-auto d-flex gap-2 align-items-center">
+        <a class="btn btn-sm btn-outline-secondary" href="/admin/inquiries/export<?= $filter === 'unread' ? '?filter=unread' : '' ?>"><i class="bi bi-download me-1" aria-hidden="true"></i>CSV</a>
+        <a class="btn btn-sm btn-outline-secondary" href="/admin/inquiry-fields">폼 항목 설정</a>
+    </li>
 </ul>
 
 <div class="card border-0 shadow-sm">

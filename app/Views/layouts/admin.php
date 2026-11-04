@@ -178,6 +178,9 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
                 <span class="badge bg-danger ms-1"><?= esc((string) $unreadInquiries) ?><span class="visually-hidden">건의 읽지 않은 문의</span></span>
                 <?php endif; ?>
             </a>
+            <a href="/admin/inquiry-fields" class="nav-link <?= str_starts_with($uri, 'admin/inquiry-fields') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/inquiry-fields') ? 'aria-current="page"' : '' ?>>
+                <i class="bi bi-ui-checks me-2" aria-hidden="true"></i>문의 폼 항목
+            </a>
             <a href="/admin/menus" class="nav-link <?= str_starts_with($uri, 'admin/menus') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/menus') ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-list-ul me-2" aria-hidden="true"></i>메뉴 관리
             </a>

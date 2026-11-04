@@ -180,6 +180,13 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 응답에 `X-Robots-Tag: noindex, nofollow`, `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` 를 붙이고 `preview/*` 는 방문 로그에서 제외한다(주소에 토큰이 있음). 공개 목록·RSS·sitemap 쿼리는 그대로 `is_active=1` 이라 노출되지 않는다.
 - 발급·폐기는 운영자 전용 `/admin/posts/{id}/preview-links`(글 수정 화면의 "미리보기 링크"). 관리자 활동 로그에는 토큰 값 없이 "발급(N일)/폐기"만 남긴다.
 
+## 문의 폼 빌더
+
+- 기본 항목(이름·이메일·연락처·제목·내용)은 고정이고, `inquiry_fields`(라벨·종류 text/textarea/select/checkbox/file·선택지·필수·표시·순서)에 등록한 추가 항목이 그 뒤에 붙는다. 관리자 `/admin/inquiry-fields`(추가·수정·위/아래 이동·숨김·삭제).
+- 제출 값은 `App\Libraries\InquiryForm::collect()` 가 서버에서 검증(필수·선택지 일치·길이·파일 확장자/5MB)하고, 제출 당시 라벨과 함께 `inquiries.extra_data`(JSON `[{label,type,value,file?}]`)에 저장한다. 항목을 지우거나 바꿔도 기존 문의는 그대로 읽히고, `extra_data` 가 NULL 인 옛 문의도 정상이다. 출력은 모두 `esc()`.
+- 허니팟 `website` 가 채워지면 저장·알림 없이 성공처럼 돌려보낸다. 추가 항목은 Slack 알림·이메일 본문에도 붙는다.
+- 첨부 파일은 `writable/uploads/inquiries/`(웹 루트 밖)에 랜덤 이름으로 저장하고, 관리자만 `/admin/inquiries/{id}/file/{n}` 로 내려받는다. 목록의 "CSV" 는 `/admin/inquiries/export`(추가 항목 라벨별 열, 수식 주입 방지로 `=+-@` 시작 값에 `'` 접두).
+
 ## 다국어(i18n) — 1단계 기반
 
 - 설계: `docs/i18n-design.md`. 기본 언어(ko)는 URL 접두어 없음, 그 밖의 사용 언어는 `/{코드}/...`. 켜기: 서버 `.env` 에 `i18n.enabled = ko,en` (기본은 `ko` 만 = 기능 꺼짐, 기존 동작 그대로).
