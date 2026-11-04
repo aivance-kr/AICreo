@@ -6,32 +6,35 @@ namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
 use App\Libraries\Seo\HomeIntro;
+use App\Libraries\Seo\LocaleCache;
 use App\Models\BoardModel;
 use App\Models\PageModel;
 use App\Models\SettingModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\I18n;
 
 /**
  * 동적 llms.txt (GEO) — AI 크롤러용 사이트 요약(markdown).
  * 사이트 개요·주요 페이지·공개 게시판·연락처. 전 링크 base_url() 절대경로.
- * 결과는 seo_llms 로 1시간 캐시(페이지/게시판 변경 시 무효화).
+ * 언어별로 해당 언어 페이지만 담고(/en/llms.txt), 게시판 이름은 그 언어 번역을 쓴다.
+ * 결과는 seo_llms_{언어} 로 1시간 캐시(페이지/게시판 변경 시 무효화).
  * 참고: https://llmstxt.org
  */
 class LlmsController extends BaseController
 {
-    private const CACHE_KEY = 'seo_llms';
     private const CACHE_TTL = 3600;
 
     public function index(): ResponseInterface
     {
-        $body = cache()->remember(self::CACHE_KEY, self::CACHE_TTL, fn (): string => $this->build());
+        $locale = $this->request->getLocale();
+        $body   = cache()->remember(LocaleCache::llmsKey($locale), self::CACHE_TTL, fn (): string => $this->build($locale));
 
         return $this->response
             ->setContentType('text/plain')
             ->setBody($body);
     }
 
-    private function build(): string
+    private function build(string $locale): string
     {
         $settings = (new SettingModel())->getAllAsMap();
 
@@ -44,8 +47,8 @@ class LlmsController extends BaseController
             $lines[] = '> ' . $settings['site_desc'];
         }
 
-        // 기본 소개 홈일 때만 정답형 FAQ 를 싣는다(관리자가 home 을 저장하면 그 내용이 우선).
-        if ((new PageModel())->getBySlug('home') === null) {
+        // 기본 소개 홈일 때만 정답형 FAQ 를 싣는다(관리자가 home 을 저장하면 그 내용이 우선). FAQ 원문은 기본 언어뿐이다.
+        if ($locale === config(I18n::class)->defaultLocale && (new PageModel())->getBySlug('home', $locale) === null) {
             $lines[] = '';
             $lines[] = '## 자주 묻는 질문';
 
@@ -55,21 +58,21 @@ class LlmsController extends BaseController
         }
 
         // 주요 페이지 (발행)
-        $pages = (new PageModel())->getPublished();
+        $pages = (new PageModel())->getPublished($locale);
         if ($pages !== []) {
             $lines[] = '';
             $lines[] = '## 주요 페이지';
 
             foreach ($pages as $page) {
                 $desc    = $page['meta_desc'] ?? '';
-                $entry   = '- [' . $page['title'] . '](' . base_url($page['slug']) . ')';
+                $entry   = '- [' . $page['title'] . '](' . locale_url($page['slug'], $locale) . ')';
                 $lines[] = $desc !== '' ? $entry . ': ' . $desc : $entry;
             }
         }
 
         // 공개 게시판 (활성 · guest 열람)
         $boards = array_filter(
-            (new BoardModel())->getActiveBoards(),
+            (new BoardModel())->getActiveBoards($locale),
             static fn (array $b): bool => $b['read_permission'] === 'guest',
         );
         if ($boards !== []) {
@@ -78,7 +81,7 @@ class LlmsController extends BaseController
 
             foreach ($boards as $board) {
                 $desc    = $board['description'] ?? '';
-                $entry   = '- [' . $board['name'] . '](' . base_url('board/' . $board['slug']) . ')';
+                $entry   = '- [' . $board['name'] . '](' . locale_url('board/' . $board['slug'], $locale) . ')';
                 $lines[] = $desc !== '' ? $entry . ': ' . $desc : $entry;
             }
         }

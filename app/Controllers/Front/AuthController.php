@@ -21,7 +21,7 @@ class AuthController extends BaseController
             return redirect()->to('/');
         }
 
-        return $this->render('auth/login', ['page' => ['title' => '로그인', 'noindex' => true]]);
+        return $this->render('auth/login', ['page' => ['title' => lang('Auth.login'), 'noindex' => true]]);
     }
 
     public function loginProcess(): ResponseInterface|string
@@ -38,7 +38,7 @@ class AuthController extends BaseController
         $user = $this->userModel->findByEmail($this->request->getPost('email'));
 
         if (! $user || ! password_verify($this->request->getPost('password'), (string) $user['password'])) {
-            return redirect()->back()->withInput()->with('error', '이메일 또는 비밀번호가 올바르지 않습니다.');
+            return redirect()->back()->withInput()->with('error', lang('Auth.badCredentials'));
         }
 
         return $this->finishLogin($user);
@@ -54,16 +54,16 @@ class AuthController extends BaseController
     public function register(): ResponseInterface|string
     {
         if (($this->viewData['settings']['signup_enabled'] ?? '0') !== '1') {
-            return redirect()->to('/auth/login')->with('error', '현재 회원가입이 비활성화되어 있습니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.signupDisabled'));
         }
 
-        return $this->render('auth/register', ['page' => ['title' => '회원가입', 'noindex' => true]]);
+        return $this->render('auth/register', ['page' => ['title' => lang('Auth.register'), 'noindex' => true]]);
     }
 
     public function registerProcess(): ResponseInterface|string
     {
         if (($this->viewData['settings']['signup_enabled'] ?? '0') !== '1') {
-            return redirect()->to('/auth/login')->with('error', '현재 회원가입이 비활성화되어 있습니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.signupDisabled'));
         }
 
         $rules = [
@@ -85,7 +85,7 @@ class AuthController extends BaseController
             'role'     => 'member',
         ]);
 
-        return redirect()->to('/auth/login')->with('success', '회원가입이 완료되었습니다. 로그인해주세요.');
+        return redirect()->to('/auth/login')->with('success', lang('Auth.signupDone'));
     }
 
     // ─── 내 정보 수정 ────────────────────────────────────────────────────────
@@ -93,12 +93,12 @@ class AuthController extends BaseController
     public function profile(): ResponseInterface|string
     {
         if (! session()->get('user_id')) {
-            return redirect()->to('/auth/login')->with('error', '로그인이 필요합니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.loginRequired'));
         }
 
         $user = $this->userModel->find(session()->get('user_id'));
 
-        return $this->render('auth/profile', ['user' => $user, 'page' => ['title' => '내 정보', 'noindex' => true]]);
+        return $this->render('auth/profile', ['user' => $user, 'page' => ['title' => lang('Auth.profileTitle'), 'noindex' => true]]);
     }
 
     public function profileUpdate(): ResponseInterface|string
@@ -126,14 +126,14 @@ class AuthController extends BaseController
             // 세션 닉네임 갱신
             session()->set('user_nickname', $this->request->getPost('nickname'));
 
-            return redirect()->to('/auth/profile')->with('success', '정보가 수정되었습니다.');
+            return redirect()->to('/auth/profile')->with('success', lang('Auth.profileUpdated'));
         }
 
         // ── 비밀번호 탭 ──
         if ($tab === 'password') {
             // 소셜 로그인 계정은 비밀번호 변경 불가
             if ($user['social_provider']) {
-                return redirect()->back()->with('error', '소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.');
+                return redirect()->back()->with('error', lang('Auth.socialNoPassword'));
             }
 
             $rules = [
@@ -147,14 +147,14 @@ class AuthController extends BaseController
             }
 
             if (! password_verify($this->request->getPost('current_password'), (string) $user['password'])) {
-                return redirect()->back()->withInput()->with('error', '현재 비밀번호가 올바르지 않습니다.');
+                return redirect()->back()->withInput()->with('error', lang('Auth.currentPasswordWrong'));
             }
 
             $this->userModel->update($userId, [
                 'password' => password_hash($this->request->getPost('new_password'), PASSWORD_DEFAULT),
             ]);
 
-            return redirect()->to('/auth/profile?tab=password')->with('success', '비밀번호가 변경되었습니다.');
+            return redirect()->to('/auth/profile?tab=password')->with('success', lang('Auth.passwordChanged'));
         }
 
         return redirect()->to('/auth/profile');
@@ -164,25 +164,25 @@ class AuthController extends BaseController
     {
         $userId = (int) session()->get('user_id');
         if ($userId === 0) {
-            return redirect()->to('/auth/login')->with('error', '로그인이 필요합니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.loginRequired'));
         }
 
         $user = $this->userModel->find($userId);
         if (! $user || $user['role'] === 'admin') {
-            return redirect()->to('/auth/profile')->with('error', '관리자 계정은 탈퇴할 수 없습니다.');
+            return redirect()->to('/auth/profile')->with('error', lang('Auth.adminNoWithdraw'));
         }
 
-        if ($this->request->getPost('confirmation') !== '탈퇴') {
-            return redirect()->to('/auth/profile?tab=withdraw')->withInput()->with('error', '탈퇴 확인 문구를 정확히 입력해주세요.');
+        if ($this->request->getPost('confirmation') !== lang('Auth.withdrawWord')) {
+            return redirect()->to('/auth/profile?tab=withdraw')->withInput()->with('error', lang('Auth.withdrawPhraseWrong'));
         }
 
         if (! $user['social_provider'] && ! password_verify((string) $this->request->getPost('password'), (string) $user['password'])) {
-            return redirect()->to('/auth/profile?tab=withdraw')->withInput()->with('error', '비밀번호가 올바르지 않습니다.');
+            return redirect()->to('/auth/profile?tab=withdraw')->withInput()->with('error', lang('Auth.passwordWrong'));
         }
 
         $this->userModel->withdraw($userId);
         session()->destroy();
 
-        return redirect()->to('/')->with('success', '회원 탈퇴가 완료되었습니다.');
+        return redirect()->to('/')->with('success', lang('Auth.withdrawDone'));
     }
 }

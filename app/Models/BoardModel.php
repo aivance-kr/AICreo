@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Libraries\Seo\LocaleCache;
+use App\Libraries\Seo\SitemapCache;
 use CodeIgniter\Model;
+use Config\I18n;
 
 class BoardModel extends Model
 {
@@ -18,22 +21,55 @@ class BoardModel extends Model
     ];
     protected $afterInsert = ['clearSitemapCache'];
     protected $afterUpdate = ['clearSitemapCache'];
-    protected $afterDelete = ['clearSitemapCache'];
+    protected $afterDelete = ['clearSitemapCache', 'deleteTranslations'];
 
     /**
+     * $locale 이 기본 언어가 아니면 그 언어의 이름·설명 번역을 덮어쓴다(이름이 빈 번역은 무시).
+     *
      * @return array<string, mixed>|null
      */
-    public function getBySlug(string $slug): ?array
+    public function getBySlug(string $slug, ?string $locale = null): ?array
     {
-        return $this->where('slug', $slug)->where('is_active', 1)->first();
+        $board = $this->where('slug', $slug)->where('is_active', 1)->first();
+
+        return $board === null ? null : $this->localize($board, $locale);
     }
 
     /**
      * @return list<array<string, mixed>>
      */
-    public function getActiveBoards(): array
+    public function getActiveBoards(?string $locale = null): array
     {
-        return $this->where('is_active', 1)->orderBy('sort_order')->findAll();
+        $boards = $this->where('is_active', 1)->orderBy('sort_order')->findAll();
+
+        return array_map(fn (array $board): array => $this->localize($board, $locale), $boards);
+    }
+
+    /**
+     * @param array<string, mixed> $board
+     *
+     * @return array<string, mixed>
+     */
+    private function localize(array $board, ?string $locale): array
+    {
+        if ($locale === null || $locale === config(I18n::class)->defaultLocale) {
+            return $board;
+        }
+
+        $row = db_connect()->table('board_translations')
+            ->select('name, description')
+            ->where('board_id', $board['id'])
+            ->where('locale', $locale)
+            ->get()->getRowArray();
+
+        if ($row === null || (string) $row['name'] === '') {
+            return $board;
+        }
+
+        $board['name']        = (string) $row['name'];
+        $board['description'] = $row['description'];
+
+        return $board;
     }
 
     /**
@@ -43,9 +79,25 @@ class BoardModel extends Model
      */
     protected function clearSitemapCache(array $data): array
     {
-        cache()->delete('seo_sitemap');
-        cache()->delete('seo_llms');
-        cache()->delete('public_tag_counts');
+        SitemapCache::clear();
+        LocaleCache::clearLlms();
+        PostModel::clearListCaches();
+
+        return $data;
+    }
+
+    /**
+     * 게시판을 지우면 그 번역도 함께 지운다.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function deleteTranslations(array $data): array
+    {
+        foreach ((array) ($data['id'] ?? []) as $id) {
+            $this->db->table('board_translations')->where('board_id', $id)->delete();
+        }
 
         return $data;
     }

@@ -24,7 +24,7 @@ class SocialAuthController extends BaseController
     public function redirect(string $provider): ResponseInterface|string
     {
         if (! in_array($provider, OAuthFactory::supported(), true) || ! $this->isProviderEnabled($provider)) {
-            return redirect()->to('/auth/login')->with('error', '지원하지 않는 로그인 방식입니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.socialUnsupported'));
         }
 
         // CSRF 대용 state 값 생성
@@ -45,7 +45,7 @@ class SocialAuthController extends BaseController
     public function callback(string $provider): ResponseInterface|string
     {
         if (! in_array($provider, OAuthFactory::supported(), true) || ! $this->isProviderEnabled($provider)) {
-            return redirect()->to('/auth/login')->with('error', '지원하지 않는 로그인 방식입니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.socialUnsupported'));
         }
 
         $code  = $this->request->getGet('code');
@@ -54,12 +54,12 @@ class SocialAuthController extends BaseController
 
         // 사용자가 취소
         if ($error) {
-            return redirect()->to('/auth/login')->with('error', '소셜 로그인이 취소되었습니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.socialCancelled'));
         }
 
         // state 검증 (CSRF 방지)
         if (! $code || $state !== session()->get('oauth_state')) {
-            return redirect()->to('/auth/login')->with('error', '잘못된 요청입니다. 다시 시도해주세요.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.badRequest'));
         }
 
         session()->remove('oauth_state');
@@ -69,28 +69,28 @@ class SocialAuthController extends BaseController
             $token = $oauth->getToken($code);
 
             if (! $token) {
-                return redirect()->to('/auth/login')->with('error', '인증 토큰을 가져오지 못했습니다.');
+                return redirect()->to('/auth/login')->with('error', lang('Auth.tokenFailed'));
             }
 
             $profile = $oauth->getProfile($token);
 
             if (! $profile) {
-                return redirect()->to('/auth/login')->with('error', '사용자 정보를 가져오지 못했습니다.');
+                return redirect()->to('/auth/login')->with('error', lang('Auth.userInfoFailed'));
             }
         } catch (Throwable $e) {
             log_message('error', '[SocialAuth] ' . $e->getMessage());
 
-            return redirect()->to('/auth/login')->with('error', '소셜 로그인 중 오류가 발생했습니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.socialError'));
         }
 
         $user = $this->findOrCreateUser($provider, $profile, $token);
 
         if (! $user) {
-            return redirect()->to('/auth/login')->with('error', '계정 처리 중 오류가 발생했습니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.accountError'));
         }
 
         if (! $user['is_active']) {
-            return redirect()->to('/auth/login')->with('error', '비활성화된 계정입니다.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.accountInactive'));
         }
 
         // 로그인 세션 등록

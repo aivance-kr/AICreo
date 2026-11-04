@@ -2,6 +2,7 @@
 <?php $pageTitle = '메뉴 관리' ?>
 <?= $this->section('content') ?>
 
+<?= view('admin/partials/locale_tabs', ['locales' => $locales, 'currentLocale' => $currentLocale, 'withAll' => false]) ?>
 <div class="row g-4">
     <!-- 메뉴 목록 -->
     <div class="col-lg-7">
@@ -73,6 +74,7 @@
             <div class="card-body">
                 <form method="post" id="menuForm" action="/admin/menus">
                     <?= csrf_field() ?>
+                    <input type="hidden" name="locale" value="<?= esc($currentLocale, 'attr') ?>">
                     <input type="hidden" id="menuId" name="_menu_id" value="">
                     <div class="mb-2" id="menuIdRow" hidden>
                         <label for="mIdView" class="form-label small">메뉴 ID</label>

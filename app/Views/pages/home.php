@@ -33,9 +33,9 @@
 <section class="py-5 bg-light">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="h5 fw-bold mb-0">최신 공지사항</h2>
+            <h2 class="h5 fw-bold mb-0"><?= esc(lang('Content.latestNotices')) ?></h2>
             <?php if (!empty($latestPosts)): ?>
-            <a href="/board/notice" class="text-decoration-none small">전체보기 <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+            <a href="/board/notice" class="text-decoration-none small"><?= esc(lang('Content.viewAll')) ?> <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
             <?php endif; ?>
         </div>
         <?php if (!empty($latestPosts)): ?>
@@ -50,9 +50,9 @@
         <?php else: ?>
         <div class="list-group">
             <div class="list-group-item text-muted small">
-                아직 등록된 공지사항이 없습니다.
+                <?= esc(lang('Content.noNotices')) ?>
                 <?php if (($authUser['role'] ?? '') === 'admin'): ?>
-                    <a href="/board/notice/write" class="text-decoration-none">첫 공지 등록하기 <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                    <a href="/board/notice/write" class="text-decoration-none"><?= esc(lang('Content.writeFirstNotice')) ?> <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
                 <?php endif; ?>
             </div>
         </div>

@@ -2,10 +2,10 @@
 <?= $this->section('content') ?>
 
 <div class="container py-4">
-    <h1 class="board-view-title fw-bold mb-3">태그</h1>
+    <h1 class="board-view-title fw-bold mb-3"><?= esc(lang('Content.tags')) ?></h1>
 
     <?php if ($tags === []): ?>
-        <p class="text-muted">아직 태그가 붙은 글이 없습니다.</p>
+        <p class="text-muted"><?= esc(lang('Content.noTags')) ?></p>
     <?php else: ?>
     <?php $max = max($tags); ?>
     <ul class="list-inline">

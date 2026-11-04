@@ -37,7 +37,7 @@ class BaseController extends Controller
         $settings = (new SettingModel())->getAllAsMap();
 
         // 전역 네비게이션 메뉴 (캐시됨)
-        $menus = (new MenuModel())->getTree();
+        $menus = (new MenuModel())->getTree($this->request->getLocale());
 
         $boardCategories = [];
         $isBlogTheme     = ThemeView::isBlogTheme($settings['active_theme'] ?? 'default');
@@ -82,13 +82,13 @@ class BaseController extends Controller
         $popularRaw    = $this->request->getGet('popular');
         $popularPeriod = is_string($popularRaw) ? $popularRaw : ''; // ?popular[]=x 배열 값은 무시
         $popularPeriod = isset(PostModel::POPULAR_PERIODS[$popularPeriod]) ? $popularPeriod : '7d';
-        $popularPosts  = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getPopularCached($popularPeriod, 5) : [];
+        $popularPosts  = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getPopularCached($popularPeriod, 5, $this->request->getLocale()) : [];
 
         // 사이드바 아카이브 — 블로그형 테마에서만 (연·월별 공개 글 수, 캐시됨)
-        $archiveCounts = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getArchiveCounts() : [];
+        $archiveCounts = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getArchiveCounts($this->request->getLocale()) : [];
 
         // 사이드바 태그 클라우드 — 블로그형 테마에서만, 상위 15개
-        $tagCloud = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getTagCloud(15) : [];
+        $tagCloud = ($isBlogTheme && ! $isAdmin) ? (new PostModel())->getTagCloud(15, $this->request->getLocale()) : [];
 
         // jsonLd 기본값을 항상 [] 로 명시 (Config\View::$saveData=true 공유 렌더러 누출 방지)
         $this->viewData = ['settings' => $settings, 'menus' => $menus, 'boardCategories' => $boardCategories, 'authUser' => $authUser, 'unreadInquiries' => $unreadInquiries, 'subLeftBanners' => $subLeftBanners, 'activePopups' => $activePopups, 'sidebarAds' => $sidebarAds, 'popularPosts' => $popularPosts, 'popularPeriod' => $popularPeriod, 'archiveCounts' => $archiveCounts, 'tagCloud' => $tagCloud, 'jsonLd' => []];

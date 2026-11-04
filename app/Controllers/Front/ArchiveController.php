@@ -18,14 +18,14 @@ class ArchiveController extends BaseController
 
     public function index(): string
     {
-        $counts = (new PostModel())->getArchiveCounts();
+        $counts = (new PostModel())->getArchiveCounts($this->request->getLocale());
 
         return $this->render('archive/index', [
             'counts' => $counts,
             'page'   => [
-                'title'     => '아카이브',
-                'meta_desc' => '연·월별 글 아카이브',
-                'canonical' => base_url('archive'),
+                'title'     => lang('Content.archive'),
+                'meta_desc' => lang('Content.archiveDesc'),
+                'canonical' => locale_url('archive'),
                 'noindex'   => $counts === [],
             ],
         ]);
@@ -40,8 +40,8 @@ class ArchiveController extends BaseController
         }
 
         $pageNo = max(1, (int) ($this->request->getGet('page') ?? 1));
-        $result = (new PostModel())->getArchivePosts($y, $m, $pageNo, self::PER_PAGE);
-        $label  = sprintf('%d년 %d월', $y, $m);
+        $result = (new PostModel())->getArchivePosts($y, $m, $pageNo, self::PER_PAGE, $this->request->getLocale());
+        $label  = lang('Content.yearMonthLabel', ['year' => (string) $y, 'month' => (string) $m, 'monthName' => date('F', mktime(0, 0, 0, $m, 1))]);
 
         return $this->render('archive/month', [
             'label'       => $label,
@@ -49,11 +49,11 @@ class ArchiveController extends BaseController
             'total'       => $result['total'],
             'currentPage' => $pageNo,
             'totalPages'  => max(1, (int) ceil($result['total'] / self::PER_PAGE)),
-            'baseUrl'     => base_url(sprintf('archive/%04d/%02d', $y, $m)),
+            'baseUrl'     => locale_url(sprintf('archive/%04d/%02d', $y, $m)),
             'page'        => [
-                'title'     => $label . ' 글',
-                'meta_desc' => $label . '에 작성된 글 목록',
-                'canonical' => base_url(sprintf('archive/%04d/%02d', $y, $m)),
+                'title'     => lang('Content.monthPostsTitle', ['label' => $label]),
+                'meta_desc' => lang('Content.monthPostsDesc', ['label' => $label]),
+                'canonical' => locale_url(sprintf('archive/%04d/%02d', $y, $m)),
                 'noindex'   => $result['posts'] === [],
             ],
         ]);

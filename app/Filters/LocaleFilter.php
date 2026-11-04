@@ -46,6 +46,8 @@ class LocaleFilter implements FilterInterface
 
         if (in_array($segment, $config->prefixedLocales(), true)) {
             $request->setLocale($segment);
+            // lang() 이 쓰는 언어 서비스도 같은 언어로 맞춘다 (이미 만들어졌을 수 있다)
+            service('language')->setLocale($request->getLocale());
         }
 
         return null;

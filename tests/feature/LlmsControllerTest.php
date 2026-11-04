@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\Seo\LocaleCache;
 use App\Models\BoardModel;
 use App\Models\PageModel;
 use Tests\Support\FeatureTestCase;
@@ -18,7 +19,7 @@ final class LlmsControllerTest extends FeatureTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        cache()->delete('seo_llms');
+        LocaleCache::clearLlms();
     }
 
     public function testLlmsReturnsPlainText(): void
@@ -53,7 +54,7 @@ final class LlmsControllerTest extends FeatureTestCase
             'title'  => '노출 페이지',
             'status' => 'published',
         ]);
-        cache()->delete('seo_llms');
+        LocaleCache::clearLlms();
 
         $body = $this->get('llms.txt')->getBody();
 
@@ -68,7 +69,7 @@ final class LlmsControllerTest extends FeatureTestCase
             'read_permission' => 'member',
             'is_active'       => 1,
         ]);
-        cache()->delete('seo_llms');
+        LocaleCache::clearLlms();
 
         $body = $this->get('llms.txt')->getBody();
 
