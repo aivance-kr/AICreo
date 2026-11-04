@@ -154,11 +154,11 @@ a { color: inherit; }
 .post-content p, .post-content li > p { margin-bottom: .75rem; }
 .post-content li > p:last-child { margin-bottom: 0; }
 .post-content a { text-decoration: underline; text-underline-offset: .18em; }
-/* 글 도입부 요약(인용 블록): 제호와 같은 이중선 룰 + 명조 박스 */
+/* 글 도입부 요약(인용 블록): 시리즈 박스와 같은 1px 테두리 + 좌측 잉크 룰 + 명조 박스 */
 .post-content blockquote {
     background: var(--il-tint);
-    border-bottom: 1px solid var(--border-subtle);
-    border-top: 4px double var(--text-strong);
+    border: 1px solid var(--border-subtle);
+    border-left: 4px solid var(--text-strong);
     color: var(--text-strong);
     font: 500 1.0625rem/1.75 var(--il-serif);
     margin: 1.5rem 0;
