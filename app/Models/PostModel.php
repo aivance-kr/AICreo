@@ -1004,10 +1004,8 @@ class PostModel extends Model
 
     /**
      * 목록용 비밀글 필터 — 기본은 제외, 로그인 사용자($viewerId)는 본인 비밀글만 함께 보인다.
-     *
-     * @param \CodeIgniter\Database\BaseBuilder|self $builder
      */
-    private function filterSecret($builder, bool $includeSecret, ?int $viewerId): void
+    private function filterSecret(self $builder, bool $includeSecret, ?int $viewerId): void
     {
         if ($includeSecret) {
             return;
