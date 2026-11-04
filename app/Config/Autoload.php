@@ -91,4 +91,21 @@ class Autoload extends AutoloadConfig
      * @var list<string>
      */
     public $helpers = ['mask', 'post', 'asset', 'image', 'i18n'];
+
+    /**
+     * 활성 플러그인의 PSR-4 를 병합한다.
+     *
+     * 이 클래스는 오토로더 생성 이전에 만들어져 DB·서비스·다른 클래스를 쓸 수 없으므로,
+     * 클로저를 돌려주는 `active_plugins.php` 를 직접 `require` 한다.
+     * 테스트 환경은 개발 캐시를 건드리지 않도록 `active_test.php` 를 읽는다.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        $cacheFile = WRITEPATH . 'plugins/' . (ENVIRONMENT === 'testing' ? 'active_test.php' : 'active.php');
+        $loader    = require APPPATH . 'Libraries/Plugin/active_plugins.php';
+
+        $this->psr4 = array_merge($this->psr4, $loader($cacheFile, APPPATH . 'Plugins'));
+    }
 }
