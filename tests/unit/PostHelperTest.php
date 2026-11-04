@@ -50,7 +50,7 @@ final class PostHelperTest extends CIUnitTestCase
 
     public function testBlogThemeFamily(): void
     {
-        foreach (['blog', 'ilgan', 'cobalt', 'quiet', 'devnotes'] as $theme) {
+        foreach (['blog', 'ilgan', 'cobalt', 'quiet', 'devnotes', 'fashion'] as $theme) {
             $this->assertTrue(ThemeView::isBlogTheme($theme), $theme);
         }
 

@@ -5,6 +5,7 @@ namespace Config;
 use App\Libraries\Ai\GroqPostAssistService;
 use App\Libraries\Ai\GroqSeriesService;
 use App\Libraries\Ai\GroqTagService;
+use App\Libraries\Plugin\PluginManager;
 use App\Libraries\Seo\IndexNowService;
 use App\Libraries\ThemeView;
 use CodeIgniter\Config\BaseService;
@@ -47,6 +48,19 @@ class Services extends BaseService
         }
 
         return new IndexNowService();
+    }
+
+    /**
+     * 플러그인 레지스트리. 테스트 환경은 격리된 캐시(active_test.php)를 써서
+     * 개발 서버의 실제 캐시(active.php)를 덮어쓰지 않는다.
+     */
+    public static function pluginManager(bool $getShared = true): PluginManager
+    {
+        if ($getShared) {
+            return static::getSharedInstance('pluginManager');
+        }
+
+        return new PluginManager(ENVIRONMENT === 'testing' ? WRITEPATH . 'plugins/active_test.php' : null);
     }
 
     /**

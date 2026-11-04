@@ -37,3 +37,7 @@ docs/AICreo-매뉴얼.pdf
 
 # archify 다이어그램 visual-check 산출물(검증용 스크린샷·리포트, 일회성) — 버전관리 대상 아님
 architecture/*.visual-check.*
+
+# 플러그인 활성 목록 캐시 · 설치 임시 디렉터리 (생성 산출물)
+writable/plugins/
+writable/plugins_tmp/

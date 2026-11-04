@@ -261,6 +261,10 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->post('ads/(:num)/delete', 'Admin\AdController::delete/$1');
 });
 
+// ─── 플러그인 라우트 (활성 플러그인의 Routes.php 수집) ─────────────────────────
+// 아래 동적 페이지 catch-all 두 개('{locale}/(:segment)', '(:segment)') 보다 반드시 위.
+service('pluginManager')->loadRoutes($routes);
+
 // ─── 동적 페이지 (반드시 마지막에 위치) ──────────────────────────────────────────
 foreach ($i18n->prefixedLocales() !== [] ? $i18n->locales() : [] as $locale) {
     $routes->get($locale . '/(:segment)', 'Front\PageController::show/$1');

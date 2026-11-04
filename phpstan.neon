@@ -7,5 +7,6 @@ parameters:
         - vendor/codeigniter4/framework/system/Test/bootstrap.php
     excludePaths:
         - app/Views/*
+        - app/Plugins/*/Views/*
     universalObjectCratesClasses:
         - CodeIgniter\Entity\Entity
