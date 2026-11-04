@@ -20,8 +20,8 @@ class SeriesController extends BaseController
         return $this->render('series/index', [
             'seriesList' => $seriesList,
             'page'       => [
-                'title'     => '시리즈',
-                'meta_desc' => '연재 중인 시리즈와 완결된 시리즈 목록',
+                'title'     => lang('Content.series'),
+                'meta_desc' => lang('Content.seriesDesc'),
                 'canonical' => base_url('series'),
                 'noindex'   => $seriesList === [],
             ],

@@ -22,8 +22,8 @@ class TagController extends BaseController
         return $this->render('tags/index', [
             'tags' => $tags,
             'page' => [
-                'title'     => '태그',
-                'meta_desc' => '태그별로 모아 보는 글 목록',
+                'title'     => lang('Content.tags'),
+                'meta_desc' => lang('Content.tagsDesc'),
                 'canonical' => locale_url('tags'),
                 'noindex'   => $tags === [],
             ],
@@ -47,7 +47,7 @@ class TagController extends BaseController
             'totalPages'  => max(1, (int) ceil($result['total'] / self::PER_PAGE)),
             'page'        => [
                 'title'     => '#' . $tag,
-                'meta_desc' => '"' . $tag . '" 태그가 붙은 글 ' . $result['total'] . '개',
+                'meta_desc' => lang('Content.tagMetaDesc', ['tag' => $tag, 'count' => (string) $result['total']]),
                 'canonical' => locale_url('tags/' . rawurlencode($tag)),
                 'noindex'   => $page > 1,
             ],

@@ -20,7 +20,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
             <span class="il-kicker"><?= esc($lead['board_name']) ?></span>
             <h2><?= esc($lead['title']) ?></h2>
             <p><?= esc(post_excerpt($lead['content'], 140)) ?></p>
-            <span class="il-meta"><?= esc($author($lead)) ?> · <time datetime="<?= esc($lead['created_at']) ?>"><?= esc(substr((string) $lead['created_at'], 0, 10)) ?></time> · 읽는 시간 <?= post_read_minutes($lead['content']) ?>분</span>
+            <span class="il-meta"><?= esc($author($lead)) ?> · <time datetime="<?= esc($lead['created_at']) ?>"><?= esc(substr((string) $lead['created_at'], 0, 10)) ?></time> · <?= esc(lang('Site.readingTime', [(string) post_read_minutes($lead['content'])])) ?></span>
         </a>
     </article>
 
@@ -35,7 +35,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
                     <span class="il-kicker"><?= esc($post['board_name']) ?></span>
                     <h3><?= esc($post['title']) ?></h3>
                     <p><?= esc(post_excerpt($post['content'], 90)) ?></p>
-                    <span class="il-meta"><?= esc($author($post)) ?> · <time datetime="<?= esc($post['created_at']) ?>"><?= esc(substr((string) $post['created_at'], 0, 10)) ?></time> · <?= post_read_minutes($post['content']) ?>분</span>
+                    <span class="il-meta"><?= esc($author($post)) ?> · <time datetime="<?= esc($post['created_at']) ?>"><?= esc(substr((string) $post['created_at'], 0, 10)) ?></time> · <?= esc(lang('Site.readMinutes', [(string) post_read_minutes($post['content'])])) ?></span>
                 </div>
                 <?php if ($thumb): ?><img class="il-row__img" src="<?= esc(content_thumb_url($thumb), 'attr') ?>" alt="" loading="lazy"><?php endif; ?>
             </a>
@@ -46,7 +46,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
         <?php endforeach; ?>
     </div>
 <?php else: ?>
-    <p class="il-empty">표시할 공개 글이 아직 없습니다.</p>
+    <p class="il-empty"><?= esc(lang('Site.noPublicPosts')) ?></p>
 <?php endif; ?>
 
 <?= view('components/ad_slot', ['ads' => $homeBottomAds, 'slot' => 'home_bottom']) ?>

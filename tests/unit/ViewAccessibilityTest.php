@@ -172,7 +172,10 @@ final class ViewAccessibilityTest extends CIUnitTestCase
         $offenders = [];
         $pattern   = '/<(button|a)\b[^>]*>\s*(?:<i class="bi[^"]*"[^>]*>\s*<\/i>\s*)+<\/\1>/s';
 
-        foreach ($this->markupContents() as $relative => $source) {
+        foreach ($this->viewContents() as $relative => $raw) {
+            // 태그 사이에 출력되는 번역 문구(esc(lang(...)) 출력)는 텍스트로 본다.
+            $source = (string) preg_replace('/(?<=>)\s*<\?=\s*esc\(lang\([^?]*?\)\)\s*\?>/', ' TEXT', $raw);
+            $source = (string) preg_replace('/<\?(?:php|=).*?\?>/s', '', $source);
             preg_match_all($pattern, $source, $matches);
 
             foreach ($matches[0] as $fragment) {

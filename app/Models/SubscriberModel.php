@@ -139,7 +139,7 @@ class SubscriberModel extends Model
     {
         return $this->db->table('newsletter_deliveries d')
             ->select('d.id AS delivery_id, s.id AS subscriber_id, s.email, s.unsubscribe_token, '
-                . 'p.id AS post_id, p.title, p.content, b.slug AS board_slug')
+                . 'p.id AS post_id, p.title, p.content, p.locale, b.slug AS board_slug')
             ->join('subscribers s', 's.id = d.subscriber_id AND s.status = \'' . self::STATUS_CONFIRMED . '\'')
             ->join('posts p', 'p.id = d.post_id AND p.is_active = 1 AND p.is_secret = 0 AND p.deleted_at IS NULL')
             ->join('boards b', 'b.id = p.board_id AND b.is_active = 1 AND b.read_permission = \'guest\'')

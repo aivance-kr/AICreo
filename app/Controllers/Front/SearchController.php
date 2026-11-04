@@ -19,8 +19,8 @@ class SearchController extends BaseController
 
         return $this->render('search/index', [
             'page' => [
-                'title'      => $keyword === '' ? '검색' : '"' . $keyword . '" 검색 결과',
-                'meta_title' => '검색',
+                'title'      => $keyword === '' ? lang('Content.searchTitle') : lang('Content.searchResultTitle', ['keyword' => $keyword]),
+                'meta_title' => lang('Content.searchTitle'),
                 'meta_desc'  => '',
                 'noindex'    => true,
             ],

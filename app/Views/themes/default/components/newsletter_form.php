@@ -22,6 +22,6 @@ $dark    = $dark ?? false;
         <input type="text" name="<?= esc(\App\Controllers\Front\NewsletterController::HONEYPOT_FIELD, 'attr') ?>" id="<?= esc($inputId, 'attr') ?>-hp" value="" tabindex="-1" autocomplete="off">
     </div>
     <p id="<?= esc($inputId, 'attr') ?>-privacy" class="small mb-0 mt-1 <?= $dark ? 'text-white-50' : 'text-muted' ?>">
-        <?= esc(\App\Libraries\NewsletterMailer::PRIVACY_NOTICE) ?>
+        <?= esc(\App\Libraries\NewsletterMailer::privacyNotice()) ?>
     </p>
 </form>

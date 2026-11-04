@@ -25,7 +25,7 @@ class TwoFactorController extends BaseController
         }
 
         return $this->render('auth/two_factor', [
-            'page'   => ['title' => '2단계 인증', 'noindex' => true],
+            'page'   => ['title' => lang('Auth.twoFactorTitle'), 'noindex' => true],
             'locked' => TwoFactor::isLocked($user),
         ]);
     }
@@ -34,7 +34,7 @@ class TwoFactorController extends BaseController
     {
         $user = $this->pendingUser();
         if ($user === null) {
-            return redirect()->to('/auth/login')->with('error', '인증 시간이 지났습니다. 다시 로그인해 주세요.');
+            return redirect()->to('/auth/login')->with('error', lang('Auth.twoFactorExpired'));
         }
 
         if (TwoFactor::isLocked($user)) {
@@ -50,8 +50,8 @@ class TwoFactorController extends BaseController
             }
 
             return $locked
-                ? redirect()->to('/auth/login')->with('error', '인증에 여러 번 실패해 ' . TwoFactor::LOCK_MINUTES . '분간 잠겼습니다.')
-                : redirect()->to('/auth/2fa')->with('error', '코드가 올바르지 않습니다.');
+                ? redirect()->to('/auth/login')->with('error', lang('Auth.twoFactorLocked', [TwoFactor::LOCK_MINUTES]))
+                : redirect()->to('/auth/2fa')->with('error', lang('Auth.twoFactorBadCode'));
         }
 
         session()->remove(['twofa_user_id', 'twofa_started']);
