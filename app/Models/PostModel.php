@@ -1014,10 +1014,7 @@ class PostModel extends Model
         }
 
         if ($viewerId !== null && $viewerId > 0) {
-            $builder->groupStart()
-                ->where('posts.is_secret', 0)
-                ->orWhere('posts.user_id', $viewerId)
-                ->groupEnd();
+            $builder->where('(posts.is_secret = 0 OR posts.user_id = ' . $viewerId . ')', null, false);
 
             return;
         }
