@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\Seo\LocaleCache;
 use App\Libraries\Seo\SitemapCache;
 use CodeIgniter\Model;
 
@@ -88,7 +89,7 @@ class PageModel extends Model
     protected function clearSitemapCache(array $data): array
     {
         SitemapCache::clear();
-        cache()->delete('seo_llms');
+        LocaleCache::clearLlms();
 
         return $data;
     }

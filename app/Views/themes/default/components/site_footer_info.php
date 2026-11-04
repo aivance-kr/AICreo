@@ -25,7 +25,7 @@ $socialLinks = [
             <li><a href="<?= esc($settings[$sns['key']]) ?>" target="_blank" rel="noopener"><i class="bi <?= esc($sns['icon']) ?>" aria-hidden="true"></i><span class="visually-hidden"><?= esc($sns['label']) ?> (새 창 열림)</span></a></li>
             <?php endif; ?>
         <?php endforeach; ?>
-        <li><a href="<?= esc(site_url('rss'), 'attr') ?>"><i class="bi bi-rss-fill" aria-hidden="true"></i><span class="visually-hidden">RSS 구독</span></a></li>
+        <li><a href="<?= esc(locale_url('rss'), 'attr') ?>"><i class="bi bi-rss-fill" aria-hidden="true"></i><span class="visually-hidden">RSS 구독</span></a></li>
     </ul>
     <?php if (($settings['show_footer_newsletter'] ?? '1') === '1'): ?>
     <div class="site-footer__newsletter position-relative mb-3">

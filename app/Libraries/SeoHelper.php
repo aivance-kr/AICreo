@@ -15,6 +15,7 @@ use Config\I18n;
  *   - canonical                : canonical URL 강제 지정 (없으면 current_url())
  *   - robots                   : robots 지시자 문자열 (예: 'noindex, nofollow')
  *   - noindex                  : true 이면 robots 를 'noindex, nofollow' 로 (robots 미지정 시)
+ *   - locale                   : 콘텐츠 언어 (og:locale, 없으면 요청 언어)
  *   - alternates               : 언어 => 주소 (hreflang). 기본 언어 주소를 x-default 로 함께 출력
  */
 class SeoHelper
@@ -35,7 +36,7 @@ class SeoHelper
         $title     = $page['meta_title'] ?? ($page['title'] ?? $siteName);
         $desc      = $page['meta_desc'] ?? ($this->settings['site_desc'] ?? '');
         $ogType    = $page['og_type'] ?? 'website';
-        $locale    = $this->ogLocale();
+        $locale    = $this->ogLocale($page['locale'] ?? null);
         $canonical = $page['canonical'] ?? current_url();
         $robots    = $this->resolveRobots($page);
 
@@ -95,10 +96,11 @@ class SeoHelper
 
     /**
      * og:locale — 기본 언어는 사이트 설정 값, 그 밖의 언어는 코드에서 만든다(en → en_US).
+     * $contentLocale(글·페이지 자신의 언어)이 있으면 요청 언어보다 우선한다.
      */
-    private function ogLocale(): string
+    private function ogLocale(?string $contentLocale = null): string
     {
-        $current = service('request')->getLocale();
+        $current = $contentLocale ?? service('request')->getLocale();
 
         if ($current === config(I18n::class)->defaultLocale) {
             return $this->settings['locale'] ?? 'ko_KR';

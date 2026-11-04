@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\Seo\LocaleCache;
 use App\Libraries\Seo\SitemapCache;
 use CodeIgniter\Model;
 use DateTimeImmutable;
@@ -13,8 +14,14 @@ class PostModel extends Model
     private const RELATED_CACHE_VERSION_KEY = 'related_posts_version';
     private const RELATED_CACHE_TTL         = 3600;
     private const RELATED_POOL_SIZE         = 200;
-    private const TAG_COUNTS_CACHE_KEY      = 'public_tag_counts';
-    private const TAG_COUNTS_CACHE_TTL      = 3600;
+
+    /**
+     * 글 언어의 게시판 이름 번역(bt 조인 필요), 없으면 기본 이름
+     */
+    private const BOARD_NAME_SQL = "COALESCE(NULLIF(bt.name, ''), boards.name)";
+
+    private const TAG_COUNTS_CACHE_KEY = 'public_tag_counts';
+    private const TAG_COUNTS_CACHE_TTL = 3600;
 
     /**
      * 목록용 공감수·댓글수(활성 댓글만) 서브쿼리
@@ -75,8 +82,9 @@ class PostModel extends Model
      */
     public function getLatestPublic(int $limit, ?string $locale = null): array
     {
-        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname')
+        $builder = $this->select('posts.*, ' . self::BOARD_NAME_SQL . ' AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname', false)
             ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->join('board_translations bt', 'bt.board_id = boards.id AND bt.locale = posts.locale', 'left')
             ->join('users', 'users.id = posts.user_id', 'left')
             ->where('posts.is_secret', 0)
             ->where('posts.is_active', 1)
@@ -96,8 +104,9 @@ class PostModel extends Model
      */
     public function getPopular(string $period, int $limit): array
     {
-        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug')
+        $builder = $this->select('posts.*, ' . self::BOARD_NAME_SQL . ' AS board_name, boards.slug AS board_slug', false)
             ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->join('board_translations bt', 'bt.board_id = boards.id AND bt.locale = posts.locale', 'left')
             ->where('posts.is_secret', 0)
             ->where('posts.is_active', 1)
             ->where('boards.is_active', 1)
@@ -176,8 +185,9 @@ class PostModel extends Model
         $from = sprintf('%04d-%02d-01 00:00:00', $year, $month);
         $to   = date('Y-m-d H:i:s', (int) strtotime($from . ' +1 month'));
 
-        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug')
+        $builder = $this->select('posts.*, ' . self::BOARD_NAME_SQL . ' AS board_name, boards.slug AS board_slug', false)
             ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->join('board_translations bt', 'bt.board_id = boards.id AND bt.locale = posts.locale', 'left')
             ->where('posts.is_secret', 0)
             ->where('posts.is_active', 1)
             ->where('boards.is_active', 1)
@@ -217,8 +227,9 @@ class PostModel extends Model
      */
     public function searchPublic(string $keyword, int $page, int $perPage, ?string $locale = null): array
     {
-        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname')
+        $builder = $this->select('posts.*, ' . self::BOARD_NAME_SQL . ' AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname', false)
             ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->join('board_translations bt', 'bt.board_id = boards.id AND bt.locale = posts.locale', 'left')
             ->join('users', 'users.id = posts.user_id', 'left')
             ->where('posts.is_secret', 0)
             ->where('posts.is_active', 1)
@@ -294,8 +305,9 @@ class PostModel extends Model
      */
     public function searchPublicByTag(string $tag, int $page, int $perPage): array
     {
-        $builder = $this->select('posts.*, boards.name AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname')
+        $builder = $this->select('posts.*, ' . self::BOARD_NAME_SQL . ' AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname', false)
             ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->join('board_translations bt', 'bt.board_id = boards.id AND bt.locale = posts.locale', 'left')
             ->join('users', 'users.id = posts.user_id', 'left')
             ->where('posts.is_secret', 0)
             ->where('posts.is_active', 1)
@@ -556,7 +568,7 @@ class PostModel extends Model
     protected function clearSeoCache(array $data): array
     {
         SitemapCache::clear();
-        cache()->delete('seo_feed');
+        LocaleCache::clearFeed();
 
         return $data;
     }

@@ -6,8 +6,10 @@ use App\Controllers\BaseController;
 use App\Models\AdminLogModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
+use App\Models\BoardTranslationModel;
 use App\Models\PostModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\I18n;
 
 class BoardManagerController extends BaseController
 {
@@ -33,7 +35,7 @@ class BoardManagerController extends BaseController
     // 게시판 생성 폼
     public function create(): string
     {
-        return $this->render('admin/board/form', ['board' => null]);
+        return $this->render('admin/board/form', ['board' => null, 'translations' => [], 'locales' => config(I18n::class)->prefixedLocales()]);
     }
 
     // 게시판 저장
@@ -47,7 +49,7 @@ class BoardManagerController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $this->boardModel->insert([
+        $boardId = $this->boardModel->insert([
             'slug'             => $this->request->getPost('slug'),
             'name'             => $this->request->getPost('name'),
             'description'      => $this->request->getPost('description'),
@@ -58,7 +60,9 @@ class BoardManagerController extends BaseController
             'posts_per_page'   => (int) $this->request->getPost('posts_per_page') ?: 15,
             'list_skin'        => $this->resolveListSkin($this->request->getPost('list_skin')),
             'sort_order'       => (int) $this->request->getPost('sort_order'),
-        ]);
+        ], true);
+
+        (new BoardTranslationModel())->saveForBoard((int) $boardId, $this->translationInput());
 
         return redirect()->to('/admin/boards')->with('success', '게시판이 생성되었습니다.');
     }
@@ -68,7 +72,11 @@ class BoardManagerController extends BaseController
     {
         $board = $this->boardModel->find($id);
 
-        return $this->render('admin/board/form', ['board' => $board]);
+        return $this->render('admin/board/form', [
+            'board'        => $board,
+            'translations' => (new BoardTranslationModel())->forBoard($id),
+            'locales'      => config(I18n::class)->prefixedLocales(),
+        ]);
     }
 
     public function update(int $id): ResponseInterface|string
@@ -86,7 +94,21 @@ class BoardManagerController extends BaseController
             'is_active'        => (int) $this->request->getPost('is_active'),
         ]);
 
+        (new BoardTranslationModel())->saveForBoard($id, $this->translationInput());
+
         return redirect()->to('/admin/boards')->with('success', '수정되었습니다.');
+    }
+
+    /**
+     * 폼의 언어별 이름·설명(`translations[en][name]`).
+     *
+     * @return array<string, mixed>
+     */
+    private function translationInput(): array
+    {
+        $input = $this->request->getPost('translations');
+
+        return is_array($input) ? $input : [];
     }
 
     // 게시판의 게시글 관리

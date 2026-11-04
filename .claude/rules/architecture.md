@@ -209,3 +209,10 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 고정 문구: `app/Language/{ko,en}/Site.php`(`lang('Site.login')` 등). 지금은 navbar·검색 폼·뉴스레터 폼만 옮겼다. 다른 뷰의 한글 문구는 필요할 때 같은 키 방식으로 옮긴다. 새 언어를 켜면 `app/Language/{언어}/Site.php` 를 추가한다(없으면 영어 파일로 폴백).
 - `LocaleFilter` 는 요청 로케일과 함께 언어 서비스(`service('language')`)도 맞춘다 — `lang()` 이 이미 만들어진 서비스의 언어를 쓰기 때문.
 - 후속(범위 밖): 피드·llms·OG·게시판 이름 번역, 태그·아카이브·인기글의 언어 구분, 나머지 뷰 문구.
+
+### 다국어 후속 — 피드·llms·OG·게시판 이름 (#584)
+
+- RSS(`/feed`·`/rss`)와 `llms.txt` 는 `Routes.php` 의 `$front` 클로저 안에 있어 언어별 `/en/feed`·`/en/llms.txt` 로도 열린다. 요청 언어(`$this->request->getLocale()`)의 글·페이지만 담고 링크는 `locale_url()` 이다. 사이트명·설명·연락처(`settings`)는 단일 언어라 번역하지 않는다. llms 의 FAQ(`HomeIntro`)는 기본 언어에만 싣는다.
+- 캐시 키는 `seo_feed_{언어}`·`seo_llms_{언어}`. 키·무효화는 `App\Libraries\Seo\LocaleCache` 한곳에서 한다(글·게시판·페이지·설정 변경 훅이 `clearFeed()`/`clearLlms()` 를 부른다). 새 훅을 달 때 `cache()->delete('seo_feed')` 처럼 직접 지우지 말 것.
+- OG: `og:locale` 은 `$page['locale']`(글·페이지 자신의 언어)이 있으면 요청 언어보다 우선한다. OG 이미지는 글 제목을 그대로 그리므로 글 언어를 따른다.
+- 게시판 이름·설명 번역: `board_translations`(board_id+locale 유일, 기본 언어 제외). `BoardModel::getBySlug($slug, $locale)`/`getActiveBoards($locale)` 가 번역을 덮어쓰고(이름이 빈 번역은 무시), 글 목록 쿼리(`PostModel`의 `board_name`)는 **글 언어**의 번역을 left join 으로 쓴다. 관리자 게시판 폼에 사용 언어별 입력란이 있다(`BoardTranslationModel::saveForBoard`, 이름이 비면 번역 삭제).
