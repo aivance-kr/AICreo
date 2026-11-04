@@ -154,6 +154,17 @@ a { color: inherit; }
 .post-content p, .post-content li > p { margin-bottom: .75rem; }
 .post-content li > p:last-child { margin-bottom: 0; }
 .post-content a { text-decoration: underline; text-underline-offset: .18em; }
+/* 글 도입부 요약(인용 블록): 제호와 같은 이중선 룰 + 명조 박스 */
+.post-content blockquote {
+    background: var(--il-tint);
+    border-bottom: 1px solid var(--border-subtle);
+    border-top: 4px double var(--text-strong);
+    color: var(--text-strong);
+    font: 500 1.0625rem/1.75 var(--il-serif);
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+}
+.post-content blockquote > :last-child { margin-bottom: 0; }
 .board-post-content img, .home-post-content img { display: block; margin-block: 1rem; }
 .page-content { line-height: 1.85; }
 .il-empty { color: var(--text-muted); padding: 2rem 0; }
