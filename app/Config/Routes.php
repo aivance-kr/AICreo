@@ -211,6 +211,16 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('inquiries', 'Admin\InquiryController::index');
     $routes->get('inquiries/(:num)', 'Admin\InquiryController::view/$1');
     $routes->post('inquiries/(:num)/delete', 'Admin\InquiryController::delete/$1');
+    $routes->get('inquiries/export', 'Admin\InquiryController::export');
+    $routes->get('inquiries/(:num)/file/(:num)', 'Admin\InquiryController::file/$1/$2');
+
+    // 문의 폼 빌더 (추가 항목)
+    $routes->get('inquiry-fields', 'Admin\InquiryFieldController::index');
+    $routes->post('inquiry-fields', 'Admin\InquiryFieldController::store');
+    $routes->post('inquiry-fields/(:num)', 'Admin\InquiryFieldController::update/$1');
+    $routes->post('inquiry-fields/(:num)/(up|down)', 'Admin\InquiryFieldController::move/$1/$2');
+    $routes->post('inquiry-fields/(:num)/toggle', 'Admin\InquiryFieldController::toggle/$1');
+    $routes->post('inquiry-fields/(:num)/delete', 'Admin\InquiryFieldController::delete/$1');
 
     // 배너 관리
     $routes->get('banners', 'Admin\BannerController::index');

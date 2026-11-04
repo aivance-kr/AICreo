@@ -5,8 +5,18 @@ $errors = session('errors') ?? [];
 /** 필드에 오류가 있으면 Bootstrap 무효 표시 클래스를 붙인다 */
 $invalid = static fn (string $field): string => isset($errors[$field]) ? ' is-invalid' : '';
 ?>
-<form method="post" action="/inquiry/submit" class="needs-validation" novalidate>
+<?php
+/** @var list<array<string, mixed>> $inquiryFields 관리자가 등록한 추가 항목 */
+$inquiryFields = $inquiryFields ?? [];
+$hasFile       = in_array('file', array_column($inquiryFields, 'field_type'), true);
+?>
+<form method="post" action="/inquiry/submit" class="needs-validation" novalidate<?= $hasFile ? ' enctype="multipart/form-data"' : '' ?>>
     <?= csrf_field() ?>
+    <?php /* 허니팟: 봇만 채운다 */ ?>
+    <div style="position:absolute;left:-9999px" aria-hidden="true">
+        <label for="inquiry-website">website</label>
+        <input type="text" id="inquiry-website" name="website" value="" tabindex="-1" autocomplete="off">
+    </div>
 
     <?php if ($errors !== []): ?>
     <div class="alert alert-danger" role="alert">
@@ -61,6 +71,8 @@ $invalid = static fn (string $field): string => isset($errors[$field]) ? ' is-in
                       rows="6" required aria-describedby="inquiry-message-error"><?= old('message') ?></textarea>
             <div class="invalid-feedback" id="inquiry-message-error"><?= esc($errors['message'] ?? lang('Site.errMessage')) ?></div>
         </div>
+
+        <?= view('themes/default/components/contact_extra_fields', ['inquiryFields' => $inquiryFields, 'errors' => $errors]) ?>
 
         <div class="col-12">
             <button type="submit" class="btn btn-primary px-5"><?= esc(lang('Site.contactSend')) ?></button>

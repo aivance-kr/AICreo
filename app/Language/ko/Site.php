@@ -79,6 +79,8 @@ return [
     'errSubject'        => '제목을 확인해주세요.',
     'errMessage'        => '문의 내용을 입력해주세요.',
     'contactSend'       => '문의 보내기',
+    'selectOption'      => '선택',
+    'fileMaxSize'       => '최대 5MB',
     'month1'            => '1월',
     'month2'            => '2월',
     'month3'            => '3월',

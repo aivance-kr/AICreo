@@ -79,6 +79,8 @@ return [
     'errSubject'        => 'Please check the subject.',
     'errMessage'        => 'Please enter your message.',
     'contactSend'       => 'Send message',
+    'selectOption'      => 'Select',
+    'fileMaxSize'       => 'Max 5MB',
     'month1'            => 'January',
     'month2'            => 'February',
     'month3'            => 'March',
