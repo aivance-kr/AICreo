@@ -116,8 +116,8 @@ class BoardManagerController extends BaseController
     {
         $board = $this->boardModel->find($boardId);
         $page  = (int) ($this->request->getGet('page') ?? 1);
-        $list  = $this->postModel->getList($boardId, $page, 20);
-        $total = $this->postModel->getTotalCount($boardId);
+        $list  = $this->postModel->getList($boardId, $page, 20, null, null, true);
+        $total = $this->postModel->getTotalCount($boardId, null, null, true);
 
         return $this->render('admin/board/posts', [
             'board'       => $board,
