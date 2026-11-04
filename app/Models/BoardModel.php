@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\Seo\SitemapCache;
 use CodeIgniter\Model;
 
 class BoardModel extends Model
@@ -43,7 +44,7 @@ class BoardModel extends Model
      */
     protected function clearSitemapCache(array $data): array
     {
-        cache()->delete('seo_sitemap');
+        SitemapCache::clear();
         cache()->delete('seo_llms');
         cache()->delete('public_tag_counts');
 

@@ -193,3 +193,8 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 태그·아카이브·인기글·관련글은 아직 언어를 구분하지 않는다(후속).
 - 번역 묶음: `PostModel::publicTranslationsOf()`, `PageModel::publishedTranslationsOf()` → `언어 => id`. 묶음 값은 원본 행 id 를 쓴다.
 - 메뉴 캐시 키는 `nav_menus_{locale}`, `MenuModel::clearCache()` 가 전 언어를 지운다. 페이지 슬러그 유일키는 `(locale, slug)` — 단, 컨트롤러 검증(`is_unique[pages.slug]`)은 4단계에서 언어 인지로 바꾼다.
+
+### 다국어 3단계 — SEO
+- hreflang: 화면이 `$page['alternates']`(언어 => 절대 주소)를 넘기면 `SeoHelper` 가 `<link rel="alternate" hreflang>` 와 `x-default`(기본 언어 주소)를 출력한다. 값은 `App\Libraries\Seo\Alternates::forPost/forPage/forPath`. 번역이 없어 자기 언어뿐이면 빈 배열(출력 없음). 글·홈·페이지에 적용, 목록 화면은 아직.
+- 글 canonical 은 글 자신의 언어 주소(`locale_url(..., $post['locale'])`) — 접두어 없는 주소로 들어와도 중복 색인을 막는다. `og:locale` 은 기본 언어는 `settings.locale`, 그 밖은 코드에서 만든다.
+- sitemap: 다국어를 켜면 `sitemap.xml` 은 `sitemap-{언어}.xml` 색인(`<sitemapindex>`), 각 언어 파일에 `xhtml:link` 대체 주소. 끄면 기존 단일 `<urlset>`. 캐시는 `SitemapCache`(`seo_sitemap`, `seo_sitemap_{locale}`) 한곳에서 지운다 — 모델 훅은 `SitemapCache::clear()` 를 쓴다. 태그 URL 은 기본 언어 sitemap 에만.
