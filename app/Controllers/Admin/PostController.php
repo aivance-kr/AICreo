@@ -3,11 +3,13 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Libraries\TranslationManager;
 use App\Models\AdminLogModel;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\I18n;
 
 class PostController extends BaseController
 {
@@ -27,8 +29,9 @@ class PostController extends BaseController
         $categoryId = (int) ($this->request->getGet('category_id') ?? 0);
         $page       = max(1, (int) ($this->request->getGet('page') ?? 1));
         $perPage    = 20;
+        $locale     = $this->localeFilter();
 
-        $result = $this->postModel->getAdminList($page, $perPage, $keyword, $boardId, $categoryId);
+        $result = $this->postModel->getAdminList($page, $perPage, $keyword, $boardId, $categoryId, $locale);
         $boards = $this->boardModel->orderBy('sort_order')->findAll();
 
         $categoriesByBoard = [];
@@ -50,7 +53,34 @@ class PostController extends BaseController
             'categoryId'        => $categoryId,
             'boards'            => $boards,
             'categoriesByBoard' => $categoriesByBoard,
+            'locales'           => config(I18n::class)->locales(),
+            'currentLocale'     => $locale,
         ]);
+    }
+
+    /**
+     * 글의 번역본(숨김 복사본)을 만들고 그 수정 화면으로 보낸다.
+     */
+    public function translate(int $id, string $locale): ResponseInterface
+    {
+        $manager = new TranslationManager();
+        $newId   = $manager->createPostTranslation($id, $locale);
+
+        if ($newId === null) {
+            return redirect()->back()->with('error', '번역본을 만들 수 없습니다. (이미 있거나 사용하지 않는 언어)');
+        }
+
+        model(AdminLogModel::class)->record('create', 'post', $newId, "번역({$locale}) 원본 #{$id}");
+        $rows = array_column($manager->postRows($newId), 'edit', 'locale');
+
+        return redirect()->to($rows[$locale] ?? '/admin/posts')->with('success', '번역본을 만들었습니다. 숨김 상태이니 번역 후 공개하세요.');
+    }
+
+    private function localeFilter(): ?string
+    {
+        $locale = (string) $this->request->getGet('locale');
+
+        return in_array($locale, config(I18n::class)->locales(), true) ? $locale : null;
     }
 
     public function delete(int $id): ResponseInterface|string

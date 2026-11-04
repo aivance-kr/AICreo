@@ -29,6 +29,8 @@
         </div>
         <?php endif; ?>
 
+        <?= view('admin/partials/translations', ['translationRows' => $translationRows ?? []]) ?>
+
         <form method="post"
               action="<?= $post ? "/board/{$board['slug']}/{$post['id']}/edit" . esc($listQs, 'attr') : "/board/{$board['slug']}/write" ?>"
               enctype="multipart/form-data"

@@ -9,6 +9,7 @@ use App\Libraries\HtmlSanitizer;
 use App\Libraries\OgImageGenerator;
 use App\Libraries\Seo\Alternates;
 use App\Libraries\Seo\JsonLdBuilder;
+use App\Libraries\TranslationManager;
 use App\Models\AdminLogModel;
 use App\Models\AdModel;
 use App\Models\BoardCategoryModel;
@@ -22,6 +23,7 @@ use App\Models\SeriesModel;
 use App\Models\SignatureModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\I18n;
 
 class BoardController extends BaseController
 {
@@ -414,13 +416,14 @@ class BoardController extends BaseController
         $files = $this->fileModel->getByPost($postId);
 
         return $this->render('board/write', [
-            'board'      => $board,
-            'post'       => $post,
-            'files'      => $files,
-            'categories' => $this->categoryModel->getByBoard($board['id']),
-            'listQs'     => $this->listQuery(),
-            'seriesList' => $this->seriesChoices(),
-            'postSeries' => $this->seriesModel->seriesOfPost($postId),
+            'board'           => $board,
+            'post'            => $post,
+            'files'           => $files,
+            'categories'      => $this->categoryModel->getByBoard($board['id']),
+            'listQs'          => $this->listQuery(),
+            'seriesList'      => $this->seriesChoices(),
+            'postSeries'      => $this->seriesModel->seriesOfPost($postId),
+            'translationRows' => $role === 'admin' && config(I18n::class)->prefixedLocales() !== [] ? (new TranslationManager())->postRows($postId) : [],
         ]);
     }
 
