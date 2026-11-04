@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\Seo\SitemapCache;
 use CodeIgniter\Model;
 use DateTimeImmutable;
 
@@ -51,16 +52,20 @@ class PostModel extends Model
      *
      * @return list<array{id:int,updated_at:string|null,locale:string,translation_group_id:int|null,board_slug:string}>
      */
-    public function getPublicForSitemap(): array
+    public function getPublicForSitemap(?string $locale = null): array
     {
-        return $this->select('posts.id, posts.updated_at, posts.locale, posts.translation_group_id, boards.slug AS board_slug')
+        $builder = $this->select('posts.id, posts.updated_at, posts.locale, posts.translation_group_id, boards.slug AS board_slug')
             ->join('boards', 'boards.id = posts.board_id', 'inner')
             ->where('posts.is_secret', 0)
             ->where('posts.is_active', 1)
             ->where('boards.is_active', 1)
-            ->where('boards.read_permission', 'guest')
-            ->orderBy('posts.id', 'DESC')
-            ->findAll();
+            ->where('boards.read_permission', 'guest');
+        $this->filterLocale($builder, $locale);
+
+        /** @var list<array{id:int,updated_at:string|null,locale:string,translation_group_id:int|null,board_slug:string}> $rows */
+        $rows = $builder->orderBy('posts.id', 'DESC')->findAll();
+
+        return $rows;
     }
 
     /**
@@ -550,7 +555,7 @@ class PostModel extends Model
      */
     protected function clearSeoCache(array $data): array
     {
-        cache()->delete('seo_sitemap');
+        SitemapCache::clear();
         cache()->delete('seo_feed');
 
         return $data;
@@ -617,11 +622,11 @@ class PostModel extends Model
     }
 
     /**
-     * 같은 번역 묶음의 공개(활성) 글. 언어 => 글 id. 묶음이 없으면 빈 배열.
+     * 같은 번역 묶음의 공개 글 행(본인 포함). 비공개 게시판·비밀글·숨김 글은 뺀다. 묶음이 없으면 빈 배열.
      *
-     * @return array<string, int>
+     * @return list<array{id:int,locale:string,board_slug:string}>
      */
-    public function publicTranslationsOf(int $postId): array
+    public function publicTranslationRows(int $postId): array
     {
         $group = $this->select('translation_group_id')->find($postId)['translation_group_id'] ?? null;
 
@@ -629,14 +634,27 @@ class PostModel extends Model
             return [];
         }
 
-        $rows = $this->select('id, locale')
-            ->where('translation_group_id', $group)
-            ->where('is_active', 1)
-            ->where('is_secret', 0)
-            ->orderBy('id')
+        $rows = $this->select('posts.id, posts.locale, boards.slug AS board_slug')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->where('posts.translation_group_id', $group)
+            ->where('posts.is_active', 1)
+            ->where('posts.is_secret', 0)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest')
+            ->orderBy('posts.id')
             ->findAll();
 
-        return array_column(array_map(static fn (array $r): array => [(string) $r['locale'], (int) $r['id']], $rows), 1, 0);
+        return array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'locale' => (string) $r['locale'], 'board_slug' => (string) $r['board_slug']], $rows);
+    }
+
+    /**
+     * 같은 번역 묶음의 공개 글. 언어 => 글 id. 묶음이 없으면 빈 배열.
+     *
+     * @return array<string, int>
+     */
+    public function publicTranslationsOf(int $postId): array
+    {
+        return array_column($this->publicTranslationRows($postId), 'id', 'locale');
     }
 
     /**

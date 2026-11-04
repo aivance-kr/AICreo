@@ -3,6 +3,7 @@
 namespace App\Controllers\Front;
 
 use App\Controllers\BaseController;
+use App\Libraries\Seo\Alternates;
 use App\Libraries\Seo\JsonLdBuilder;
 use App\Libraries\SlackInquiryNotifier;
 use App\Models\BoardModel;
@@ -56,8 +57,8 @@ class PageController extends BaseController
         $ld = new JsonLdBuilder();
 
         return $this->render($viewFile, [
-            'page'   => $page,
-            'jsonLd' => [$ld->webPage($page, base_url($page['slug']))],
+            'page'   => $page + ['alternates' => Alternates::forPage((int) $page['id'])],
+            'jsonLd' => [$ld->webPage($page, locale_url($page['slug']))],
         ]);
     }
 

@@ -7,6 +7,7 @@ use App\Libraries\CommentSpamFilter;
 use App\Libraries\FileUploader;
 use App\Libraries\HtmlSanitizer;
 use App\Libraries\OgImageGenerator;
+use App\Libraries\Seo\Alternates;
 use App\Libraries\Seo\JsonLdBuilder;
 use App\Models\AdminLogModel;
 use App\Models\AdModel;
@@ -86,7 +87,7 @@ class BoardController extends BaseController
         $totalPages = (int) ceil($total / $board['posts_per_page']);
 
         // 검색결과·비공개 게시판은 색인 제외, canonical 은 자기 참조(페이지·카테고리 파라미터 포함)
-        $canonical   = base_url('board/' . $board['slug']);
+        $canonical   = locale_url('board/' . $board['slug']);
         $canonicalQs = array_filter(['category' => $categoryId, 'page' => $page > 1 ? $page : null]);
         if ($canonicalQs !== []) {
             $canonical .= '?' . http_build_query($canonicalQs);
@@ -206,7 +207,7 @@ class BoardController extends BaseController
 
         // 비밀글·비공개 게시판 글은 색인 제외
         $noindex   = (bool) $post['is_secret'] || $board['read_permission'] !== 'guest';
-        $canonical = base_url('board/' . $board['slug'] . '/' . $post['id']);
+        $canonical = locale_url('board/' . $board['slug'] . '/' . $post['id'], $post['locale']);
 
         // 시리즈(연재) 내비게이션 — 하단 글 번호 기준 이전/다음 글과는 별개로 얹는다
         $seriesNavs = $this->seriesModel->navigationsForPost($postId);
@@ -262,10 +263,11 @@ class BoardController extends BaseController
             'kakaoJsKey'          => (string) env('KAKAO_JS_KEY', ''),
             'jsonLd'              => $jsonLd,
             'page'                => [
-                'title'     => $post['title'],
-                'meta_desc' => ($post['meta_desc'] ?? '') !== '' ? $post['meta_desc'] : post_excerpt($post['content'], 150),
-                'canonical' => $canonical,
-                'noindex'   => $noindex,
+                'title'      => $post['title'],
+                'meta_desc'  => ($post['meta_desc'] ?? '') !== '' ? $post['meta_desc'] : post_excerpt($post['content'], 150),
+                'canonical'  => $canonical,
+                'noindex'    => $noindex,
+                'alternates' => $noindex ? [] : Alternates::forPost($postId),
             ] + $ogPage,
         ]);
     }

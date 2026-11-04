@@ -44,6 +44,7 @@ if ($i18n->prefixedLocales() !== []) {
 
 // ─── 크롤러 진입점 (SEO/GEO) — 반드시 catch-all '(:segment)' 보다 위 ─────────────
 $routes->get('sitemap.xml', 'Front\SitemapController::index');
+$routes->get('sitemap-(:segment)\\.xml', 'Front\SitemapController::locale/$1');
 $routes->get('robots.txt', 'Front\RobotsController::index');
 $routes->get('llms.txt', 'Front\LlmsController::index');
 $routes->get('indexnow-key.txt', 'Front\IndexNowController::key');
