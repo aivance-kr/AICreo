@@ -74,16 +74,18 @@ class BoardController extends BaseController
             $categoryId = null;
         }
 
+        $viewerId = (int) session()->get('user_id') ?: null;
+
         if ($keyword) {
-            $result  = $this->postModel->search($board['id'], $keyword, $type, $page, $board['posts_per_page'], $categoryId);
+            $result  = $this->postModel->search($board['id'], $keyword, $type, $page, $board['posts_per_page'], $categoryId, $viewerId);
             $posts   = $result['posts'];
             $total   = $result['total'];
             $notices = [];
         } else {
-            $list    = $this->postModel->getList($board['id'], $page, $board['posts_per_page'], $categoryId, $this->request->getLocale());
+            $list    = $this->postModel->getList($board['id'], $page, $board['posts_per_page'], $categoryId, $this->request->getLocale(), false, $viewerId);
             $posts   = $list['posts'];
             $notices = $list['notices'];
-            $total   = $this->postModel->getTotalCount($board['id'], $categoryId, $this->request->getLocale());
+            $total   = $this->postModel->getTotalCount($board['id'], $categoryId, $this->request->getLocale(), false, $viewerId);
         }
 
         $totalPages = (int) ceil($total / $board['posts_per_page']);

@@ -713,7 +713,7 @@ class PostModel extends Model
     /**
      * @return array{notices: list<array<string, mixed>>, posts: list<array<string, mixed>>}
      */
-    public function getList(int $boardId, int $page, int $perPage, ?int $categoryId = null, ?string $locale = null, bool $includeSecret = false): array
+    public function getList(int $boardId, int $page, int $perPage, ?int $categoryId = null, ?string $locale = null, bool $includeSecret = false, ?int $viewerId = null): array
     {
         $offset = ($page - 1) * $perPage;
 
@@ -725,9 +725,7 @@ class PostModel extends Model
         if ($categoryId !== null) {
             $noticeBuilder->where('posts.category_id', $categoryId);
         }
-        if (! $includeSecret) {
-            $noticeBuilder->where('posts.is_secret', 0);
-        }
+        $this->filterSecret($noticeBuilder, $includeSecret, $viewerId);
         $this->filterLocale($noticeBuilder, $locale);
         $notices = $noticeBuilder->orderBy('posts.id', 'DESC')->findAll(5);
 
@@ -740,21 +738,17 @@ class PostModel extends Model
         if ($categoryId !== null) {
             $postBuilder->where('posts.category_id', $categoryId);
         }
-        if (! $includeSecret) {
-            $postBuilder->where('posts.is_secret', 0);
-        }
+        $this->filterSecret($postBuilder, $includeSecret, $viewerId);
         $this->filterLocale($postBuilder, $locale);
         $posts = $postBuilder->orderBy('posts.id', 'DESC')->findAll($perPage, $offset);
 
         return ['notices' => $notices, 'posts' => $posts];
     }
 
-    public function getTotalCount(int $boardId, ?int $categoryId = null, ?string $locale = null, bool $includeSecret = false): int
+    public function getTotalCount(int $boardId, ?int $categoryId = null, ?string $locale = null, bool $includeSecret = false, ?int $viewerId = null): int
     {
         $builder = $this->where('board_id', $boardId)->where('is_notice', 0)->where('is_active', 1);
-        if (! $includeSecret) {
-            $builder->where('is_secret', 0);
-        }
+        $this->filterSecret($builder, $includeSecret, $viewerId);
         if ($categoryId !== null) {
             $builder->where('category_id', $categoryId);
         }
@@ -974,15 +968,15 @@ class PostModel extends Model
     /**
      * @return array{posts: list<array<string, mixed>>, total: int}
      */
-    public function search(int $boardId, string $keyword, string $type, int $page, int $perPage, ?int $categoryId = null): array
+    public function search(int $boardId, string $keyword, string $type, int $page, int $perPage, ?int $categoryId = null, ?int $viewerId = null): array
     {
         $offset  = ($page - 1) * $perPage;
         $builder = $this->select('posts.*, users.nickname as user_nickname, board_categories.name as category_name, ' . self::COUNT_SUBQUERIES)
             ->join('users', 'users.id = posts.user_id', 'left')
             ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId)
-            ->where('posts.is_active', 1)
-            ->where('posts.is_secret', 0);
+            ->where('posts.is_active', 1);
+        $this->filterSecret($builder, false, $viewerId);
 
         if ($categoryId !== null) {
             $builder->where('posts.category_id', $categoryId);
@@ -1006,5 +1000,28 @@ class PostModel extends Model
         $posts = $builder->orderBy('posts.id', 'DESC')->findAll($perPage, $offset);
 
         return ['posts' => $posts, 'total' => $total];
+    }
+
+    /**
+     * 목록용 비밀글 필터 — 기본은 제외, 로그인 사용자($viewerId)는 본인 비밀글만 함께 보인다.
+     *
+     * @param \CodeIgniter\Database\BaseBuilder|self $builder
+     */
+    private function filterSecret($builder, bool $includeSecret, ?int $viewerId): void
+    {
+        if ($includeSecret) {
+            return;
+        }
+
+        if ($viewerId !== null && $viewerId > 0) {
+            $builder->groupStart()
+                ->where('posts.is_secret', 0)
+                ->orWhere('posts.user_id', $viewerId)
+                ->groupEnd();
+
+            return;
+        }
+
+        $builder->where('posts.is_secret', 0);
     }
 }
