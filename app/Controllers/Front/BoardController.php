@@ -55,7 +55,7 @@ class BoardController extends BaseController
 
     public function index(string $boardSlug): ResponseInterface|string
     {
-        $board = $this->boardModel->getBySlug($boardSlug);
+        $board = $this->boardModel->getBySlug($boardSlug, $this->request->getLocale());
         if (! $board) {
             throw PageNotFoundException::forPageNotFound();
         }
@@ -136,8 +136,8 @@ class BoardController extends BaseController
      */
     private function loadReadablePost(string $boardSlug, int $postId): array|ResponseInterface
     {
-        $board = $this->boardModel->getBySlug($boardSlug);
         $post  = $this->postModel->getDetail($postId);
+        $board = $this->boardModel->getBySlug($boardSlug, $post['locale'] ?? null);
 
         if (! $board || ! $post || $post['board_id'] !== $board['id']) {
             throw PageNotFoundException::forPageNotFound();
@@ -268,6 +268,7 @@ class BoardController extends BaseController
                 'title'        => $post['title'],
                 'meta_desc'    => ($post['meta_desc'] ?? '') !== '' ? $post['meta_desc'] : post_excerpt($post['content'], 150),
                 'canonical'    => $canonical,
+                'locale'       => $post['locale'],
                 'noindex'      => $noindex,
                 'alternates'   => $noindex ? [] : Alternates::forPost($postId),
                 'translatable' => true,
@@ -279,7 +280,7 @@ class BoardController extends BaseController
 
     public function write(string $boardSlug): ResponseInterface|string
     {
-        $board = $this->boardModel->getBySlug($boardSlug);
+        $board = $this->boardModel->getBySlug($boardSlug, $this->request->getLocale());
         if (! $board) {
             throw PageNotFoundException::forPageNotFound();
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Database;
 
+use App\Libraries\Seo\LocaleCache;
 use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostModel;
@@ -450,7 +451,7 @@ final class PostModelTest extends DatabaseTestCase
         $later  = $this->makePost(['is_active' => 0, 'publish_at' => date('Y-m-d H:i:s', strtotime('+1 hour'))]);
         $hidden = $this->makePost(['is_active' => 0]);
 
-        cache()->save('seo_feed', 'stale', 60);
+        cache()->save(LocaleCache::feedKey('ko'), 'stale', 60);
 
         $this->assertSame(1, $this->model->publishDue());
 
@@ -459,7 +460,7 @@ final class PostModelTest extends DatabaseTestCase
         $this->assertSame(0, (int) $this->model->find($later)['is_active']);
         $this->assertNotNull($this->model->find($later)['publish_at']);
         $this->assertSame(0, (int) $this->model->find($hidden)['is_active']);
-        $this->assertNull(cache()->get('seo_feed'));
+        $this->assertNull(cache()->get(LocaleCache::feedKey('ko')));
     }
 
     public function testScheduledPostIsHiddenFromPublicQueries(): void

@@ -26,6 +26,17 @@
                 <input id="board-form-description" type="text" name="description" class="form-control form-control-sm"
                        value="<?= esc($board['description'] ?? '') ?>">
             </div>
+            <?php foreach ($locales as $loc): ?>
+                <fieldset class="border rounded p-2 mb-3">
+                    <legend class="small float-none w-auto px-1 mb-1">번역 (<?= esc($loc) ?>) — 비우면 기본 언어 이름을 씁니다</legend>
+                    <input id="board-form-name-<?= esc($loc, 'attr') ?>" type="text" name="translations[<?= esc($loc, 'attr') ?>][name]" class="form-control form-control-sm mb-2"
+                           maxlength="100" placeholder="게시판 이름" aria-label="게시판 이름 (<?= esc($loc, 'attr') ?>)"
+                           value="<?= esc($translations[$loc]['name'] ?? '') ?>">
+                    <input id="board-form-description-<?= esc($loc, 'attr') ?>" type="text" name="translations[<?= esc($loc, 'attr') ?>][description]" class="form-control form-control-sm"
+                           maxlength="255" placeholder="설명" aria-label="설명 (<?= esc($loc, 'attr') ?>)"
+                           value="<?= esc($translations[$loc]['description'] ?? '') ?>">
+                </fieldset>
+            <?php endforeach; ?>
             <div class="row g-2 mb-3">
                 <div class="col">
                     <label for="board-form-read_permission" class="form-label small">읽기 권한</label>

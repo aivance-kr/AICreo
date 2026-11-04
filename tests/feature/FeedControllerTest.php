@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\Seo\LocaleCache;
 use App\Models\BoardModel;
 use App\Models\PostModel;
 use Tests\Support\FeatureTestCase;
@@ -16,7 +17,7 @@ final class FeedControllerTest extends FeatureTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        cache()->delete('seo_feed');
+        LocaleCache::clearFeed();
     }
 
     public function testFeedReturnsRssXml(): void
@@ -54,7 +55,7 @@ final class FeedControllerTest extends FeatureTestCase
             'author_name' => '작성자',
             'is_secret'   => 0,
         ]);
-        cache()->delete('seo_feed');
+        LocaleCache::clearFeed();
 
         $body = (string) $this->get('feed')->response()->getBody();
 
@@ -79,7 +80,7 @@ final class FeedControllerTest extends FeatureTestCase
             'author_name' => '작성자',
             'is_secret'   => 1,
         ]);
-        cache()->delete('seo_feed');
+        LocaleCache::clearFeed();
 
         $body = (string) $this->get('feed')->response()->getBody();
 

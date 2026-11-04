@@ -10,6 +10,9 @@ use Config\I18n;
 // ─── 공개 화면 (기본 언어는 접두어 없이, 그 밖의 사용 언어는 /{코드}/ 아래에 같은 라우트를 등록) ──
 $front = static function (RouteCollection $routes): void {
     $routes->get('/', 'Front\HomeController::index');
+    $routes->get('feed', 'Front\FeedController::index');
+    $routes->get('rss', 'Front\FeedController::index');
+    $routes->get('llms.txt', 'Front\LlmsController::index');
     $routes->get('search', 'Front\SearchController::index');
     $routes->get('series', 'Front\SeriesController::index');
     $routes->get('series/(:segment)', 'Front\SeriesController::show/$1');
@@ -46,10 +49,7 @@ if ($i18n->prefixedLocales() !== []) {
 $routes->get('sitemap.xml', 'Front\SitemapController::index');
 $routes->get('sitemap-(:segment)\\.xml', 'Front\SitemapController::locale/$1');
 $routes->get('robots.txt', 'Front\RobotsController::index');
-$routes->get('llms.txt', 'Front\LlmsController::index');
 $routes->get('indexnow-key.txt', 'Front\IndexNowController::key');
-$routes->get('feed', 'Front\FeedController::index');
-$routes->get('rss', 'Front\FeedController::index');
 $routes->get('og/(:num)\\.png', 'Front\OgImageController::post/$1');
 $routes->get('preview/(:segment)', 'Front\PreviewController::show/$1');
 
