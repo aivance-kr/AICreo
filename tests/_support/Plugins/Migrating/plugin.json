@@ -1,0 +1,8 @@
+{
+  "key": "migrating",
+  "name": "마이그레이션 있는 플러그인",
+  "version": "1.0.0",
+  "requires": { "core": ">=1.0", "plugins": [] },
+  "license_type": "onetime",
+  "menu": []
+}
