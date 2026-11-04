@@ -713,7 +713,7 @@ class PostModel extends Model
     /**
      * @return array{notices: list<array<string, mixed>>, posts: list<array<string, mixed>>}
      */
-    public function getList(int $boardId, int $page, int $perPage, ?int $categoryId = null, ?string $locale = null): array
+    public function getList(int $boardId, int $page, int $perPage, ?int $categoryId = null, ?string $locale = null, bool $includeSecret = false): array
     {
         $offset = ($page - 1) * $perPage;
 
@@ -724,6 +724,9 @@ class PostModel extends Model
             ->where('posts.is_active', 1);
         if ($categoryId !== null) {
             $noticeBuilder->where('posts.category_id', $categoryId);
+        }
+        if (! $includeSecret) {
+            $noticeBuilder->where('posts.is_secret', 0);
         }
         $this->filterLocale($noticeBuilder, $locale);
         $notices = $noticeBuilder->orderBy('posts.id', 'DESC')->findAll(5);
@@ -737,15 +740,21 @@ class PostModel extends Model
         if ($categoryId !== null) {
             $postBuilder->where('posts.category_id', $categoryId);
         }
+        if (! $includeSecret) {
+            $postBuilder->where('posts.is_secret', 0);
+        }
         $this->filterLocale($postBuilder, $locale);
         $posts = $postBuilder->orderBy('posts.id', 'DESC')->findAll($perPage, $offset);
 
         return ['notices' => $notices, 'posts' => $posts];
     }
 
-    public function getTotalCount(int $boardId, ?int $categoryId = null, ?string $locale = null): int
+    public function getTotalCount(int $boardId, ?int $categoryId = null, ?string $locale = null, bool $includeSecret = false): int
     {
         $builder = $this->where('board_id', $boardId)->where('is_notice', 0)->where('is_active', 1);
+        if (! $includeSecret) {
+            $builder->where('is_secret', 0);
+        }
         if ($categoryId !== null) {
             $builder->where('category_id', $categoryId);
         }
@@ -972,7 +981,8 @@ class PostModel extends Model
             ->join('users', 'users.id = posts.user_id', 'left')
             ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
             ->where('posts.board_id', $boardId)
-            ->where('posts.is_active', 1);
+            ->where('posts.is_active', 1)
+            ->where('posts.is_secret', 0);
 
         if ($categoryId !== null) {
             $builder->where('posts.category_id', $categoryId);
