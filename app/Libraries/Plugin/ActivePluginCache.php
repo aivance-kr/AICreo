@@ -63,8 +63,8 @@ final class ActivePluginCache
             throw new RuntimeException('플러그인 캐시를 쓸 수 없습니다.');
         }
 
-        // tempnam 은 0600 으로 만들므로 웹 서버가 읽을 수 있게 맞춘다
-        chmod($this->cacheFile, 0664);
+        // tempnam 은 0600 으로 만들므로 웹 서버가 읽을 수 있게 읽기 전용(0644)으로 맞춘다
+        chmod($this->cacheFile, 0644);
 
         if (function_exists('opcache_invalidate')) {
             opcache_invalidate($this->cacheFile, true);
