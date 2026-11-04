@@ -44,6 +44,7 @@ if ($i18n->prefixedLocales() !== []) {
 
 // ─── 크롤러 진입점 (SEO/GEO) — 반드시 catch-all '(:segment)' 보다 위 ─────────────
 $routes->get('sitemap.xml', 'Front\SitemapController::index');
+$routes->get('sitemap-(:segment)\\.xml', 'Front\SitemapController::locale/$1');
 $routes->get('robots.txt', 'Front\RobotsController::index');
 $routes->get('llms.txt', 'Front\LlmsController::index');
 $routes->get('indexnow-key.txt', 'Front\IndexNowController::key');
@@ -103,6 +104,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('pages/(:num)/edit', 'Admin\PageManagerController::edit/$1');
     $routes->post('pages/(:num)/edit', 'Admin\PageManagerController::update/$1');
     $routes->post('pages/(:num)/delete', 'Admin\PageManagerController::delete/$1');
+    $routes->post('pages/(:num)/translate/(:segment)', 'Admin\PageManagerController::translate/$1/$2');
 
     // 게시판 관리
     $routes->get('boards', 'Admin\BoardManagerController::index');
@@ -166,6 +168,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->post('posts/bulk-move', 'Admin\PostController::bulkMove');
     $routes->post('posts/bulk-category', 'Admin\PostController::bulkCategory');
     $routes->post('posts/(:num)/toggle', 'Admin\PostController::toggle/$1');
+    $routes->post('posts/(:num)/translate/(:segment)', 'Admin\PostController::translate/$1/$2');
     $routes->post('posts/(:num)/delete', 'Admin\PostController::delete/$1');
 
     // 전체 댓글 관리

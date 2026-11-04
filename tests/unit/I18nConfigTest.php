@@ -8,6 +8,7 @@ use CodeIgniter\Config\Factories;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\I18n;
 use Config\Services;
+use Locale;
 
 /**
  * @internal
@@ -23,6 +24,8 @@ final class I18nConfigTest extends CIUnitTestCase
     protected function tearDown(): void
     {
         Factories::reset('config');
+        Services::resetSingle('request');
+        Locale::setDefault('ko');
         parent::tearDown();
     }
 

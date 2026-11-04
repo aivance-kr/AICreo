@@ -187,3 +187,25 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - `LocaleFilter`(전역 before)가 첫 세그먼트가 사용 언어면 `Request::setLocale()`. 헬퍼 `locale_url($path, $locale)`·`html_lang()`(`i18n_helper.php`, 자동 로드). 테마 레이아웃의 `<html lang>` 은 `html_lang()`.
 - 언어 코드(ko·en 등)는 페이지 슬러그로 쓸 수 없다(`PageManagerController::store` 검증).
 - DB: `posts`/`pages` 에 `locale`(기본 ko)·`translation_group_id`, `menus.locale`. 1단계는 컬럼만 추가하고 조회 로직은 아직 locale 을 쓰지 않는다(2단계).
+
+### 다국어 2단계 — 언어별 조회
+- 글 조회(`PostModel::getList/getTotalCount/getLatestPublic/searchPublic/getPrevious/getNext`)·페이지(`PageModel::getBySlug/getPublished`)·메뉴(`MenuModel::getTree/getTreeAll`)는 선택 인자 `$locale`. `null` 이면 거르지 않는다(관리자·사이트맵). 공개 컨트롤러는 `$this->request->getLocale()` 를 넘긴다. 피드·llms·사이트맵은 아직 기본 언어만.
+- 태그·아카이브·인기글·관련글은 아직 언어를 구분하지 않는다(후속).
+- 번역 묶음: `PostModel::publicTranslationsOf()`, `PageModel::publishedTranslationsOf()` → `언어 => id`. 묶음 값은 원본 행 id 를 쓴다.
+- 메뉴 캐시 키는 `nav_menus_{locale}`, `MenuModel::clearCache()` 가 전 언어를 지운다. 페이지 슬러그 유일키는 `(locale, slug)` — 단, 컨트롤러 검증(`is_unique[pages.slug]`)은 4단계에서 언어 인지로 바꾼다.
+
+### 다국어 3단계 — SEO
+- hreflang: 화면이 `$page['alternates']`(언어 => 절대 주소)를 넘기면 `SeoHelper` 가 `<link rel="alternate" hreflang>` 와 `x-default`(기본 언어 주소)를 출력한다. 값은 `App\Libraries\Seo\Alternates::forPost/forPage/forPath`. 번역이 없어 자기 언어뿐이면 빈 배열(출력 없음). 글·홈·페이지에 적용, 목록 화면은 아직.
+- 글 canonical 은 글 자신의 언어 주소(`locale_url(..., $post['locale'])`) — 접두어 없는 주소로 들어와도 중복 색인을 막는다. `og:locale` 은 기본 언어는 `settings.locale`, 그 밖은 코드에서 만든다.
+- sitemap: 다국어를 켜면 `sitemap.xml` 은 `sitemap-{언어}.xml` 색인(`<sitemapindex>`), 각 언어 파일에 `xhtml:link` 대체 주소. 끄면 기존 단일 `<urlset>`. 캐시는 `SitemapCache`(`seo_sitemap`, `seo_sitemap_{locale}`) 한곳에서 지운다 — 모델 훅은 `SitemapCache::clear()` 를 쓴다. 태그 URL 은 기본 언어 sitemap 에만.
+
+### 다국어 4단계 — 관리자 번역 흐름
+- `App\Libraries\TranslationManager`: `createPostTranslation/createPageTranslation($sourceId, $locale)` 가 원본을 복사해 번역본을 만든다(글은 숨김 `is_active=0`, 페이지는 `draft`, 슬러그 동일). 묶음 id 는 원본 행 id — 원본의 묶음이 비어 있으면 이때 채운다. 이미 있는 언어·사용하지 않는 언어면 `null`. `postRows/pageRows` 가 관리자 "번역" 상자(`admin/partials/translations`)용 행을 만든다.
+- 화면: 페이지 수정·글 수정(`board/write`, 관리자만) 상단 "번역" 상자 → `POST /admin/pages|posts/{id}/translate/{언어}` 로 번역본을 만들고 그 수정 화면으로 이동. 페이지·글 목록은 언어 탭/배지(`admin/partials/locale_tabs`), 메뉴 관리는 언어 탭별로 따로 관리(메뉴는 언어별 트리, 상위 메뉴는 같은 언어끼리만). 사용 언어가 하나뿐이면 UI 가 모두 숨는다.
+- 페이지 슬러그 유일성은 `(locale, slug)` — 컨트롤러가 직접 검사(소프트 삭제 행 포함). 새 페이지는 자기 id 를 묶음 id 로 갖는다.
+
+### 다국어 5단계 — 전환 UI·고정 문구
+- 전환기: `themes/default/components/lang_switcher` 를 공용 `navbar`(모든 테마가 default 컴포넌트로 폴백)가 포함한다. 사용 언어 둘 이상 + 설정 `show_lang_switcher`(기본 1)일 때만 보인다. 목적지는 `lang_switch_url()` — 화면이 준 `$page['alternates']` 주소 → 번역 대상(`$page['translatable']`, 글·페이지)인데 번역이 없으면 그 언어 홈 → 그 밖의 화면은 같은 경로·쿼리를 그 언어로.
+- 고정 문구: `app/Language/{ko,en}/Site.php`(`lang('Site.login')` 등). 지금은 navbar·검색 폼·뉴스레터 폼만 옮겼다. 다른 뷰의 한글 문구는 필요할 때 같은 키 방식으로 옮긴다. 새 언어를 켜면 `app/Language/{언어}/Site.php` 를 추가한다(없으면 영어 파일로 폴백).
+- `LocaleFilter` 는 요청 로케일과 함께 언어 서비스(`service('language')`)도 맞춘다 — `lang()` 이 이미 만들어진 서비스의 언어를 쓰기 때문.
+- 후속(범위 밖): 피드·llms·OG·게시판 이름 번역, 태그·아카이브·인기글의 언어 구분, 나머지 뷰 문구.

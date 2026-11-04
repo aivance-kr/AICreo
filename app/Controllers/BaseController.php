@@ -37,7 +37,7 @@ class BaseController extends Controller
         $settings = (new SettingModel())->getAllAsMap();
 
         // 전역 네비게이션 메뉴 (캐시됨)
-        $menus = (new MenuModel())->getTree();
+        $menus = (new MenuModel())->getTree($this->request->getLocale());
 
         $boardCategories = [];
         $isBlogTheme     = ThemeView::isBlogTheme($settings['active_theme'] ?? 'default');

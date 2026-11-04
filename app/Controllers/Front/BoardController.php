@@ -7,7 +7,9 @@ use App\Libraries\CommentSpamFilter;
 use App\Libraries\FileUploader;
 use App\Libraries\HtmlSanitizer;
 use App\Libraries\OgImageGenerator;
+use App\Libraries\Seo\Alternates;
 use App\Libraries\Seo\JsonLdBuilder;
+use App\Libraries\TranslationManager;
 use App\Models\AdminLogModel;
 use App\Models\AdModel;
 use App\Models\BoardCategoryModel;
@@ -21,6 +23,7 @@ use App\Models\SeriesModel;
 use App\Models\SignatureModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\I18n;
 
 class BoardController extends BaseController
 {
@@ -77,16 +80,16 @@ class BoardController extends BaseController
             $total   = $result['total'];
             $notices = [];
         } else {
-            $list    = $this->postModel->getList($board['id'], $page, $board['posts_per_page'], $categoryId);
+            $list    = $this->postModel->getList($board['id'], $page, $board['posts_per_page'], $categoryId, $this->request->getLocale());
             $posts   = $list['posts'];
             $notices = $list['notices'];
-            $total   = $this->postModel->getTotalCount($board['id'], $categoryId);
+            $total   = $this->postModel->getTotalCount($board['id'], $categoryId, $this->request->getLocale());
         }
 
         $totalPages = (int) ceil($total / $board['posts_per_page']);
 
         // 검색결과·비공개 게시판은 색인 제외, canonical 은 자기 참조(페이지·카테고리 파라미터 포함)
-        $canonical   = base_url('board/' . $board['slug']);
+        $canonical   = locale_url('board/' . $board['slug']);
         $canonicalQs = array_filter(['category' => $categoryId, 'page' => $page > 1 ? $page : null]);
         if ($canonicalQs !== []) {
             $canonical .= '?' . http_build_query($canonicalQs);
@@ -200,13 +203,13 @@ class BoardController extends BaseController
         if ($categoryId !== null && ! in_array($categoryId, array_map('intval', array_column($this->categoryModel->getByBoard($board['id']), 'id')), true)) {
             $categoryId = null;
         }
-        $prevPost            = $this->postModel->getPrevious($board['id'], $postId, $categoryId);
-        $nextPost            = $this->postModel->getNext($board['id'], $postId, $categoryId);
+        $prevPost            = $this->postModel->getPrevious($board['id'], $postId, $categoryId, $post['locale']);
+        $nextPost            = $this->postModel->getNext($board['id'], $postId, $categoryId, $post['locale']);
         $guestCommentCaptcha = session()->get('user_id') ? null : $this->guestCommentCaptcha($postId);
 
         // 비밀글·비공개 게시판 글은 색인 제외
         $noindex   = (bool) $post['is_secret'] || $board['read_permission'] !== 'guest';
-        $canonical = base_url('board/' . $board['slug'] . '/' . $post['id']);
+        $canonical = locale_url('board/' . $board['slug'] . '/' . $post['id'], $post['locale']);
 
         // 시리즈(연재) 내비게이션 — 하단 글 번호 기준 이전/다음 글과는 별개로 얹는다
         $seriesNavs = $this->seriesModel->navigationsForPost($postId);
@@ -262,10 +265,12 @@ class BoardController extends BaseController
             'kakaoJsKey'          => (string) env('KAKAO_JS_KEY', ''),
             'jsonLd'              => $jsonLd,
             'page'                => [
-                'title'     => $post['title'],
-                'meta_desc' => ($post['meta_desc'] ?? '') !== '' ? $post['meta_desc'] : post_excerpt($post['content'], 150),
-                'canonical' => $canonical,
-                'noindex'   => $noindex,
+                'title'        => $post['title'],
+                'meta_desc'    => ($post['meta_desc'] ?? '') !== '' ? $post['meta_desc'] : post_excerpt($post['content'], 150),
+                'canonical'    => $canonical,
+                'noindex'      => $noindex,
+                'alternates'   => $noindex ? [] : Alternates::forPost($postId),
+                'translatable' => true,
             ] + $ogPage,
         ]);
     }
@@ -412,13 +417,14 @@ class BoardController extends BaseController
         $files = $this->fileModel->getByPost($postId);
 
         return $this->render('board/write', [
-            'board'      => $board,
-            'post'       => $post,
-            'files'      => $files,
-            'categories' => $this->categoryModel->getByBoard($board['id']),
-            'listQs'     => $this->listQuery(),
-            'seriesList' => $this->seriesChoices(),
-            'postSeries' => $this->seriesModel->seriesOfPost($postId),
+            'board'           => $board,
+            'post'            => $post,
+            'files'           => $files,
+            'categories'      => $this->categoryModel->getByBoard($board['id']),
+            'listQs'          => $this->listQuery(),
+            'seriesList'      => $this->seriesChoices(),
+            'postSeries'      => $this->seriesModel->seriesOfPost($postId),
+            'translationRows' => $role === 'admin' && config(I18n::class)->prefixedLocales() !== [] ? (new TranslationManager())->postRows($postId) : [],
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\Seo\SitemapCache;
 use CodeIgniter\Model;
 
 class PageModel extends Model
@@ -13,7 +14,7 @@ class PageModel extends Model
     protected $allowedFields  = [
         'slug', 'title', 'content', 'layout',
         'meta_title', 'meta_desc', 'og_image', 'sort_order', 'status',
-        'wp_post_id', 'created_at', 'updated_at',
+        'wp_post_id', 'created_at', 'updated_at', 'locale', 'translation_group_id',
     ];
     protected $afterInsert = ['clearSitemapCache'];
     protected $afterUpdate = ['clearSitemapCache'];
@@ -22,17 +23,61 @@ class PageModel extends Model
     /**
      * @return array<string, mixed>|null
      */
-    public function getBySlug(string $slug): ?array
+    public function getBySlug(string $slug, ?string $locale = null): ?array
     {
-        return $this->where('slug', $slug)->where('status', 'published')->first();
+        $builder = $this->where('slug', $slug)->where('status', 'published');
+
+        if ($locale !== null) {
+            $builder->where('locale', $locale);
+        }
+
+        return $builder->first();
     }
 
     /**
      * @return list<array<string, mixed>>
      */
-    public function getPublished(): array
+    public function getPublished(?string $locale = null): array
     {
-        return $this->where('status', 'published')->orderBy('sort_order')->findAll();
+        $builder = $this->where('status', 'published');
+
+        if ($locale !== null) {
+            $builder->where('locale', $locale);
+        }
+
+        return $builder->orderBy('sort_order')->findAll();
+    }
+
+    /**
+     * 같은 번역 묶음의 발행 페이지 행(본인 포함). 묶음이 없으면 빈 배열.
+     *
+     * @return list<array{id:int,locale:string,slug:string}>
+     */
+    public function publishedTranslationRows(int $pageId): array
+    {
+        $group = $this->select('translation_group_id')->find($pageId)['translation_group_id'] ?? null;
+
+        if ($group === null) {
+            return [];
+        }
+
+        $rows = $this->select('id, locale, slug')
+            ->where('translation_group_id', $group)
+            ->where('status', 'published')
+            ->orderBy('id')
+            ->findAll();
+
+        return array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'locale' => (string) $r['locale'], 'slug' => (string) $r['slug']], $rows);
+    }
+
+    /**
+     * 같은 번역 묶음의 발행 페이지. 언어 => 페이지 id. 묶음이 없으면 빈 배열.
+     *
+     * @return array<string, int>
+     */
+    public function publishedTranslationsOf(int $pageId): array
+    {
+        return array_column($this->publishedTranslationRows($pageId), 'id', 'locale');
     }
 
     /**
@@ -42,7 +87,7 @@ class PageModel extends Model
      */
     protected function clearSitemapCache(array $data): array
     {
-        cache()->delete('seo_sitemap');
+        SitemapCache::clear();
         cache()->delete('seo_llms');
 
         return $data;
