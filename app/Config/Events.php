@@ -55,3 +55,6 @@ Events::on('pre_system', static function (): void {
         }
     }
 });
+
+// 활성 플러그인의 Events.php 수집 (구독은 활성일 때만 존재한다)
+service('pluginManager')->loadEvents();
