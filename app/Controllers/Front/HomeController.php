@@ -33,11 +33,11 @@ class HomeController extends BaseController
         }
 
         $blogPostLimit   = min(100, max(1, (int) ($this->viewData['settings']['blog_home_post_limit'] ?? 10)));
-        $latestBlogPosts = $isBlogTheme ? $postModel->getLatestPublic($blogPostLimit) : [];
+        $latestBlogPosts = $isBlogTheme ? $postModel->getLatestPublic($blogPostLimit, $this->request->getLocale()) : [];
 
         $bannerModel       = new BannerModel();
         $adModel           = new AdModel();
-        $homePage          = (new PageModel())->getBySlug('home');
+        $homePage          = (new PageModel())->getBySlug('home', $this->request->getLocale());
         $showLatestNotices = ($this->viewData['settings']['home_show_latest_notices'] ?? '1') === '1';
 
         $settings = $this->viewData['settings'] ?? [];

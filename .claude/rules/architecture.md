@@ -187,3 +187,9 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - `LocaleFilter`(전역 before)가 첫 세그먼트가 사용 언어면 `Request::setLocale()`. 헬퍼 `locale_url($path, $locale)`·`html_lang()`(`i18n_helper.php`, 자동 로드). 테마 레이아웃의 `<html lang>` 은 `html_lang()`.
 - 언어 코드(ko·en 등)는 페이지 슬러그로 쓸 수 없다(`PageManagerController::store` 검증).
 - DB: `posts`/`pages` 에 `locale`(기본 ko)·`translation_group_id`, `menus.locale`. 1단계는 컬럼만 추가하고 조회 로직은 아직 locale 을 쓰지 않는다(2단계).
+
+### 다국어 2단계 — 언어별 조회
+- 글 조회(`PostModel::getList/getTotalCount/getLatestPublic/searchPublic/getPrevious/getNext`)·페이지(`PageModel::getBySlug/getPublished`)·메뉴(`MenuModel::getTree/getTreeAll`)는 선택 인자 `$locale`. `null` 이면 거르지 않는다(관리자·사이트맵). 공개 컨트롤러는 `$this->request->getLocale()` 를 넘긴다. 피드·llms·사이트맵은 아직 기본 언어만.
+- 태그·아카이브·인기글·관련글은 아직 언어를 구분하지 않는다(후속).
+- 번역 묶음: `PostModel::publicTranslationsOf()`, `PageModel::publishedTranslationsOf()` → `언어 => id`. 묶음 값은 원본 행 id 를 쓴다.
+- 메뉴 캐시 키는 `nav_menus_{locale}`, `MenuModel::clearCache()` 가 전 언어를 지운다. 페이지 슬러그 유일키는 `(locale, slug)` — 단, 컨트롤러 검증(`is_unique[pages.slug]`)은 4단계에서 언어 인지로 바꾼다.

@@ -29,7 +29,7 @@ class PageController extends BaseController
      */
     public function show(string $slug): ResponseInterface|string
     {
-        $page = $this->pageModel->getBySlug($slug);
+        $page = $this->pageModel->getBySlug($slug, $this->request->getLocale());
 
         // 짧은 주소(/{게시글ID}) — 같은 슬러그의 페이지가 없을 때만 게시글로 보낸다.
         // 게시글이 다른 게시판으로 옮겨져도 깨지지 않게 301이 아닌 302를 쓴다.

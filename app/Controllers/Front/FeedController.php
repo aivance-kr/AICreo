@@ -8,6 +8,7 @@ use App\Controllers\BaseController;
 use App\Models\PostModel;
 use App\Models\SettingModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\I18n;
 
 /**
  * 블로그 RSS 2.0 피드 — /feed, /rss.
@@ -31,7 +32,7 @@ class FeedController extends BaseController
     private function build(): string
     {
         $settings = (new SettingModel())->getAllAsMap();
-        $posts    = (new PostModel())->getLatestPublic(self::ITEM_LIMIT);
+        $posts    = (new PostModel())->getLatestPublic(self::ITEM_LIMIT, config(I18n::class)->defaultLocale);
 
         $items = '';
 

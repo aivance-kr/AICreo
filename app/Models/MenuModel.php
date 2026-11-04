@@ -3,22 +3,25 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use Config\I18n;
 
 class MenuModel extends Model
 {
     protected $table         = 'menus';
     protected $primaryKey    = 'id';
-    protected $allowedFields = ['parent_id', 'title', 'url', 'target', 'sort_order', 'is_active'];
+    protected $allowedFields = ['parent_id', 'title', 'url', 'target', 'sort_order', 'is_active', 'locale'];
 
     /**
      * 트리 구조로 메뉴 반환 (캐시 1시간)
      *
      * @return list<array<string, mixed>>
      */
-    public function getTree(): array
+    public function getTree(?string $locale = null): array
     {
-        return cache()->remember('nav_menus', 3600, fn (): array => $this->buildTree(
-            $this->where('is_active', 1)->orderBy('sort_order')->findAll(),
+        $locale ??= config(I18n::class)->defaultLocale;
+
+        return cache()->remember('nav_menus_' . $locale, 3600, fn (): array => $this->buildTree(
+            $this->where('locale', $locale)->where('is_active', 1)->orderBy('sort_order')->findAll(),
         ));
     }
 
@@ -27,9 +30,11 @@ class MenuModel extends Model
      *
      * @return list<array<string, mixed>>
      */
-    public function getTreeAll(): array
+    public function getTreeAll(?string $locale = null): array
     {
-        return $this->buildTree($this->orderBy('sort_order')->findAll());
+        $locale ??= config(I18n::class)->defaultLocale;
+
+        return $this->buildTree($this->where('locale', $locale)->orderBy('sort_order')->findAll());
     }
 
     /**
@@ -50,7 +55,11 @@ class MenuModel extends Model
 
     public function clearCache(): void
     {
-        cache()->delete('nav_menus');
+        $locales = array_column($this->db->table('menus')->select('locale')->distinct()->get()->getResultArray(), 'locale');
+
+        foreach (array_unique([...$locales, config(I18n::class)->defaultLocale]) as $locale) {
+            cache()->delete('nav_menus_' . $locale);
+        }
     }
 
     /**

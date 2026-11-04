@@ -10,6 +10,7 @@ use App\Models\BoardModel;
 use App\Models\PageModel;
 use App\Models\SettingModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\I18n;
 
 /**
  * 동적 llms.txt (GEO) — AI 크롤러용 사이트 요약(markdown).
@@ -45,7 +46,7 @@ class LlmsController extends BaseController
         }
 
         // 기본 소개 홈일 때만 정답형 FAQ 를 싣는다(관리자가 home 을 저장하면 그 내용이 우선).
-        if ((new PageModel())->getBySlug('home') === null) {
+        if ((new PageModel())->getBySlug('home', config(I18n::class)->defaultLocale) === null) {
             $lines[] = '';
             $lines[] = '## 자주 묻는 질문';
 
@@ -55,7 +56,7 @@ class LlmsController extends BaseController
         }
 
         // 주요 페이지 (발행)
-        $pages = (new PageModel())->getPublished();
+        $pages = (new PageModel())->getPublished(config(I18n::class)->defaultLocale);
         if ($pages !== []) {
             $lines[] = '';
             $lines[] = '## 주요 페이지';
