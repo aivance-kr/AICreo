@@ -15,8 +15,12 @@ final class InquiryForm
 {
     public const FILE_MAX_BYTES = 5 * 1024 * 1024;
     public const FILE_EXTS      = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'txt', 'zip', 'doc', 'docx', 'xls', 'xlsx', 'hwp'];
-    private const TEXT_MAX      = 255;
-    private const TEXTAREA_MAX  = 5000;
+    private const EXT_MIME      = [
+        'jpg' => ['image/jpeg'], 'jpeg' => ['image/jpeg'], 'png' => ['image/png'],
+        'gif' => ['image/gif'], 'webp' => ['image/webp'], 'pdf' => ['application/pdf'],
+    ];
+    private const TEXT_MAX     = 255;
+    private const TEXTAREA_MAX = 5000;
 
     /**
      * 첨부 파일 저장 폴더. 웹 루트 밖이라 관리자 다운로드 라우트로만 내려받는다.
@@ -173,6 +177,11 @@ final class InquiryForm
         }
         if (! in_array(strtolower($file->getClientExtension()), self::FILE_EXTS, true)) {
             return '허용되지 않는 파일 형식입니다.';
+        }
+        // 확장자만 믿지 않고 실제 내용(MIME)이 확장자와 맞는지 본다
+        $expected = self::EXT_MIME[strtolower($file->getClientExtension())] ?? null;
+        if ($expected !== null && ! in_array($file->getMimeType(), $expected, true)) {
+            return '파일 내용이 확장자와 일치하지 않습니다.';
         }
         if ($file->getSize() > self::FILE_MAX_BYTES) {
             return '파일 크기는 5MB 이하여야 합니다.';

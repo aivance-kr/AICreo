@@ -19,6 +19,8 @@ use Throwable;
 
 class PageController extends BaseController
 {
+    private const INQUIRY_IP_LIMIT = 5;
+
     private readonly PageModel $pageModel;
 
     public function __construct()
@@ -73,6 +75,11 @@ class PageController extends BaseController
         // 허니팟: 사람 눈에 안 보이는 입력란이 채워졌으면 봇이다. 저장·알림 없이 성공처럼 돌려보낸다.
         if ((string) $this->request->getPost('website') !== '') {
             return redirect()->back()->with('success', lang('Content.inquiryReceived'));
+        }
+
+        // 같은 IP 의 반복 제출(업로드·Slack·메일 폭주)을 막는다
+        if (! service('throttler')->check('inquiry_ip_' . md5($this->request->getIPAddress()), self::INQUIRY_IP_LIMIT, HOUR)) {
+            return redirect()->back()->withInput()->with('error', lang('Newsletter.tooManyRequests'));
         }
 
         $rules = [

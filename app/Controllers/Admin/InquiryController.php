@@ -10,7 +10,8 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class InquiryController extends BaseController
 {
-    private const EXPORT_LIMIT = 5000;
+    private const EXPORT_LIMIT        = 5000;
+    private const STORED_FILE_PATTERN = '/^[a-f0-9]{32}\.[a-z0-9]{2,5}$/';
 
     private readonly InquiryModel $model;
 
@@ -109,7 +110,7 @@ class InquiryController extends BaseController
         $inquiry = $this->model->find($id);
         $item    = $inquiry ? (InquiryModel::extraOf($inquiry)[$index] ?? null) : null;
         // 저장 이름은 서버가 만든 hex+확장자만 허용해 경로 조작을 막는다
-        if ($item === null || ! isset($item['file']) || preg_match('/^[a-f0-9]{32}\.[a-z0-9]{2,5}$/', $item['file']) !== 1) {
+        if ($item === null || ! isset($item['file']) || preg_match(self::STORED_FILE_PATTERN, $item['file']) !== 1) {
             throw PageNotFoundException::forPageNotFound();
         }
         $path = InquiryForm::uploadDir() . '/' . $item['file'];
@@ -117,7 +118,7 @@ class InquiryController extends BaseController
             throw PageNotFoundException::forPageNotFound();
         }
 
-        return $this->response->download($path, null)->setFileName($item['value'])
+        return $this->response->download($path, null)->setFileName(preg_replace('/[\x00-\x1f\x7f"\\\\\/]+/', '_', $item['value']) ?? 'file')
             ->setHeader('X-Content-Type-Options', 'nosniff');
     }
 
@@ -133,6 +134,17 @@ class InquiryController extends BaseController
 
     public function delete(int $id): ResponseInterface|string
     {
+        // 삭제하면 첨부 파일도 디스크에서 지운다(익명 업로드가 쌓이지 않게)
+        $inquiry = $this->model->find($id);
+
+        foreach ($inquiry ? InquiryModel::extraOf($inquiry) : [] as $item) {
+            if (isset($item['file']) && preg_match(self::STORED_FILE_PATTERN, $item['file']) === 1) {
+                $path = InquiryForm::uploadDir() . '/' . $item['file'];
+                if (is_file($path)) {
+                    unlink($path);
+                }
+            }
+        }
         $this->model->delete($id);
 
         return redirect()->to('/admin/inquiries')->with('success', '삭제되었습니다.');
