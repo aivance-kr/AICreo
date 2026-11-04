@@ -11,7 +11,7 @@
                 <div class="d-flex align-items-center gap-3">
                     <div class="bg-primary bg-opacity-10 rounded p-2"><i class="bi bi-telephone text-primary fs-5" aria-hidden="true"></i></div>
                     <div>
-                        <div class="text-muted small">전화</div>
+                        <div class="text-muted small"><?= esc(lang('Content.phone')) ?></div>
                         <a href="tel:<?= esc($settings['phone']) ?>" class="fw-semibold text-decoration-none"><?= esc($settings['phone']) ?></a>
                     </div>
                 </div>
@@ -20,7 +20,7 @@
                 <div class="d-flex align-items-center gap-3">
                     <div class="bg-primary bg-opacity-10 rounded p-2"><i class="bi bi-envelope text-primary fs-5" aria-hidden="true"></i></div>
                     <div>
-                        <div class="text-muted small">이메일</div>
+                        <div class="text-muted small"><?= esc(lang('Content.email')) ?></div>
                         <a href="mailto:<?= esc($settings['email']) ?>" class="fw-semibold text-decoration-none"><?= esc($settings['email']) ?></a>
                     </div>
                 </div>
@@ -29,7 +29,7 @@
                 <div class="d-flex align-items-center gap-3">
                     <div class="bg-primary bg-opacity-10 rounded p-2"><i class="bi bi-geo-alt text-primary fs-5" aria-hidden="true"></i></div>
                     <div>
-                        <div class="text-muted small">주소</div>
+                        <div class="text-muted small"><?= esc(lang('Content.address')) ?></div>
                         <span class="fw-semibold"><?= esc($settings['address']) ?></span>
                     </div>
                 </div>
@@ -38,7 +38,7 @@
         </div>
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm p-4">
-                <h2 class="h5 fw-bold mb-3">문의 남기기</h2>
+                <h2 class="h5 fw-bold mb-3"><?= esc(lang('Content.leaveInquiry')) ?></h2>
                 <?php if (session()->has('success')): ?>
                     <div class="alert alert-success" role="alert"><?= esc(session('success')) ?></div>
                 <?php else: ?>

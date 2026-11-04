@@ -11,9 +11,9 @@
     <?php endif; ?>
 
     <?php if ($posts === []): ?>
-        <p class="text-muted">아직 공개된 글이 없습니다.</p>
+        <p class="text-muted"><?= esc(lang('Content.noPublicPosts')) ?></p>
     <?php else: ?>
-    <p class="small text-muted">총 <?= count($posts) ?>편</p>
+    <p class="small text-muted"><?= esc(lang('Content.totalPostCount', ['count' => count($posts)])) ?></p>
     <ol class="list-group list-group-numbered">
         <?php foreach ($posts as $p): ?>
         <li class="list-group-item">

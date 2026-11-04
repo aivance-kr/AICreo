@@ -99,7 +99,7 @@ class PageController extends BaseController
         // 클라이언트 이메일 발송 (설정에서 수신 이메일 읽기)
         $this->sendInquiryEmail();
 
-        return redirect()->back()->with('success', '문의가 접수되었습니다. 빠른 시일 내에 답변드리겠습니다.');
+        return redirect()->back()->with('success', lang('Content.inquiryReceived'));
     }
 
     private function sendInquiryEmail(): void

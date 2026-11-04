@@ -13,8 +13,8 @@ $imgDims = static function (string $relativePath): string {
         <?php $alt = trim((string) ($b['alt_text'] ?? '')); ?>
         <?php if ($b['link_url']): ?>
         <a href="<?= esc($b['link_url']) ?>" target="<?= esc($b['link_target']) ?>"<?= $b['link_target'] === '_blank' ? ' rel="noopener"' : '' ?>>
-            <img src="/<?= esc($b['image_path']) ?>" alt="<?= esc($alt !== '' ? $alt : '배너') ?>"<?= $imgDims($b['image_path']) ?>>
-            <?php if ($b['link_target'] === '_blank'): ?><span class="visually-hidden">(새 창 열림)</span><?php endif; ?>
+            <img src="/<?= esc($b['image_path']) ?>" alt="<?= esc($alt !== '' ? $alt : lang('Site.banner')) ?>"<?= $imgDims($b['image_path']) ?>>
+            <?php if ($b['link_target'] === '_blank'): ?><span class="visually-hidden"><?= esc(lang('Site.newWindow')) ?></span><?php endif; ?>
         </a>
         <?php else: ?>
         <img src="/<?= esc($b['image_path']) ?>" alt="<?= esc($alt) ?>"<?= $imgDims($b['image_path']) ?>>

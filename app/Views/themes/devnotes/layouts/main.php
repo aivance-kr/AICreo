@@ -40,11 +40,10 @@
 </head>
 <body>
 
-<a class="skip-link" href="#main-content">본문 바로가기</a>
+<a class="skip-link" href="#main-content"><?= esc(lang('Site.skipToContent')) ?></a>
 
 <?php
-$weekdays   = ['일', '월', '화', '수', '목', '금', '토'];
-$todayLabel = date('Y년 n월 j일') . ' ' . $weekdays[(int) date('w')] . '요일';
+$todayLabel = lang('Site.todayLabel', [date('Y'), lang('Site.month' . date('n')), date('j'), lang('Site.weekday' . date('w'))]);
 
 $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
     'menus'           => $menus,
@@ -64,13 +63,13 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
 <img src="/<?= esc($settings['site_logo']) ?>" alt="<?= esc($settings['site_name'] ?? '') ?>">
 <?php else: ?><?= esc($settings['site_name'] ?? '') ?><?php endif; ?></a>
             <button class="navbar-toggler dn-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-                    aria-controls="mainNav" aria-expanded="false" aria-label="메뉴 열기">
+                    aria-controls="mainNav" aria-expanded="false" aria-label="<?= esc(lang('Site.openMenu'), 'attr') ?>">
                 <span class="navbar-toggler-icon" aria-hidden="true"></span>
             </button>
         </div>
         <?php if (! empty($settings['site_desc'])): ?><p class="dn-rail__desc"><?= esc($settings['site_desc']) ?></p><?php endif; ?>
         <div class="collapse dn-rail__collapse" id="mainNav">
-            <nav class="dn-menu" aria-label="주 메뉴">
+            <nav class="dn-menu" aria-label="<?= esc(lang('Site.mainMenu'), 'attr') ?>">
                 <?php
                 $currentPath = '/' . uri_string();
                 $isCurrent   = static fn (?string $url): bool => $url !== null && $url !== '' && $url === $currentPath;
@@ -93,16 +92,16 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
                             <?php foreach ($children as $child): ?>
                             <li><a class="<?= $isCurrent($child['url'] ?? null) ? 'is-active' : '' ?>" href="<?= esc($child['url']) ?>"
                                    target="<?= esc($child['target']) ?>"<?= $child['target'] === '_blank' ? ' rel="noopener"' : '' ?>
-                                   <?= $isCurrent($child['url'] ?? null) ? 'aria-current="page"' : '' ?>><?= esc($child['title']) ?><?php if ($child['target'] === '_blank'): ?><span class="visually-hidden"> (새 창 열림)</span><?php endif; ?></a></li>
+                                   <?= $isCurrent($child['url'] ?? null) ? 'aria-current="page"' : '' ?>><?= esc($child['title']) ?><?php if ($child['target'] === '_blank'): ?><span class="visually-hidden"> <?= esc(lang('Site.newWindow')) ?></span><?php endif; ?></a></li>
                             <?php endforeach; ?>
                         </ul>
                         <?php else: ?>
                         <a class="<?= $active ? 'is-active' : '' ?>" href="<?= esc($menu['url']) ?>"
                            target="<?= esc($menu['target']) ?>"<?= $menu['target'] === '_blank' ? ' rel="noopener"' : '' ?>
-                           <?= $active ? 'aria-current="page"' : '' ?>><?= esc($menu['title']) ?><?php if ($menu['target'] === '_blank'): ?><span class="visually-hidden"> (새 창 열림)</span><?php endif; ?></a>
+                           <?= $active ? 'aria-current="page"' : '' ?>><?= esc($menu['title']) ?><?php if ($menu['target'] === '_blank'): ?><span class="visually-hidden"> <?= esc(lang('Site.newWindow')) ?></span><?php endif; ?></a>
                         <?php if ($categories !== []): ?>
                         <ul class="dn-submenu">
-                            <li><a href="/board/<?= esc($boardSlug) ?>">전체</a></li>
+                            <li><a href="/board/<?= esc($boardSlug) ?>"><?= esc(lang('Site.all')) ?></a></li>
                             <?php foreach ($categories as $category): ?>
                             <li><a href="/board/<?= esc($boardSlug) ?>?category=<?= esc($category['id']) ?>"><?= esc($category['name']) ?></a></li>
                             <?php endforeach; ?>
@@ -116,11 +115,11 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
             <div class="dn-account">
                 <?php if ($authUser['loggedIn']): ?>
                     <span><?= esc($authUser['nickname']) ?></span>
-                    <?php if ($authUser['role'] === 'admin'): ?><a href="/admin">관리자</a><?php endif; ?>
-                    <a href="/auth/profile">내 정보</a>
-                    <a href="/auth/logout">로그아웃</a>
+                    <?php if ($authUser['role'] === 'admin'): ?><a href="/admin"><?= esc(lang('Site.admin')) ?></a><?php endif; ?>
+                    <a href="/auth/profile"><?= esc(lang('Site.profile')) ?></a>
+                    <a href="/auth/logout"><?= esc(lang('Site.logout')) ?></a>
                 <?php else: ?>
-                    <a href="/auth/login">로그인</a>
+                    <a href="/auth/login"><?= esc(lang('Site.login')) ?></a>
                 <?php endif; ?>
             </div>
         </div>
@@ -133,7 +132,7 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
             <?php if (session()->has($key)): ?>
             <div class="alert alert-<?= $cls ?> alert-dismissible fade show" role="alert">
                 <?= esc(session($key)) ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="알림 닫기"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?= esc(lang('Site.closeAlert'), 'attr') ?>"></button>
             </div>
             <?php endif; ?>
         <?php endforeach; ?>
@@ -141,16 +140,16 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
         <?= $this->renderSection('content') ?>
     </main>
     <?php if ($sidebarHtml !== ''): ?>
-    <aside class="dn-aside" aria-label="사이드바">
+    <aside class="dn-aside" aria-label="<?= esc(lang('Site.sidebar'), 'attr') ?>">
         <?= $sidebarHtml ?>
     </aside>
     <?php endif; ?>
 </div>
 
         <footer class="dn-footer">
-            <nav class="dn-footer__nav" aria-label="하단 메뉴">
+            <nav class="dn-footer__nav" aria-label="<?= esc(lang('Site.footerMenu'), 'attr') ?>">
     <?php foreach ($menus as $menu): ?>
-    <a href="<?= esc($menu['url']) ?>"<?= $menu['target'] === '_blank' ? ' target="_blank" rel="noopener"' : '' ?>><?= esc($menu['title']) ?><?php if ($menu['target'] === '_blank'): ?><span class="visually-hidden"> (새 창 열림)</span><?php endif; ?></a>
+    <a href="<?= esc($menu['url']) ?>"<?= $menu['target'] === '_blank' ? ' target="_blank" rel="noopener"' : '' ?>><?= esc($menu['title']) ?><?php if ($menu['target'] === '_blank'): ?><span class="visually-hidden"> <?= esc(lang('Site.newWindow')) ?></span><?php endif; ?></a>
     <?php endforeach; ?>
 </nav>
             <?= $this->include('themes/default/components/site_footer_info') ?>

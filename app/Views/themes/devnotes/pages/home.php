@@ -12,7 +12,7 @@ $postUrl   = static fn (array $p): string => '/board/' . $p['board_slug'] . '/' 
 $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? mask_name($p['author_name'] ?? ''));
 ?>
 
-<?php $pageTitle = (string) ($page['title'] ?: '최근 글'); ?>
+<?php $pageTitle = (string) ($page['title'] ?: lang('Site.recentPosts')); ?>
 <h1 class="dn-page-title<?= $pageTitle === ($settings['site_name'] ?? '') ? ' visually-hidden' : '' ?>"><?= esc($pageTitle) ?></h1>
 
 <?php if ($latestBlogPosts !== []): ?>
@@ -35,7 +35,7 @@ $author    = static fn (array $p): string => (string) ($p['user_nickname'] ?? ma
     <?php endforeach; ?>
 </div>
 <?php else: ?>
-    <p class="dn-empty">표시할 공개 글이 아직 없습니다.</p>
+    <p class="dn-empty"><?= esc(lang('Site.noPublicPosts')) ?></p>
 <?php endif; ?>
 
 <?= view('components/ad_slot', ['ads' => $homeBottomAds, 'slot' => 'home_bottom']) ?>

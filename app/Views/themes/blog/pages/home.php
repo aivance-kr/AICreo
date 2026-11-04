@@ -12,8 +12,8 @@
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="h2 fw-bold mb-1">최신 글</h1>
-                <p class="text-muted mb-0">새로 등록된 글을 확인하세요.</p>
+                <h1 class="h2 fw-bold mb-1"><?= esc(lang('Site.latestPosts')) ?></h1>
+                <p class="text-muted mb-0"><?= esc(lang('Site.latestPostsDesc')) ?></p>
             </div>
         </div>
 
@@ -27,8 +27,8 @@
                                 <h2 class="fw-bold mb-2" style="font-size:var(--fs-list-title);line-height:1.45"><a class="text-decoration-none" href="/board/<?= esc($post['board_slug']) ?>/<?= esc($post['id']) ?>"><?= esc($post['title']) ?></a></h2>
                                 <div class="post-content blog-post-body home-post-content mb-3"><?= $post['content'] ?></div>
                                 <div class="blog-post-meta text-muted" style="font-size:var(--fs-meta)">
-                                    <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden">작성자 </span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'] ?? '')) ?></span>
-                                    <span><i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">조회수 </span><?= number_format((int) ($post['views'] ?? 0)) ?></span>
+                                    <span><i class="bi bi-person" aria-hidden="true"></i><span class="visually-hidden"><?= esc(lang('Site.authorLabel')) ?> </span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'] ?? '')) ?></span>
+                                    <span><i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden"><?= esc(lang('Site.viewsLabel')) ?> </span><?= number_format((int) ($post['views'] ?? 0)) ?></span>
                                 </div>
                             </div>
                             <time class="text-muted small text-nowrap" datetime="<?= esc($post['created_at']) ?>">
@@ -39,7 +39,7 @@
                 <?php endforeach; ?>
             </div>
         <?php else: ?>
-            <p class="text-muted">표시할 공개 글이 아직 없습니다.</p>
+            <p class="text-muted"><?= esc(lang('Site.noPublicPosts')) ?></p>
         <?php endif; ?>
     </div>
 </section>

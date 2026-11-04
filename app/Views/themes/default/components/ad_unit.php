@@ -12,8 +12,8 @@ if (empty($ads)) {
     return;
 }
 ?>
-<aside class="ad-unit" data-slot="<?= esc($slot ?? 'home_top', 'attr') ?>" aria-label="광고">
-    <span class="ad-unit__label">광고</span>
+<aside class="ad-unit" data-slot="<?= esc($slot ?? 'home_top', 'attr') ?>" aria-label="<?= esc(lang('Site.ad'), 'attr') ?>">
+    <span class="ad-unit__label"><?= esc(lang('Site.ad')) ?></span>
     <?php foreach ($ads as $ad): ?>
     <?= $ad['code'] /* 관리자가 등록한 광고 스니펫(구글 애드센스 등) — 그대로 출력 */ ?>
     <?php endforeach; ?>

@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
-<div class="post-progress" role="progressbar" aria-label="읽기 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="post-progress__bar"></span></div>
+<div class="post-progress" role="progressbar" aria-label="<?= esc(lang('Board.readProgress'), 'attr') ?>" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="post-progress__bar"></span></div>
 
 <div class="container py-4">
 <?php
@@ -12,16 +12,16 @@ $postBase = '/board/' . esc($board['slug']) . '/' . $post['id'];
 ob_start();
 ?>
 <?php if ($canEdit): ?>
-    <a href="<?= $postBase ?>/edit<?= esc($listQs, 'attr') ?>" class="btn btn-sm btn-outline-secondary">수정</a>
+    <a href="<?= $postBase ?>/edit<?= esc($listQs, 'attr') ?>" class="btn btn-sm btn-outline-secondary"><?= esc(lang('Board.edit')) ?></a>
     <form method="post" action="<?= $postBase ?>/delete<?= esc($listQs, 'attr') ?>"
-          onsubmit="return confirm('이 게시글을 삭제하시겠습니까? 되돌릴 수 없습니다.')">
+          onsubmit="return confirm('<?= esc(lang('Board.confirmDeletePost'), 'js') ?>')">
         <?= csrf_field() ?>
-        <button class="btn btn-sm btn-outline-danger">삭제</button>
+        <button class="btn btn-sm btn-outline-danger"><?= esc(lang('Board.delete')) ?></button>
     </form>
 <?php elseif (! $userId && $post['author_password']): ?>
     <!-- 비회원 수정/삭제: 비밀번호 입력 모달 -->
-    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#guestModal" data-action="edit">수정</button>
-    <button class="btn btn-sm btn-outline-danger"    data-bs-toggle="modal" data-bs-target="#guestModal" data-action="delete">삭제</button>
+    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#guestModal" data-action="edit"><?= esc(lang('Board.edit')) ?></button>
+    <button class="btn btn-sm btn-outline-danger"    data-bs-toggle="modal" data-bs-target="#guestModal" data-action="delete"><?= esc(lang('Board.delete')) ?></button>
 <?php endif; ?>
 <?php $postActions = ob_get_clean(); ?>
 <?php $preview = $preview ?? false; // 미리보기 공유 링크: 읽기 전용 ?>
@@ -29,7 +29,7 @@ ob_start();
 
 <div class="mb-2">
     <a href="/board/<?= esc($board['slug']) ?><?= esc($listQs, 'attr') ?>" class="text-decoration-none text-muted small">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= esc($board['name']) ?> 목록
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> <?= esc(lang('Board.backToList', [$board['name']])) ?>
     </a>
 </div>
 
@@ -44,11 +44,11 @@ ob_start();
         </div>
         <div class="post-meta">
             <?php if (! empty($post['category_name'])): ?>
-            <span class="post-meta__item"><span class="visually-hidden">분류 </span><?= esc($post['category_name']) ?></span>
+            <span class="post-meta__item"><span class="visually-hidden"><?= esc(lang('Board.category')) ?> </span><?= esc($post['category_name']) ?></span>
             <?php endif; ?>
-            <span class="post-meta__item"><span class="visually-hidden">작성자 </span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
-            <span class="post-meta__item"><span class="visually-hidden">작성일 </span><time datetime="<?= esc(substr((string) $post['created_at'], 0, 10), 'attr') ?>"><?= esc(str_replace('-', '.', substr((string) $post['created_at'], 0, 10))) ?></time></span>
-            <span class="post-meta__item"><span class="visually-hidden">조회수 </span>조회 <?= number_format($post['views']) ?></span>
+            <span class="post-meta__item"><span class="visually-hidden"><?= esc(lang('Board.author')) ?> </span><?= esc($post['user_nickname'] ?? mask_name($post['author_name'])) ?></span>
+            <span class="post-meta__item"><span class="visually-hidden"><?= esc(lang('Board.createdAt')) ?> </span><time datetime="<?= esc(substr((string) $post['created_at'], 0, 10), 'attr') ?>"><?= esc(str_replace('-', '.', substr((string) $post['created_at'], 0, 10))) ?></time></span>
+            <span class="post-meta__item"><span class="visually-hidden"><?= esc(lang('Board.viewCount')) ?> </span><?= esc(lang('Board.views')) ?> <?= number_format($post['views']) ?></span>
             <?php if (! $preview): ?>
             <?= view('board/_share', ['url' => $canonicalUrl, 'shortUrl' => $shortUrl, 'title' => $post['title'], 'kakaoJsKey' => $kakaoJsKey]) ?>
             <?php endif; ?>
@@ -82,7 +82,7 @@ ob_start();
         <?php $images = array_filter($files, fn($f) => $f['is_image']); ?>
         <?php $attachments = array_filter($files, fn($f) => !$f['is_image']); ?>
         <?php if ($images || $attachments): ?>
-        <div class="post-files" aria-label="첨부">
+        <div class="post-files" aria-label="<?= esc(lang('Board.attachments'), 'attr') ?>">
             <!-- 이미지 첨부 -->
             <?php if ($images): ?>
             <div class="row g-2">
@@ -91,7 +91,7 @@ ob_start();
                     <a href="/<?= esc($img['file_path']) ?>" target="_blank" rel="noopener">
                         <img loading="lazy" src="<?= esc(thumb_url($img['file_path'])) ?>" alt="<?= esc($img['original_name']) ?>"
                              class="img-thumbnail" style="max-height:200px;">
-                        <span class="visually-hidden">원본 이미지 보기 (새 창 열림)</span>
+                        <span class="visually-hidden"><?= esc(lang('Board.viewOriginal')) ?></span>
                     </a>
                 </div>
                 <?php endforeach; ?>
@@ -101,7 +101,7 @@ ob_start();
             <!-- 파일 첨부 -->
             <?php if ($attachments): ?>
             <div class="file-list<?= $images ? ' mt-3' : '' ?>">
-                <div class="text-muted small mb-1"><i class="bi bi-paperclip" aria-hidden="true"></i> 첨부파일</div>
+                <div class="text-muted small mb-1"><i class="bi bi-paperclip" aria-hidden="true"></i> <?= esc(lang('Board.attachedFiles')) ?></div>
                 <?php foreach ($attachments as $file): ?>
                 <div>
                     <a href="/board/file/<?= $file['id'] ?>/download" class="text-decoration-none">
@@ -121,7 +121,7 @@ ob_start();
         <?php $postTags = \App\Models\PostModel::splitTags($post['tags'] ?? null); ?>
         <?php if ($postTags !== []): ?>
         <div class="post-tags">
-            <span class="visually-hidden">태그</span>
+            <span class="visually-hidden"><?= esc(lang('Board.tag')) ?></span>
             <?php foreach ($postTags as $tag): ?><a href="/board/<?= esc($board['slug']) ?>?type=tag&amp;keyword=<?= urlencode($tag) ?>" class="badge text-bg-light border text-decoration-none">#<?= esc($tag) ?></a> <?php endforeach; ?>
         </div>
         <?php endif; ?>
@@ -133,7 +133,7 @@ ob_start();
         <?= csrf_field() ?>
         <button type="submit" class="btn <?= $liked ? 'btn-danger' : 'btn-outline-danger' ?>" aria-pressed="<?= $liked ? 'true' : 'false' ?>">
             <i class="bi <?= $liked ? 'bi-heart-fill' : 'bi-heart' ?>" aria-hidden="true"></i>
-            공감 <span class="fw-bold"><?= number_format($likeCount) ?></span>
+            <?= esc(lang('Board.likes')) ?> <span class="fw-bold"><?= number_format($likeCount) ?></span>
         </button>
     </form>
     <?php endif; ?>
@@ -151,17 +151,17 @@ ob_start();
 
 <?php if ($prevPost || $nextPost): ?>
 <!-- 이전글 / 다음글 -->
-<nav class="post-section post-pager" aria-label="이전·다음 글">
+<nav class="post-section post-pager" aria-label="<?= esc(lang('Board.prevNextPost'), 'attr') ?>">
     <div class="list-group list-group-flush">
         <?php if ($nextPost): ?>
         <a href="/board/<?= esc($board['slug']) ?>/<?= $nextPost['id'] ?><?= esc($listQs, 'attr') ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
-            <span class="text-muted small flex-shrink-0" style="width:4.5rem;"><i class="bi bi-arrow-up" aria-hidden="true"></i> 다음글</span>
+            <span class="text-muted small flex-shrink-0" style="width:4.5rem;"><i class="bi bi-arrow-up" aria-hidden="true"></i> <?= esc(lang('Board.nextPost')) ?></span>
             <span class="text-truncate"><?= esc($nextPost['title']) ?></span>
         </a>
         <?php endif; ?>
         <?php if ($prevPost): ?>
         <a href="/board/<?= esc($board['slug']) ?>/<?= $prevPost['id'] ?><?= esc($listQs, 'attr') ?>" class="list-group-item list-group-item-action d-flex align-items-center gap-2">
-            <span class="text-muted small flex-shrink-0" style="width:4.5rem;"><i class="bi bi-arrow-down" aria-hidden="true"></i> 이전글</span>
+            <span class="text-muted small flex-shrink-0" style="width:4.5rem;"><i class="bi bi-arrow-down" aria-hidden="true"></i> <?= esc(lang('Board.prevPost')) ?></span>
             <span class="text-truncate"><?= esc($prevPost['title']) ?></span>
         </a>
         <?php endif; ?>
@@ -172,7 +172,7 @@ ob_start();
 <?php if (! empty($relatedPosts)): ?>
 <!-- 관련 글 -->
 <section class="post-section" aria-labelledby="related-posts-title">
-    <h2 id="related-posts-title" class="post-section__title">이어 읽을 글</h2>
+    <h2 id="related-posts-title" class="post-section__title"><?= esc(lang('Board.relatedPosts')) ?></h2>
     <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
         <?php foreach ($relatedPosts as $related): ?>
         <div class="col">
@@ -193,9 +193,9 @@ ob_start();
 <?php if (! $preview): ?>
 <!-- 댓글 -->
 <section id="comments" class="post-section" aria-labelledby="comments-title">
-    <h2 id="comments-title" class="post-section__title">댓글 <span class="text-muted fw-normal"><?= count($comments) ?></span></h2>
+    <h2 id="comments-title" class="post-section__title"><?= esc(lang('Board.comments')) ?> <span class="text-muted fw-normal"><?= count($comments) ?></span></h2>
     <?php if ($comments === []): ?>
-    <p class="text-muted small mb-3">아직 댓글이 없습니다. 첫 댓글을 남겨 보세요.</p>
+    <p class="text-muted small mb-3"><?= esc(lang('Board.noComments')) ?></p>
     <?php else: ?>
     <div class="list-group list-group-flush mb-3">
         <?php foreach ($comments as $c): ?>
@@ -206,9 +206,9 @@ ob_start();
                     <span class="text-muted small"><?= substr($c['created_at'], 0, 16) ?></span>
                     <?php if ($role === 'admin' || ($userId && $c['user_id'] == $userId)): ?>
                     <form method="post" action="/board/<?= esc($board['slug']) ?>/<?= $post['id'] ?>/comment/<?= $c['id'] ?>/delete<?= esc($listQs, 'attr') ?>"
-                          onsubmit="return confirm('이 댓글을 삭제하시겠습니까?')">
+                          onsubmit="return confirm('<?= esc(lang('Board.confirmDeleteComment'), 'js') ?>')">
                         <?= csrf_field() ?>
-                        <button class="btn btn-link btn-sm text-danger p-0">삭제<span class="visually-hidden"> — <?= esc($c['user_nickname'] ?? mask_name($c['author_name'])) ?>님의 댓글</span></button>
+                        <button class="btn btn-link btn-sm text-danger p-0"><?= esc(lang('Board.delete')) ?><span class="visually-hidden"> — <?= esc(lang('Board.commentBy', [$c['user_nickname'] ?? mask_name($c['author_name'])])) ?></span></button>
                     </form>
                     <?php endif; ?>
                 </div>
@@ -225,32 +225,32 @@ ob_start();
         <?php if (! session()->get('user_id')): ?>
         <div class="row g-2 mb-2">
             <div class="col-sm-4">
-                <label class="visually-hidden" for="comment-author-name">이름</label>
+                <label class="visually-hidden" for="comment-author-name"><?= esc(lang('Board.name')) ?></label>
                 <input type="text" name="author_name" id="comment-author-name" class="form-control"
-                       placeholder="이름" required autocomplete="name">
+                       placeholder="<?= esc(lang('Board.name'), 'attr') ?>" required autocomplete="name">
             </div>
             <div class="col-sm-4">
-                <label class="visually-hidden" for="comment-author-password">비밀번호</label>
+                <label class="visually-hidden" for="comment-author-password"><?= esc(lang('Board.password')) ?></label>
                 <input type="password" name="author_password" id="comment-author-password" class="form-control"
-                       placeholder="비밀번호" required autocomplete="new-password">
+                       placeholder="<?= esc(lang('Board.password'), 'attr') ?>" required autocomplete="new-password">
             </div>
             <div class="col-sm-4">
-                <label class="visually-hidden" for="comment-captcha-answer">스팸 방지 계산</label>
+                <label class="visually-hidden" for="comment-captcha-answer"><?= esc(lang('Board.captchaLabel')) ?></label>
                 <div class="input-group">
                     <span class="input-group-text" aria-hidden="true"><?= esc($guestCommentCaptcha['question']) ?></span>
                     <input type="text" inputmode="numeric" name="captcha_answer" id="comment-captcha-answer" class="form-control"
-                           placeholder="답" required autocomplete="off" aria-label="스팸 방지 계산 답">
+                           placeholder="<?= esc(lang('Board.captchaAnswerPlaceholder'), 'attr') ?>" required autocomplete="off" aria-label="<?= esc(lang('Board.captchaAnswerLabel'), 'attr') ?>">
                 </div>
             </div>
             <div class="visually-hidden" aria-hidden="true">
-                <label for="comment-website">웹사이트</label>
+                <label for="comment-website"><?= esc(lang('Board.website')) ?></label>
                 <input type="text" name="website" id="comment-website" tabindex="-1" autocomplete="off">
             </div>
         </div>
         <?php endif; ?>
-        <label class="visually-hidden" for="comment-content">댓글 내용</label>
-        <textarea name="content" id="comment-content" class="form-control mb-2" rows="3" placeholder="댓글을 입력하세요" required></textarea>
-        <div class="text-end"><button class="btn btn-primary px-4">댓글 등록</button></div>
+        <label class="visually-hidden" for="comment-content"><?= esc(lang('Board.commentContent')) ?></label>
+        <textarea name="content" id="comment-content" class="form-control mb-2" rows="3" placeholder="<?= esc(lang('Board.commentPlaceholder'), 'attr') ?>" required></textarea>
+        <div class="text-end"><button class="btn btn-primary px-4"><?= esc(lang('Board.commentSubmit')) ?></button></div>
     </form>
 </section>
 
@@ -261,15 +261,15 @@ ob_start();
             <form method="post" id="guestForm">
                 <?= csrf_field() ?>
                 <div class="modal-header">
-                    <h2 class="modal-title h6 mb-0" id="guestModalLabel">비밀번호 확인</h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                    <h2 class="modal-title h6 mb-0" id="guestModalLabel"><?= esc(lang('Board.confirmPassword')) ?></h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= esc(lang('Board.close'), 'attr') ?>"></button>
                 </div>
                 <div class="modal-body">
-                    <label class="form-label" for="guest-password">작성 시 입력한 비밀번호</label>
+                    <label class="form-label" for="guest-password"><?= esc(lang('Board.postPassword')) ?></label>
                     <input type="password" name="author_password" id="guest-password" class="form-control" required autocomplete="current-password">
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary btn-sm">확인</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><?= esc(lang('Board.confirm')) ?></button>
                 </div>
             </form>
         </div>

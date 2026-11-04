@@ -67,6 +67,30 @@ final class NewsletterMailerTest extends CIUnitTestCase
         $this->assertStringNotContainsString('<b>', $this->sent['body']);
     }
 
+    public function testPostMailUsesPostLocale(): void
+    {
+        $this->mailer()->sendPost([
+            'email'             => 'a@example.com',
+            'unsubscribe_token' => 'tok123',
+            'post_id'           => 7,
+            'title'             => 'Title',
+            'content'           => '<p>Body</p>',
+            'board_slug'        => 'blog',
+            'locale'            => 'en',
+        ]);
+
+        $this->assertStringContainsString('Unsubscribe', $this->sent['body']);
+        $this->assertStringContainsString('Read post', $this->sent['body']);
+        $this->assertStringNotContainsString('구독 해지', $this->sent['body']);
+    }
+
+    public function testConfirmationMailUsesGivenLocale(): void
+    {
+        $this->mailer()->sendConfirmation(['email' => 'a@example.com', 'confirm_token' => 'conf1', 'unsubscribe_token' => 'unsub1'], 'en');
+
+        $this->assertStringContainsString('Confirm subscription', $this->sent['body']);
+    }
+
     public function testConfirmationMailLinksToConfirmUrl(): void
     {
         $this->mailer()->sendConfirmation(['email' => 'a@example.com', 'confirm_token' => 'conf1', 'unsubscribe_token' => 'unsub1']);
