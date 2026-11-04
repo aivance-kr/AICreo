@@ -1,0 +1,8 @@
+{
+  "key": "valid",
+  "name": "정상 플러그인",
+  "version": "1.0.0",
+  "requires": { "core": ">=1.0", "plugins": [] },
+  "license_type": "onetime",
+  "menu": [{ "title": "정상", "route": "my/valid", "icon": "bi-check" }]
+}
