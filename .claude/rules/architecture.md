@@ -223,3 +223,11 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 캐시 키는 `seo_feed_{언어}`·`seo_llms_{언어}`. 키·무효화는 `App\Libraries\Seo\LocaleCache` 한곳에서 한다(글·게시판·페이지·설정 변경 훅이 `clearFeed()`/`clearLlms()` 를 부른다). 새 훅을 달 때 `cache()->delete('seo_feed')` 처럼 직접 지우지 말 것.
 - OG: `og:locale` 은 `$page['locale']`(글·페이지 자신의 언어)이 있으면 요청 언어보다 우선한다. OG 이미지는 글 제목을 그대로 그리므로 글 언어를 따른다.
 - 게시판 이름·설명 번역: `board_translations`(board_id+locale 유일, 기본 언어 제외). `BoardModel::getBySlug($slug, $locale)`/`getActiveBoards($locale)` 가 번역을 덮어쓰고(이름이 빈 번역은 무시), 글 목록 쿼리(`PostModel`의 `board_name`)는 **글 언어**의 번역을 left join 으로 쓴다. 관리자 게시판 폼에 사용 언어별 입력란이 있다(`BoardTranslationModel::saveForBoard`, 이름이 비면 번역 삭제).
+
+## 웹훅·알림 연동
+
+- 관리자 `/admin/settings/notify`("알림" 탭)에 웹훅 URL(`webhook_url`, settings 에만 보관)과 이벤트별 켜기(`webhook_on_inquiry|comment|subscriber`)를 둔다. URL 은 http(s) 만 저장한다.
+- 이벤트(문의 접수 `PageController`, 댓글 작성 `BoardController::commentStore`, 구독 신청 `NewsletterController::subscribe`)는 `WebhookDeliveryModel::enqueue()` 로 `webhook_deliveries` 큐에만 올린다. URL 이 없거나 이벤트가 꺼져 있으면 아무것도 하지 않고, 어떤 예외도 요청 흐름으로 번지지 않는다. 큐 행에는 URL 을 복사하지 않는다.
+- 발송: `php spark webhook:send [--limit 50]` 가 `WebhookSender`(JSON POST, 타임아웃 5초, 최상위 `text` 로 Slack 호환)로 보낸다. 실패하면 1·5·30·120분 간격으로 재시도하고 5번째 실패에서 포기(`failed_at`)한다. 로그(`[Webhook]`)와 `last_error` 에는 URL 을 남기지 않는다. 30일 지난 처리 완료 행은 같은 명령이 지운다.
+- 기존 `SLACK_INQUIRY_WEBHOOK_URL`(`SlackInquiryNotifier`, 문의 즉시 동기 알림)과 별개다. 둘 다 설정하면 문의 알림이 두 번 간다.
+- **서버 crontab 에 1분마다 등록해야 한다** (예: `* * * * * cd /path/to/app && php spark webhook:send >> /dev/null 2>&1`). 없으면 큐에만 쌓인다.

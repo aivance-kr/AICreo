@@ -21,6 +21,7 @@ use App\Models\PostModel;
 use App\Models\PostRevisionModel;
 use App\Models\SeriesModel;
 use App\Models\SignatureModel;
+use App\Models\WebhookDeliveryModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\I18n;
@@ -619,7 +620,7 @@ class BoardController extends BaseController
         // 비회원 댓글이 스팸으로 의심되면 공개하지 않고 승인 대기로 둔다
         $pending = $isGuest && (new CommentSpamFilter())->isSuspicious((string) $this->request->getPost('content'));
 
-        $this->commentModel->insert([
+        $commentId = (int) $this->commentModel->insert([
             'post_id'         => $postId,
             'is_active'       => $pending ? 0 : 1,
             'is_pending'      => $pending ? 1 : 0,
@@ -629,6 +630,13 @@ class BoardController extends BaseController
             'author_password' => $isGuest ? password_hash($this->request->getPost('author_password'), PASSWORD_DEFAULT) : null,
             'ip_address'      => $this->request->getIPAddress(),
         ]);
+
+        $authorName = (string) ($isGuest ? $this->request->getPost('author_name') : session()->get('user_nickname'));
+        model(WebhookDeliveryModel::class)->enqueue(
+            'comment',
+            sprintf('%s: %s', $authorName, mb_substr(trim(strip_tags((string) $this->request->getPost('content'))), 0, 100)),
+            ['id' => $commentId, 'post_id' => $postId, 'author' => $authorName, 'pending' => $pending, 'url' => base_url("board/{$boardSlug}/{$postId}")],
+        );
 
         if ($isGuest) {
             cache()->save($this->guestCommentRateLimitKey(), true, 60);
