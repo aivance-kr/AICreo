@@ -39,6 +39,20 @@ final class WidgetRenderer
         return $html;
     }
 
+    /**
+     * 플러그인의 위젯 렌더 캐시를 모두 지운다 (슬롯·뷰·로케일 무관).
+     * 설정이 바뀌면 캐시 TTL 을 기다리지 않고 바로 반영하려고 쓴다.
+     */
+    public static function clearCache(string $pluginKey): void
+    {
+        try {
+            cache()->deleteMatching($pluginKey . '_widget_*');
+        } catch (Throwable $e) {
+            // 캐시 핸들러가 패턴 삭제를 지원하지 않으면 TTL 만료로 반영된다
+            log_message('warning', '[Plugin] 위젯 캐시 삭제 실패: ' . $e->getMessage());
+        }
+    }
+
     private function renderOne(WidgetDefinition $widget): string
     {
         // 권한은 캐시보다 먼저 본다 — 캐시된 HTML 이 비보유자에게 새지 않게
