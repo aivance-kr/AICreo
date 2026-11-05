@@ -151,7 +151,7 @@ class WeatherClient
 
         return [
             'region'      => $region,
-            'name'        => $place['name'] ?? $region,
+            'name'        => $place['name'],
             'temperature' => (float) $now['temperature_2m'],
             'humidity'    => (int) ($now['relative_humidity_2m'] ?? 0),
             'wind'        => (float) ($now['wind_speed_10m'] ?? 0),
@@ -177,6 +177,6 @@ class WeatherClient
             return null;
         }
 
-        return ['name' => $place['name'] ?? $region, 'latitude' => $place['latitude'], 'longitude' => $place['longitude']];
+        return ['name' => $place['name'], 'latitude' => $place['latitude'], 'longitude' => $place['longitude']];
     }
 }
