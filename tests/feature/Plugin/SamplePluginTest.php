@@ -61,6 +61,8 @@ final class SamplePluginTest extends FeatureTestCase
         Database::forge()->dropTable('sample_notes', true);
         db_connect()->table('migrations')->like('namespace', 'Plugins\\Sample', 'after')->delete();
         db_connect()->table('plugins')->where('plugin_key', 'sample')->delete();
+        // DDL 커밋 이후 /sample 요청의 방문 로그가 롤백되지 않고 남아 VisitLogFilterTest 등을 깨뜨린다
+        db_connect()->table('page_visits')->where('uri', '/sample')->delete();
 
         Services::reset();
         Events::removeAllListeners();

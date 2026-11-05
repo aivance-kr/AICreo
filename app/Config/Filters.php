@@ -6,6 +6,7 @@ namespace Config;
 
 use App\Filters\AuthFilter;
 use App\Filters\BlockedIpFilter;
+use App\Filters\EntitlementFilter;
 use App\Filters\LocaleFilter;
 use App\Filters\RedirectFilter;
 use App\Filters\VisitLogFilter;
@@ -20,14 +21,15 @@ class Filters extends BaseConfig
      * @var array<string, class-string|list<class-string>>
      */
     public array $aliases = [
-        'csrf'      => CSRF::class,
-        'toolbar'   => DebugToolbar::class,
-        'honeypot'  => Honeypot::class,
-        'auth'      => AuthFilter::class,   // ← 추가
-        'redirect'  => RedirectFilter::class,
-        'visitLog'  => VisitLogFilter::class,
-        'blockedIp' => BlockedIpFilter::class,
-        'locale'    => LocaleFilter::class,
+        'csrf'        => CSRF::class,
+        'toolbar'     => DebugToolbar::class,
+        'honeypot'    => Honeypot::class,
+        'auth'        => AuthFilter::class,   // ← 추가
+        'redirect'    => RedirectFilter::class,
+        'visitLog'    => VisitLogFilter::class,
+        'blockedIp'   => BlockedIpFilter::class,
+        'locale'      => LocaleFilter::class,
+        'entitlement' => EntitlementFilter::class,
     ];
 
     /**
