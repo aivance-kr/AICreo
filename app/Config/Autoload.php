@@ -90,7 +90,7 @@ class Autoload extends AutoloadConfig
      *
      * @var list<string>
      */
-    public $helpers = ['mask', 'post', 'asset', 'image', 'i18n'];
+    public $helpers = ['mask', 'post', 'asset', 'image', 'i18n', 'widget'];
 
     /**
      * 활성 플러그인의 PSR-4 를 병합한다.

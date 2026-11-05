@@ -8,6 +8,7 @@ use App\Exceptions\InvalidManifestException;
 use App\Libraries\Plugin\LicenseType;
 use App\Libraries\Plugin\PluginManifest;
 use CodeIgniter\Test\CIUnitTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * @internal
@@ -186,6 +187,7 @@ final class PluginManifestTest extends CIUnitTestCase
             'license_type' => 'onetime',
             'requires'     => ['core' => '>=1.0', 'plugins' => ['quote']],
             'menu'         => [['title' => '샘플 노트', 'route' => 'my/sample', 'icon' => 'bi-sticky']],
+            'widgets'      => [['slot' => 'sidebar', 'view' => 'Views/widgets/a', 'order' => 3, 'class' => null, 'cache' => 60, 'entitled' => true]],
         ];
         $manifest = PluginManifest::fromArray($data, 'Sample');
 
@@ -217,5 +219,50 @@ final class PluginManifestTest extends CIUnitTestCase
     public function testLicenseTypeLabels(): void
     {
         $this->assertSame('구독', LicenseType::Subscription->label());
+    }
+
+    public function testParsesWidgetsWithDefaults(): void
+    {
+        $data            = $this->validData();
+        $data['widgets'] = [['slot' => 'sidebar', 'view' => 'Views/widgets/recent', 'order' => 10]];
+
+        $widget = PluginManifest::fromArray($data, 'Sample')->widgets[0];
+
+        $this->assertSame('sidebar', $widget->slot);
+        $this->assertSame(10, $widget->order);
+        $this->assertSame(300, $widget->cache);
+        $this->assertFalse($widget->entitled);
+        $this->assertSame('\\Plugins\\Sample\\Views\\widgets\\recent', $widget->viewName());
+    }
+
+    /**
+     * @param array<string, mixed> $widget
+     */
+    #[DataProvider('provideRejectsInvalidWidget')]
+    public function testRejectsInvalidWidget(array $widget): void
+    {
+        $data            = $this->validData();
+        $data['widgets'] = [$widget];
+
+        $this->expectException(InvalidManifestException::class);
+        PluginManifest::fromArray($data, 'Sample');
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>}>
+     */
+    public static function provideRejectsInvalidWidget(): iterable
+    {
+        yield 'slot 대문자' => [['slot' => 'Side', 'view' => 'Views/a']];
+
+        yield 'view 상위 경로' => [['slot' => 'sidebar', 'view' => 'Views/../x']];
+
+        yield 'view Views 아님' => [['slot' => 'sidebar', 'view' => 'Other/a']];
+
+        yield '다른 네임스페이스 class' => [['slot' => 'sidebar', 'view' => 'Views/a', 'class' => 'App\\Evil']];
+
+        yield 'cache 음수' => [['slot' => 'sidebar', 'view' => 'Views/a', 'cache' => -1]];
+
+        yield 'order 문자열' => [['slot' => 'sidebar', 'view' => 'Views/a', 'order' => 'x']];
     }
 }

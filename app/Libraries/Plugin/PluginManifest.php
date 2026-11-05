@@ -19,8 +19,9 @@ final readonly class PluginManifest
     public const SEMVER_PATTERN = '/^\d+\.\d+\.\d+$/';
 
     /**
-     * @param list<string>   $requiresPlugins
-     * @param list<MenuItem> $menu
+     * @param list<string>           $requiresPlugins
+     * @param list<MenuItem>         $menu
+     * @param list<WidgetDefinition> $widgets
      */
     public function __construct(
         public string $key,
@@ -31,6 +32,7 @@ final readonly class PluginManifest
         public string $requiresCore = '*',
         public array $requiresPlugins = [],
         public array $menu = [],
+        public array $widgets = [],
     ) {
     }
 
@@ -91,7 +93,17 @@ final readonly class PluginManifest
             $menu[] = MenuItem::fromArray($item);
         }
 
-        return new self($key, $name, $version, $licenseType, $directoryName, $requiresCore, $requiresPlugins, $menu);
+        $widgets = [];
+
+        foreach (is_array($data['widgets'] ?? null) ? $data['widgets'] : [] as $item) {
+            if (! is_array($item)) {
+                throw InvalidManifestException::forField('widgets', '객체 배열이어야 합니다');
+            }
+
+            $widgets[] = WidgetDefinition::fromArray($item, $key, $directoryName);
+        }
+
+        return new self($key, $name, $version, $licenseType, $directoryName, $requiresCore, $requiresPlugins, $menu, $widgets);
     }
 
     public static function fromJsonFile(string $path): self
@@ -130,6 +142,7 @@ final readonly class PluginManifest
             'license_type' => $this->licenseType->value,
             'requires'     => ['core' => $this->requiresCore, 'plugins' => $this->requiresPlugins],
             'menu'         => array_map(static fn (MenuItem $item): array => $item->toArray(), $this->menu),
+            'widgets'      => array_map(static fn (WidgetDefinition $w): array => $w->toArray(), $this->widgets),
         ];
     }
 
