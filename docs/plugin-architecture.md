@@ -98,8 +98,37 @@ public/plugins/{plugin_key}/   # CSS/JS/이미지 (ZIP 의 public/ 이 여기로
 | `requires.core` | ❌ | 제약 문자열. **현재 AILign 도 문법만 검증, 해석 안 함** |
 | `requires.plugins` | ❌ | key 배열. 강제는 2단계 `PluginDependencyService` |
 | `menu[]` | ❌ | `{title, route, icon}`. `route` 는 선행 `/` 금지 |
+| `widgets[]` | ❌ | 위젯 슬롯 등록. 아래 «위젯 슬롯» 참고 |
+| `settings[]` | ❌ | `{key, label, default, help}` — 관리자가 `/admin/plugins/{key}/settings` 에서 입력하는 문자열 값(100자). 값은 `plugins.settings`(JSON)에 저장, 플러그인은 `model(PluginModel::class)->settingsFor('{key}')` 로 읽는다(비면 `default`). 재스캔해도 저장값은 유지 |
 
 주의: 매니페스트의 `license_type` 은 **신규 등록 시 기본값 제안**일 뿐이다. 재스캔(`upsertFromManifest`)은 `name`·`version`·`manifest` 만 갱신하고, 운영자가 정한 `status`·가격·`license_type` 은 덮어쓰지 않는다.
+
+## 위젯 슬롯 (#627)
+
+플러그인이 공개 화면의 원하는 자리에 작은 단위(위젯)로 끼어든다. 슬롯은 **코어 뷰가 `<?= widget_slot('이름') ?>` 를 부르는 자리**이고, 이름은 `^[a-z][a-z0-9_]*$` 자유 문자열이다 — 새 자리가 필요하면 그 뷰에 한 줄 넣으면 된다.
+
+```json
+"widgets": [
+  { "slot": "sidebar", "view": "Views/widgets/recent", "order": 10,
+    "class": "Plugins\\Sample\\Widgets\\RecentNotesWidget", "cache": 300, "entitled": false }
+]
+```
+
+| 필드 | 필수 | 규칙 |
+|---|---|---|
+| `slot` | ✅ | 슬롯 이름 |
+| `view` | ✅ | 플러그인 디렉터리 기준 `Views/...` (상위 경로·확장자 금지) |
+| `order` | ❌ | 정수, 기본 0. 작을수록 먼저, 같으면 plugin key 순 |
+| `class` | ❌ | `Plugins\{Dir}\` 네임스페이스의 `WidgetInterface` 구현. `data()` 가 뷰 변수를 만든다 (위젯은 컨트롤러 없이 렌더되므로 데이터 조회는 여기서) |
+| `cache` | ❌ | 렌더 결과 캐시 초, 기본 300, `0` 이면 캐시 안 함. 키 `{plugin_key}_widget_{해시}`(슬롯·뷰·로케일) |
+| `entitled` | ❌ | `true` 면 해당 플러그인 Entitlement 가 없는(`None`) 사용자에게 숨김. 권한 검사는 캐시 조회보다 먼저 한다 |
+
+- `PluginManager::widgets($slot)` 는 **활성 플러그인**의 위젯만 모은다 → 비활성화·제거하면 다음 요청부터 사라진다(캐시된 HTML 은 조회 자체가 안 됨).
+- `WidgetRenderer` 는 위젯 단위 try/catch — 예외는 로그(`위젯 렌더 실패`)만 남기고 그 위젯만 비운다.
+- 기본 제공 슬롯: `sidebar`(`blog_sidebar.php` 끝, 블로그형 테마 공용), `footer`(`site_footer_info.php` 끝). 다른 자리(헤더·본문 위/아래·상세·목록)는 해당 뷰에서 `widget_slot()` 을 부르면 된다.
+- 뷰는 `esc()` 필수. 다국어는 위젯 뷰가 `lang()`/`$request->getLocale()` 로 처리하고, 캐시 키에 로케일이 들어간다.
+- 사용자별로 내용이 달라지는 위젯은 `cache: 0` 으로 둔다(캐시는 사용자 구분이 없다).
+- 예: `app/Plugins/Sample` 의 `RecentNotesWidget` + `Views/widgets/recent.php`.
 
 ## 4. 구성 요소 (AILign 기준 파일 → AICreo 이식 위치)
 

@@ -110,3 +110,4 @@ $tagSpan = max($tagCloud) - $tagMin;
     <a class="side-tags__all" href="/tags"><?= esc(lang('Site.allTags')) ?></a>
 </section>
 <?php endif; ?>
+<?= widget_slot('sidebar') ?>

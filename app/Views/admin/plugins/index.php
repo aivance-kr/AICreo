@@ -39,6 +39,9 @@ $statusLabels = ['active' => ['사용', 'bg-success'], 'inactive' => ['꺼짐', 
                     <td data-label="버전"><?= esc($plugin['version']) ?></td>
                     <td data-label="상태"><span class="badge <?= $badge ?>"><?= esc($label) ?></span></td>
                     <td data-label="" class="cell-actions text-nowrap">
+                        <?php if (! empty($plugin['has_settings'])): ?>
+                        <a href="<?= $base ?>/settings" class="btn btn-sm btn-outline-primary">설정</a>
+                        <?php endif; ?>
                         <?php if ($plugin['status'] === 'active'): ?>
                         <form method="post" action="<?= $base ?>/deactivate" class="d-inline">
                             <?= csrf_field() ?>

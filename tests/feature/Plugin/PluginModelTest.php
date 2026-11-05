@@ -6,6 +6,7 @@ namespace Tests\Feature\Plugin;
 
 use App\Libraries\Plugin\LicenseType;
 use App\Libraries\Plugin\PluginManifest;
+use App\Libraries\Plugin\PluginSetting;
 use App\Models\PluginModel;
 use Tests\Support\DatabaseTestCase;
 
@@ -105,5 +106,51 @@ final class PluginModelTest extends DatabaseTestCase
         $this->model->update($this->model->findByKey('ai_quote')['id'], ['status' => PluginModel::STATUS_ACTIVE]);
 
         $this->assertSame(['ai_quote' => 'AiQuote'], $this->model->activeKeys());
+    }
+
+    private function withSettings(): void
+    {
+        $manifest = new PluginManifest(
+            key: 'sample',
+            name: '샘플',
+            version: '1.0.0',
+            licenseType: LicenseType::Onetime,
+            directoryName: 'Sample',
+            settings: [new PluginSetting('regions', '지역', '서울')],
+        );
+
+        $this->model->upsertFromManifest($manifest);
+    }
+
+    public function testSettingsFallBackToManifestDefault(): void
+    {
+        $this->withSettings();
+
+        $this->assertSame(['regions' => '서울'], $this->model->settingsFor('sample'));
+    }
+
+    public function testSaveSettingsKeepsOnlyDeclaredKeysTrimmedAndCapped(): void
+    {
+        $this->withSettings();
+
+        $this->model->saveSettings('sample', ['regions' => '  부산, 제주  ', 'evil' => 'x']);
+        $this->assertSame(['regions' => '부산, 제주'], $this->model->settingsFor('sample'));
+
+        $this->model->saveSettings('sample', ['regions' => str_repeat('가', 300)]);
+        $this->assertSame(PluginSetting::MAX_LENGTH, mb_strlen($this->model->settingsFor('sample')['regions']));
+
+        // 비우면 기본값으로 돌아간다
+        $this->model->saveSettings('sample', ['regions' => '']);
+        $this->assertSame('서울', $this->model->settingsFor('sample')['regions']);
+    }
+
+    public function testRescanKeepsSavedSettings(): void
+    {
+        $this->withSettings();
+        $this->model->saveSettings('sample', ['regions' => '부산']);
+
+        $this->withSettings();
+
+        $this->assertSame('부산', $this->model->settingsFor('sample')['regions']);
     }
 }

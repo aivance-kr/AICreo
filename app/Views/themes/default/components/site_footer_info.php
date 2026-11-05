@@ -39,4 +39,5 @@ $socialLinks = [
         <?= esc($settings['copyright'] ?? '') ?>
         <?php if (! empty($settings['business_num'])): ?> · <?= esc(lang('Site.businessNum')) ?> <?= esc($settings['business_num']) ?><?php endif; ?>
     </p>
+    <?= widget_slot('footer') ?>
 </div>
