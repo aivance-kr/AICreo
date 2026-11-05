@@ -15,9 +15,35 @@ use Throwable;
  */
 class WeatherClient
 {
-    public const CACHE_TTL     = 1800;
-    public const FAILURE_TTL   = 300;
-    public const MAX_REGIONS   = 5;
+    public const CACHE_TTL   = 1800;
+    public const FAILURE_TTL = 300;
+    public const MAX_REGIONS = 5;
+
+    /**
+     * 지오코딩이 짧은 한글 도시명을 못 찾거나 엉뚱한 동네를 돌려주는 경우("서울" 결과 없음,
+     * "부산" → 경북의 작은 마을)가 있어, 주요 도시는 좌표를 직접 둔다.
+     *
+     * @var array<string, array{name: string, latitude: float, longitude: float}>
+     */
+    private const KNOWN_PLACES = [
+        '서울' => ['name' => '서울', 'latitude' => 37.5665, 'longitude' => 126.9780],
+        '부산' => ['name' => '부산', 'latitude' => 35.1796, 'longitude' => 129.0756],
+        '인천' => ['name' => '인천', 'latitude' => 37.4563, 'longitude' => 126.7052],
+        '대구' => ['name' => '대구', 'latitude' => 35.8714, 'longitude' => 128.6014],
+        '대전' => ['name' => '대전', 'latitude' => 36.3504, 'longitude' => 127.3845],
+        '광주' => ['name' => '광주', 'latitude' => 35.1595, 'longitude' => 126.8526],
+        '울산' => ['name' => '울산', 'latitude' => 35.5384, 'longitude' => 129.3114],
+        '세종' => ['name' => '세종', 'latitude' => 36.4800, 'longitude' => 127.2890],
+        '수원' => ['name' => '수원', 'latitude' => 37.2636, 'longitude' => 127.0286],
+        '춘천' => ['name' => '춘천', 'latitude' => 37.8813, 'longitude' => 127.7298],
+        '강릉' => ['name' => '강릉', 'latitude' => 37.7519, 'longitude' => 128.8761],
+        '청주' => ['name' => '청주', 'latitude' => 36.6424, 'longitude' => 127.4890],
+        '전주' => ['name' => '전주', 'latitude' => 35.8242, 'longitude' => 127.1480],
+        '포항' => ['name' => '포항', 'latitude' => 36.0190, 'longitude' => 129.3435],
+        '창원' => ['name' => '창원', 'latitude' => 35.2280, 'longitude' => 128.6811],
+        '제주' => ['name' => '제주', 'latitude' => 33.4996, 'longitude' => 126.5312],
+    ];
+
     private const GEOCODE_URL  = 'https://geocoding-api.open-meteo.com/v1/search';
     private const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 
@@ -102,11 +128,9 @@ class WeatherClient
     {
         $http = $this->http ?? service('curlrequest', ['timeout' => 5, 'http_errors' => true]);
 
-        /** @var array{results?: list<array{name?: string, latitude?: float, longitude?: float}>} $geo */
-        $geo   = json_decode($http->get(self::GEOCODE_URL, ['query' => ['name' => $region, 'count' => 1, 'language' => 'ko']])->getBody(), true) ?? [];
-        $place = $geo['results'][0] ?? null;
+        $place = self::KNOWN_PLACES[$region] ?? $this->geocode($http, $region);
 
-        if ($place === null || ! isset($place['latitude'], $place['longitude'])) {
+        if ($place === null) {
             return null;
         }
 
@@ -134,5 +158,25 @@ class WeatherClient
             'label'       => $label,
             'icon'        => $icon,
         ];
+    }
+
+    /**
+     * 목록에 없는 지역: 후보 여럿 중 인구가 가장 많은 곳을 고른다 (동명 소지역 오인 방지).
+     *
+     * @return array{name: string, latitude: float, longitude: float}|null
+     */
+    private function geocode(CURLRequest $http, string $region): ?array
+    {
+        /** @var array{results?: list<array{name?: string, latitude?: float, longitude?: float, population?: int}>} $geo */
+        $geo     = json_decode($http->get(self::GEOCODE_URL, ['query' => ['name' => $region, 'count' => 10, 'language' => 'ko']])->getBody(), true) ?? [];
+        $results = $geo['results'] ?? [];
+        usort($results, static fn (array $a, array $b): int => ($b['population'] ?? 0) <=> ($a['population'] ?? 0));
+        $place = $results[0] ?? null;
+
+        if ($place === null || ! isset($place['latitude'], $place['longitude'])) {
+            return null;
+        }
+
+        return ['name' => $place['name'] ?? $region, 'latitude' => $place['latitude'], 'longitude' => $place['longitude']];
     }
 }
