@@ -17,7 +17,7 @@ final class RecentCommentsWidget implements WidgetInterface
     public const MAX_LIMIT     = 10;
     private const EXCERPT      = 40;
 
-    public function data(): array
+    public function data(array $context = []): array
     {
         $limit    = self::parseLimit(model(PluginModel::class)->settingsFor('recent_comments')['limit'] ?? '');
         $comments = model(PostCommentModel::class)->getRecentPublic($limit, service('request')->getLocale());
