@@ -57,7 +57,10 @@ final class SamplePluginTest extends FeatureTestCase
     {
         exec('rm -rf ' . escapeshellarg($this->tmpDir));
 
-        // DDL 암묵 커밋으로 트랜잭션 롤백에 기댈 수 없다 — 직접 정리
+        // DDL 은 암묵적으로 커밋하므로, 먼저 롤백해 요청이 남긴 방문 로그(page_visits) 등이
+        // 커밋되지 않게 한다. 롤백 뒤 남는 것(테이블·이력 행)만 직접 정리한다.
+        $this->db->transRollback();
+
         Database::forge()->dropTable('sample_notes', true);
         db_connect()->table('migrations')->like('namespace', 'Plugins\\Sample', 'after')->delete();
         db_connect()->table('plugins')->where('plugin_key', 'sample')->delete();
@@ -147,7 +150,10 @@ final class SamplePluginTest extends FeatureTestCase
         $this->manager->activate('sample');
         model(SampleNoteModel::class)->add('<b>hi</b>');
 
-        $result = $this->withRoutes([['get', 'sample', '\Plugins\Sample\Controllers\SampleController::index']])
+        // 봇 UA 는 방문 로그에서 제외된다. activate() 의 DDL 이 트랜잭션을 암묵 커밋해
+        // 이후 요청이 남기는 page_visits 행은 롤백되지 않으므로 아예 기록되지 않게 한다.
+        $result = $this->withHeaders(['User-Agent' => 'TestBot/1.0'])
+            ->withRoutes([['get', 'sample', '\Plugins\Sample\Controllers\SampleController::index']])
             ->get('sample');
 
         $result->assertStatus(200);
