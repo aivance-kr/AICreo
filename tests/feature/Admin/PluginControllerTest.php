@@ -95,6 +95,20 @@ final class PluginControllerTest extends AdminTestCase
         $this->assertSame(['regions' => '부산, 제주'], model(PluginModel::class)->settingsFor('demo_tool'));
     }
 
+    public function testSavingSettingsClearsThatPluginsWidgetCacheOnly(): void
+    {
+        $this->addPluginWithSettings();
+        $this->manager->sync();
+        cache()->save('demo_tool_widget_abc', '<p>old</p>', 300);
+        cache()->save('other_tool_widget_abc', '<p>keep</p>', 300);
+
+        $this->withSession($this->adminSession)->post('admin/plugins/demo_tool/settings', ['regions' => '부산']);
+
+        $this->assertNull(cache('demo_tool_widget_abc'));
+        $this->assertSame('<p>keep</p>', cache('other_tool_widget_abc'));
+        cache()->delete('other_tool_widget_abc');
+    }
+
     public function testSettingsRedirectsWhenPluginHasNone(): void
     {
         $this->addPlugin();

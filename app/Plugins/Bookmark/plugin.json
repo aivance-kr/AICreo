@@ -1,0 +1,12 @@
+{
+  "key": "bookmark",
+  "name": "북마크 (읽기 목록)",
+  "version": "1.0.0",
+  "license_type": "onetime",
+  "menu": [
+    { "title": "내 북마크", "route": "my/bookmarks", "icon": "bi-bookmark-heart" }
+  ],
+  "widgets": [
+    { "slot": "post_actions", "view": "Views/widgets/post_button", "order": 10, "class": "Plugins\\Bookmark\\Widgets\\PostBookmarkWidget", "cache": 0 }
+  ]
+}

@@ -20,13 +20,16 @@ final class WidgetRenderer
     {
     }
 
-    public function render(string $slot): string
+    /**
+     * @param array<string, mixed> $context 위젯 `data()` 로 전달할 화면별 값
+     */
+    public function render(string $slot, array $context = []): string
     {
         $html = '';
 
         foreach ($this->plugins->widgets($slot) as $widget) {
             try {
-                $html .= $this->renderOne($widget);
+                $html .= $this->renderOne($widget, $context);
             } catch (Throwable $e) {
                 log_message('error', '위젯 렌더 실패 [{key}/{view}]: {msg}', [
                     'key'  => $widget->pluginKey,
@@ -39,14 +42,31 @@ final class WidgetRenderer
         return $html;
     }
 
-    private function renderOne(WidgetDefinition $widget): string
+    /**
+     * 플러그인의 위젯 렌더 캐시를 모두 지운다 (슬롯·뷰·로케일 무관).
+     * 설정이 바뀌면 캐시 TTL 을 기다리지 않고 바로 반영하려고 쓴다.
+     */
+    public static function clearCache(string $pluginKey): void
+    {
+        try {
+            cache()->deleteMatching($pluginKey . '_widget_*');
+        } catch (Throwable $e) {
+            // 캐시 핸들러가 패턴 삭제를 지원하지 않으면 TTL 만료로 반영된다
+            log_message('warning', '[Plugin] 위젯 캐시 삭제 실패: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function renderOne(WidgetDefinition $widget, array $context): string
     {
         // 권한은 캐시보다 먼저 본다 — 캐시된 HTML 이 비보유자에게 새지 않게
         if ($widget->entitled && ! $this->hasAccess($widget->pluginKey)) {
             return '';
         }
 
-        $cacheKey = $widget->pluginKey . '_widget_' . md5($widget->slot . '|' . $widget->view . '|' . service('request')->getLocale());
+        $cacheKey = $widget->pluginKey . '_widget_' . md5($widget->slot . '|' . $widget->view . '|' . service('request')->getLocale() . '|' . json_encode($context));
 
         if ($widget->cache > 0) {
             $cached = cache($cacheKey);
@@ -56,7 +76,7 @@ final class WidgetRenderer
             }
         }
 
-        $html = trim(view($widget->viewName(), $this->dataFor($widget), ['saveData' => false]));
+        $html = trim(view($widget->viewName(), $this->dataFor($widget, $context), ['saveData' => false]));
 
         if ($widget->cache > 0) {
             cache()->save($cacheKey, $html, $widget->cache);
@@ -66,9 +86,11 @@ final class WidgetRenderer
     }
 
     /**
+     * @param array<string, mixed> $context
+     *
      * @return array<string, mixed>
      */
-    private function dataFor(WidgetDefinition $widget): array
+    private function dataFor(WidgetDefinition $widget, array $context): array
     {
         if ($widget->class === null) {
             return [];
@@ -80,7 +102,7 @@ final class WidgetRenderer
             throw new RuntimeException("{$widget->class} 는 WidgetInterface 구현 클래스가 아닙니다");
         }
 
-        return $instance->data();
+        return $instance->data($context);
     }
 
     private function hasAccess(string $pluginKey): bool
