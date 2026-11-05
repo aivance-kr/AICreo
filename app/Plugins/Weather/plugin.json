@@ -7,7 +7,7 @@
     { "title": "날씨", "route": "weather", "icon": "bi-cloud-sun" }
   ],
   "widgets": [
-    { "slot": "sidebar", "view": "Views/widgets/weather", "order": 20, "class": "Plugins\\Weather\\Widgets\\WeatherWidget", "cache": 0 }
+    { "slot": "sidebar", "view": "Views/widgets/weather", "order": 20, "class": "Plugins\\Weather\\Widgets\\WeatherWidget", "cache": 300 }
   ],
   "settings": [
     {

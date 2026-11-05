@@ -69,8 +69,11 @@ final class WeatherClientTest extends CIUnitTestCase
         $this->assertNull((new WeatherClient($http))->current('없는곳'));
 
         $failing = $this->createMock(CURLRequest::class);
-        $failing->method('get')->willThrowException(new RuntimeException('timeout'));
-        $this->assertNull((new WeatherClient($failing))->current('실패지역'));
+        $failing->expects($this->once())->method('get')->willThrowException(new RuntimeException('timeout'));
+        $client = new WeatherClient($failing);
+        $this->assertNull($client->current('실패지역'));
+        // 실패는 잠시 기억돼 재호출하지 않는다 (위 mock 은 1회만 허용하는 것과 같다)
+        $this->assertNull($client->current('실패지역'));
     }
 
     private function body(string $json): ResponseInterface

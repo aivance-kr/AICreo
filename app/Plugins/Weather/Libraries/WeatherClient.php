@@ -16,6 +16,7 @@ use Throwable;
 class WeatherClient
 {
     public const CACHE_TTL     = 1800;
+    public const FAILURE_TTL   = 300;
     public const MAX_REGIONS   = 5;
     private const GEOCODE_URL  = 'https://geocoding-api.open-meteo.com/v1/search';
     private const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
@@ -49,17 +50,25 @@ class WeatherClient
             return $cached;
         }
 
+        // 실패도 짧게 기억한다 — 외부 API 장애 때 모든 공개 페이지 요청이 매번 느린 호출을 반복하지 않게
+        if (cache($cacheKey . '_fail') !== null) {
+            return null;
+        }
+
         try {
             $result = $this->fetch($region);
         } catch (Throwable $e) {
             log_message('warning', '[Weather] 조회 실패: ' . $e->getMessage());
+            $result = null;
+        }
+
+        if ($result === null) {
+            cache()->save($cacheKey . '_fail', 1, self::FAILURE_TTL);
 
             return null;
         }
 
-        if ($result !== null) {
-            cache()->save($cacheKey, $result, self::CACHE_TTL);
-        }
+        cache()->save($cacheKey, $result, self::CACHE_TTL);
 
         return $result;
     }
