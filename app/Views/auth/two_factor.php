@@ -7,10 +7,6 @@
             <div class="card-body p-4">
                 <h1 class="h5 mb-4 fw-bold"><?= esc(lang('Auth.twoFactorTitle')) ?></h1>
 
-                <?php if (session()->has('error')): ?>
-                    <div class="alert alert-danger" role="alert"><?= esc(session('error')) ?></div>
-                <?php endif; ?>
-
                 <?php if ($locked): ?>
                     <div class="alert alert-warning" role="alert"><?= esc(lang('Auth.twoFactorLockedNotice')) ?></div>
                     <a href="/auth/login" class="btn btn-outline-secondary w-100"><?= esc(lang('Auth.backToLogin')) ?></a>

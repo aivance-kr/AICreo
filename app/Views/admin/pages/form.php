@@ -5,9 +5,6 @@
 <?= view('admin/partials/translations', ['translationRows' => $translationRows]) ?>
 <div class="card border-0 shadow-sm" style="max-width:800px">
     <div class="card-body p-4">
-        <?php if (session()->has('errors')): ?>
-            <div class="alert alert-danger"><?php foreach (session('errors') as $e): ?><div><?= esc($e) ?></div><?php endforeach; ?></div>
-        <?php endif; ?>
 
         <form method="post" action="<?= $page ? "/admin/pages/{$page['id']}/edit" : '/admin/pages/create' ?>">
             <?= csrf_field() ?>

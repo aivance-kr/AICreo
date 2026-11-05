@@ -55,11 +55,6 @@
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white"><strong id="categoryFormTitle">카테고리 추가</strong></div>
             <div class="card-body">
-                <?php if (session()->has('errors')): ?>
-                <div class="alert alert-danger">
-                    <?php foreach (session('errors') as $e): ?><div><?= esc($e) ?></div><?php endforeach; ?>
-                </div>
-                <?php endif; ?>
                 <form method="post" id="categoryForm" action="/admin/boards/<?= $board['id'] ?>/categories">
                     <?= csrf_field() ?>
                     <div class="mb-2">
