@@ -1,0 +1,17 @@
+{
+  "key": "recent_comments",
+  "name": "최신 댓글 위젯",
+  "version": "1.0.0",
+  "license_type": "onetime",
+  "widgets": [
+    { "slot": "sidebar", "view": "Views/widgets/recent_comments", "order": 30, "class": "Plugins\\RecentComments\\Widgets\\RecentCommentsWidget", "cache": 60 }
+  ],
+  "settings": [
+    {
+      "key": "limit",
+      "label": "표시 개수",
+      "default": "5",
+      "help": "사이드바에 보여 줄 최신 댓글 수 (1~10)"
+    }
+  ]
+}

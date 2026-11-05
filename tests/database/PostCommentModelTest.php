@@ -73,4 +73,37 @@ final class PostCommentModelTest extends DatabaseTestCase
         $this->commentModel->toggleActive($id);
         $this->assertSame(1, (int) $this->commentModel->find($id)['is_active']);
     }
+
+    public function testGetRecentPublicExcludesNonPublicComments(): void
+    {
+        $this->makeComment(['content' => '공개']);
+        $this->makeComment(['content' => '숨김', 'is_active' => 0]);
+        $this->makeComment(['content' => '대기', 'is_pending' => 1]);
+        $deleted = $this->makeComment(['content' => '삭제']);
+        $this->commentModel->delete($deleted);
+
+        $secretPost = (int) (new PostModel())->insert([
+            'board_id'    => (int) (new BoardModel())->getBySlug('notice')['id'],
+            'title'       => '비밀글',
+            'content'     => '본문',
+            'author_name' => '글쓴이',
+            'is_secret'   => 1,
+        ]);
+        $this->makeComment(['post_id' => $secretPost, 'content' => '비밀글 댓글']);
+
+        $rows = $this->commentModel->getRecentPublic(10);
+
+        $this->assertSame(['공개'], array_column($rows, 'content'));
+        $this->assertSame('댓글 대상 게시글', $rows[0]['post_title']);
+        $this->assertSame('notice', $rows[0]['board_slug']);
+    }
+
+    public function testGetRecentPublicOrdersNewestFirstAndLimits(): void
+    {
+        $this->makeComment(['content' => '첫째']);
+        $this->makeComment(['content' => '둘째']);
+        $this->makeComment(['content' => '셋째']);
+
+        $this->assertSame(['셋째', '둘째'], array_column($this->commentModel->getRecentPublic(2), 'content'));
+    }
 }
