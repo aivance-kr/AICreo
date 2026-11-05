@@ -12,7 +12,7 @@ use Plugins\Sample\Models\SampleNoteModel;
  */
 final class RecentNotesWidget implements WidgetInterface
 {
-    public function data(): array
+    public function data(array $context = []): array
     {
         return ['notes' => array_slice(model(SampleNoteModel::class)->latest(), 0, 5)];
     }
