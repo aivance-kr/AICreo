@@ -9,6 +9,7 @@ use App\Exceptions\InvalidManifestException;
 use App\Exceptions\PluginException;
 use App\Libraries\Plugin\PluginInstaller;
 use App\Libraries\Plugin\PluginManager;
+use App\Libraries\Plugin\WidgetRenderer;
 use App\Models\AdminLogModel;
 use App\Models\PluginModel;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -87,6 +88,7 @@ class PluginController extends BaseController
         }
 
         $model->saveSettings($key, (array) $this->request->getPost());
+        WidgetRenderer::clearCache($key);
         // 값은 남기지 않고 항목 이름만 (활동 로그 규약)
         model(AdminLogModel::class)->record('update', 'plugin', (int) $row['id'], $key . ' 설정');
 
