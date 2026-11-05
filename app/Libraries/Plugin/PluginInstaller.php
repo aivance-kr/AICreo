@@ -111,7 +111,7 @@ class PluginInstaller
 
             $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
             // public/ 은 웹 루트로 옮겨지므로 실행·XSS 가능한 형식(php·json·md·svg)은 받지 않는다.
-            $allowed = str_starts_with($name, 'public/') ? self::PUBLIC_EXTENSIONS : self::ALLOWED_EXTENSIONS;
+            $allowed = str_starts_with(strtolower($name), 'public/') ? self::PUBLIC_EXTENSIONS : self::ALLOWED_EXTENSIONS;
             if (! in_array($extension, $allowed, true)) {
                 throw new PluginException("허용되지 않는 파일 형식입니다: {$name}");
             }
@@ -141,7 +141,14 @@ class PluginInstaller
             return true;
         }
 
-        return in_array('..', explode('/', $name), true);
+        // '..' 뿐 아니라 '.'·빈 세그먼트('a//b', './public/x')도 거부해 검증과 실제 경로 해석이 어긋나지 않게 한다.
+        foreach (explode('/', rtrim($name, '/')) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -208,6 +215,10 @@ class PluginInstaller
         $publicSrc  = $sourceDir . DIRECTORY_SEPARATOR . 'public';
         $backupDir  = $workDir . DIRECTORY_SEPARATOR . 'backup';
 
+        if (is_dir($publicSrc)) {
+            $this->assertPublicTreeSafe($publicSrc);
+        }
+
         $movedBackups = [];
         $placed       = [];
 
@@ -243,6 +254,22 @@ class PluginInstaller
             }
 
             throw $e instanceof PluginException ? $e : new PluginException('플러그인 설치에 실패했습니다.', 0, $e);
+        }
+    }
+
+    /**
+     * 웹 루트로 승격하기 직전에 실제 파일시스템 상태를 다시 검증한다 (ZIP 메타데이터 기준 검증의 이중 안전장치).
+     */
+    private function assertPublicTreeSafe(string $dir): void
+    {
+        $items = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS));
+
+        foreach ($items as $item) {
+            $extension = strtolower($item->getExtension());
+
+            if ($item->isLink() || ! in_array($extension, self::PUBLIC_EXTENSIONS, true)) {
+                throw new PluginException('public/ 에 허용되지 않는 파일이 있습니다: ' . $item->getFilename());
+            }
         }
     }
 
