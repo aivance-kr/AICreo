@@ -22,6 +22,7 @@ final readonly class PluginManifest
      * @param list<string>           $requiresPlugins
      * @param list<MenuItem>         $menu
      * @param list<WidgetDefinition> $widgets
+     * @param list<PluginSetting>    $settings
      */
     public function __construct(
         public string $key,
@@ -33,6 +34,7 @@ final readonly class PluginManifest
         public array $requiresPlugins = [],
         public array $menu = [],
         public array $widgets = [],
+        public array $settings = [],
     ) {
     }
 
@@ -103,7 +105,23 @@ final readonly class PluginManifest
             $widgets[] = WidgetDefinition::fromArray($item, $key, $directoryName);
         }
 
-        return new self($key, $name, $version, $licenseType, $directoryName, $requiresCore, $requiresPlugins, $menu, $widgets);
+        $settings = [];
+
+        foreach (is_array($data['settings'] ?? null) ? $data['settings'] : [] as $item) {
+            if (! is_array($item)) {
+                throw InvalidManifestException::forField('settings', '객체 배열이어야 합니다');
+            }
+
+            $setting = PluginSetting::fromArray($item);
+
+            if (isset($settings[$setting->key])) {
+                throw InvalidManifestException::forField('settings[].key', "'{$setting->key}' 가 중복입니다");
+            }
+
+            $settings[$setting->key] = $setting;
+        }
+
+        return new self($key, $name, $version, $licenseType, $directoryName, $requiresCore, $requiresPlugins, $menu, $widgets, array_values($settings));
     }
 
     public static function fromJsonFile(string $path): self
@@ -135,7 +153,7 @@ final readonly class PluginManifest
      */
     public function toArray(): array
     {
-        return [
+        $data = [
             'key'          => $this->key,
             'name'         => $this->name,
             'version'      => $this->version,
@@ -144,6 +162,12 @@ final readonly class PluginManifest
             'menu'         => array_map(static fn (MenuItem $item): array => $item->toArray(), $this->menu),
             'widgets'      => array_map(static fn (WidgetDefinition $w): array => $w->toArray(), $this->widgets),
         ];
+
+        if ($this->settings !== []) {
+            $data['settings'] = array_map(static fn (PluginSetting $setting): array => $setting->toArray(), $this->settings);
+        }
+
+        return $data;
     }
 
     /**

@@ -99,6 +99,7 @@ public/plugins/{plugin_key}/   # CSS/JS/이미지 (ZIP 의 public/ 이 여기로
 | `requires.plugins` | ❌ | key 배열. 강제는 2단계 `PluginDependencyService` |
 | `menu[]` | ❌ | `{title, route, icon}`. `route` 는 선행 `/` 금지 |
 | `widgets[]` | ❌ | 위젯 슬롯 등록. 아래 «위젯 슬롯» 참고 |
+| `settings[]` | ❌ | `{key, label, default, help}` — 관리자가 `/admin/plugins/{key}/settings` 에서 입력하는 문자열 값(100자). 값은 `plugins.settings`(JSON)에 저장, 플러그인은 `model(PluginModel::class)->settingsFor('{key}')` 로 읽는다(비면 `default`). 재스캔해도 저장값은 유지 |
 
 주의: 매니페스트의 `license_type` 은 **신규 등록 시 기본값 제안**일 뿐이다. 재스캔(`upsertFromManifest`)은 `name`·`version`·`manifest` 만 갱신하고, 운영자가 정한 `status`·가격·`license_type` 은 덮어쓰지 않는다.
 

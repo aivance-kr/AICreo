@@ -60,6 +60,60 @@ final class PluginControllerTest extends AdminTestCase
         ], JSON_THROW_ON_ERROR));
     }
 
+    private function addPluginWithSettings(): void
+    {
+        $dir = $this->pluginsPath . 'DemoTool';
+        mkdir($dir, 0777, true);
+        file_put_contents($dir . '/plugin.json', json_encode([
+            'key'      => 'demo_tool', 'name' => '데모', 'version' => '1.0.0', 'license_type' => 'onetime',
+            'settings' => [['key' => 'regions', 'label' => '지역', 'default' => '서울', 'help' => '도시 이름']],
+        ], JSON_THROW_ON_ERROR));
+    }
+
+    public function testSettingsButtonOnlyForPluginsWithSettings(): void
+    {
+        $this->addPlugin('plain_tool');
+        $this->addPluginWithSettings();
+        $this->manager->sync();
+
+        $result = $this->withSession($this->adminSession)->get('admin/plugins');
+
+        $result->assertSee('/admin/plugins/demo_tool/settings');
+        $result->assertDontSee('/admin/plugins/plain_tool/settings');
+    }
+
+    public function testSettingsFormShowsDefaultAndSaves(): void
+    {
+        $this->addPluginWithSettings();
+        $this->manager->sync();
+
+        $this->withSession($this->adminSession)->get('admin/plugins/demo_tool/settings')->assertSee('지역');
+
+        $result = $this->withSession($this->adminSession)->post('admin/plugins/demo_tool/settings', ['regions' => '부산, 제주', 'evil' => 'x']);
+
+        $result->assertRedirectTo('/admin/plugins');
+        $this->assertSame(['regions' => '부산, 제주'], model(PluginModel::class)->settingsFor('demo_tool'));
+    }
+
+    public function testSettingsRedirectsWhenPluginHasNone(): void
+    {
+        $this->addPlugin();
+        $this->manager->sync();
+
+        $this->withSession($this->adminSession)->get('admin/plugins/demo_tool/settings')->assertRedirectTo('/admin/plugins');
+        $this->withSession($this->adminSession)->get('admin/plugins/nope/settings')->assertRedirectTo('/admin/plugins');
+    }
+
+    public function testMemberCannotSaveSettings(): void
+    {
+        $this->addPluginWithSettings();
+        $this->manager->sync();
+
+        $this->withSession($this->memberSession)->post('admin/plugins/demo_tool/settings', ['regions' => 'x']);
+
+        $this->assertSame(['regions' => '서울'], model(PluginModel::class)->settingsFor('demo_tool'));
+    }
+
     private function allowUpload(bool $allow): void
     {
         $config              = new Plugins();

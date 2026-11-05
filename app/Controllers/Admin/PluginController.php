@@ -25,8 +25,16 @@ class PluginController extends BaseController
 
     public function index(): string
     {
+        $model   = model(PluginModel::class);
+        $plugins = $model->orderBy('plugin_key')->findAll();
+
+        foreach ($plugins as &$plugin) {
+            $plugin['has_settings'] = $model->definitionsOf($plugin) !== [];
+        }
+        unset($plugin);
+
         return $this->render('admin/plugins/index', [
-            'plugins'     => model(PluginModel::class)->orderBy('plugin_key')->findAll(),
+            'plugins'     => $plugins,
             'allowUpload' => config(Plugins::class)->allowUpload,
         ]);
     }
@@ -51,6 +59,38 @@ class PluginController extends BaseController
     public function uninstall(string $key): ResponseInterface
     {
         return $this->change($key, 'delete', '제거', fn () => $this->manager()->uninstall($key));
+    }
+
+    public function settings(string $key): ResponseInterface|string
+    {
+        $model = model(PluginModel::class);
+        $row   = $model->findByKey($key);
+
+        if ($row === null || $model->settingDefinitions($key) === []) {
+            return redirect()->to(self::LIST_URL)->with('error', '설정할 항목이 없는 플러그인입니다.');
+        }
+
+        return $this->render('admin/plugins/settings', [
+            'plugin'      => $row,
+            'definitions' => $model->settingDefinitions($key),
+            'values'      => $model->settingsFor($key),
+        ]);
+    }
+
+    public function saveSettings(string $key): ResponseInterface
+    {
+        $model = model(PluginModel::class);
+        $row   = $model->findByKey($key);
+
+        if ($row === null || $model->settingDefinitions($key) === []) {
+            return redirect()->to(self::LIST_URL)->with('error', '설정할 항목이 없는 플러그인입니다.');
+        }
+
+        $model->saveSettings($key, (array) $this->request->getPost());
+        // 값은 남기지 않고 항목 이름만 (활동 로그 규약)
+        model(AdminLogModel::class)->record('update', 'plugin', (int) $row['id'], $key . ' 설정');
+
+        return redirect()->to(self::LIST_URL)->with('success', "{$row['name']} 설정을 저장했습니다.");
     }
 
     public function upload(): ResponseInterface
