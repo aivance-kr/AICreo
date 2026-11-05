@@ -5,7 +5,6 @@
 <?php
 use App\Models\InquiryFieldModel;
 
-$errors   = session('errors') ?? [];
 $formType = (string) old('field_type', $editing['field_type'] ?? 'text');
 ?>
 
@@ -13,10 +12,6 @@ $formType = (string) old('field_type', $editing['field_type'] ?? 'text');
     이름·이메일·연락처·제목·내용은 항상 표시되는 기본 항목입니다. 여기서 추가한 항목은 그 아래에 순서대로 나타나고,
     제출 내용은 문의 상세·CSV에 함께 저장됩니다. 항목을 지워도 이미 받은 문의의 값은 그대로 보입니다.
 </div>
-
-<?php if ($errors !== []): ?>
-<div class="alert alert-danger" role="alert"><ul class="mb-0 ps-3"><?php foreach ($errors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div>
-<?php endif; ?>
 
 <div class="row g-4">
     <div class="col-lg-7">

@@ -39,9 +39,7 @@
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm p-4">
                 <h2 class="h5 fw-bold mb-3"><?= esc(lang('Content.leaveInquiry')) ?></h2>
-                <?php if (session()->has('success')): ?>
-                    <div class="alert alert-success" role="alert"><?= esc(session('success')) ?></div>
-                <?php else: ?>
+                <?php if (! session()->has('success')): ?>
                     <?= $this->include('components/contact_form') ?>
                 <?php endif; ?>
             </div>
