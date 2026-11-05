@@ -88,4 +88,31 @@ class PostCommentModel extends Model
             ->orderBy('post_comments.id', 'DESC')
             ->findAll($limit);
     }
+
+    /**
+     * 공개 화면(사이드바 위젯 등)에 노출할 최신 댓글.
+     * 공개 댓글(대기·숨김·삭제 제외)이면서 공개 게시판의 공개 글(비밀글·숨김·삭제 제외)에 달린 것만 돌려준다.
+     *
+     * @return list<array<string, mixed>> id, content, post_id, post_title, board_slug, author_name, user_nickname, created_at
+     */
+    public function getRecentPublic(int $limit, ?string $locale = null): array
+    {
+        $builder = $this->select('post_comments.id, post_comments.content, post_comments.post_id, post_comments.author_name, post_comments.created_at, posts.title AS post_title, boards.slug AS board_slug, users.nickname AS user_nickname')
+            ->join('posts', 'posts.id = post_comments.post_id', 'inner')
+            ->join('boards', 'boards.id = posts.board_id', 'inner')
+            ->join('users', 'users.id = post_comments.user_id', 'left')
+            ->where('post_comments.is_active', 1)
+            ->where('post_comments.is_pending', 0)
+            ->where('posts.is_active', 1)
+            ->where('posts.is_secret', 0)
+            ->where('posts.deleted_at', null)
+            ->where('boards.is_active', 1)
+            ->where('boards.read_permission', 'guest');
+
+        if ($locale !== null) {
+            $builder->where('posts.locale', $locale);
+        }
+
+        return $builder->orderBy('post_comments.id', 'DESC')->findAll($limit);
+    }
 }
