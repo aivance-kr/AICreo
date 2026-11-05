@@ -1,0 +1,20 @@
+{
+  "key": "weather",
+  "name": "날씨 위젯",
+  "version": "1.0.0",
+  "license_type": "onetime",
+  "menu": [
+    { "title": "날씨", "route": "weather", "icon": "bi-cloud-sun" }
+  ],
+  "widgets": [
+    { "slot": "sidebar", "view": "Views/widgets/weather", "order": 20, "class": "Plugins\\Weather\\Widgets\\WeatherWidget", "cache": 0 }
+  ],
+  "settings": [
+    {
+      "key": "regions",
+      "label": "지역",
+      "default": "서울",
+      "help": "도시 이름. 여러 곳은 쉼표로 구분합니다 (최대 5곳). 예: 서울, 부산, 제주"
+    }
+  ]
+}

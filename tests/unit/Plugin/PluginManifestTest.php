@@ -216,6 +216,45 @@ final class PluginManifestTest extends CIUnitTestCase
         PluginManifest::fromJsonFile(WRITEPATH . 'no_such_plugin.json');
     }
 
+    public function testParsesSettings(): void
+    {
+        $data             = $this->validData();
+        $data['settings'] = [['key' => 'regions', 'label' => '지역', 'default' => '서울', 'help' => '쉼표로 구분']];
+
+        $manifest = PluginManifest::fromArray($data, 'Sample');
+
+        $this->assertCount(1, $manifest->settings);
+        $this->assertSame('regions', $manifest->settings[0]->key);
+        $this->assertSame('서울', $manifest->settings[0]->default);
+        $this->assertSame($data['settings'], $manifest->toArray()['settings']);
+    }
+
+    public function testOmitsSettingsKeyWhenNone(): void
+    {
+        $this->assertArrayNotHasKey('settings', PluginManifest::fromArray($this->validData(), 'Sample')->toArray());
+    }
+
+    public function testRejectsInvalidOrDuplicateSettings(): void
+    {
+        $bad = [
+            [['key' => 'Bad Key', 'label' => '가']],
+            [['key' => 'a', 'label' => '']],
+            [['key' => 'a', 'label' => '가'], ['key' => 'a', 'label' => '나']],
+        ];
+
+        foreach ($bad as $settings) {
+            $data             = $this->validData();
+            $data['settings'] = $settings;
+
+            try {
+                PluginManifest::fromArray($data, 'Sample');
+                $this->fail('InvalidManifestException 이 나야 합니다');
+            } catch (InvalidManifestException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
+
     public function testLicenseTypeLabels(): void
     {
         $this->assertSame('구독', LicenseType::Subscription->label());

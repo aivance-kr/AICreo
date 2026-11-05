@@ -213,6 +213,8 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->get('plugins', 'Admin\PluginController::index');
     $routes->post('plugins/sync', 'Admin\PluginController::sync');
     $routes->post('plugins/upload', 'Admin\PluginController::upload');
+    $routes->get('plugins/(:segment)/settings', 'Admin\PluginController::settings/$1');
+    $routes->post('plugins/(:segment)/settings', 'Admin\PluginController::saveSettings/$1');
     $routes->post('plugins/(:segment)/activate', 'Admin\PluginController::activate/$1');
     $routes->post('plugins/(:segment)/deactivate', 'Admin\PluginController::deactivate/$1');
     $routes->post('plugins/(:segment)/uninstall', 'Admin\PluginController::uninstall/$1');
