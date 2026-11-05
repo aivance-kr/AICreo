@@ -125,7 +125,8 @@ public/plugins/{plugin_key}/   # CSS/JS/이미지 (ZIP 의 public/ 이 여기로
 
 - `PluginManager::widgets($slot)` 는 **활성 플러그인**의 위젯만 모은다 → 비활성화·제거하면 다음 요청부터 사라진다(캐시된 HTML 은 조회 자체가 안 됨).
 - `WidgetRenderer` 는 위젯 단위 try/catch — 예외는 로그(`위젯 렌더 실패`)만 남기고 그 위젯만 비운다.
-- 기본 제공 슬롯: `sidebar`(`blog_sidebar.php` 끝, 블로그형 테마 공용), `footer`(`site_footer_info.php` 끝). 다른 자리(헤더·본문 위/아래·상세·목록)는 해당 뷰에서 `widget_slot()` 을 부르면 된다.
+- 기본 제공 슬롯: `sidebar`(`blog_sidebar.php` 끝, 블로그형 테마 공용), `footer`(`site_footer_info.php` 끝).
+- 기본 제공 슬롯 `post_actions`: 글 상세의 공감 버튼 아래(미리보기 제외). 화면별 값은 `widget_slot('post_actions', ['post_id' => 12])` 의 두 번째 인자로 넘기고 위젯은 `data(array $context = [])` 로 받는다. context 가 있는 위젯은 캐시 키에 context 가 포함되지만, 회원별 상태를 보여주면 `cache: 0` 으로 둔다 (예: `app/Plugins/Bookmark`). 다른 자리(헤더·본문 위/아래·상세·목록)는 해당 뷰에서 `widget_slot()` 을 부르면 된다.
 - 뷰는 `esc()` 필수. 다국어는 위젯 뷰가 `lang()`/`$request->getLocale()` 로 처리하고, 캐시 키에 로케일이 들어간다.
 - 사용자별로 내용이 달라지는 위젯은 `cache: 0` 으로 둔다(캐시는 사용자 구분이 없다).
 - 예: `app/Plugins/Sample` 의 `RecentNotesWidget` + `Views/widgets/recent.php`.

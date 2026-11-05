@@ -13,7 +13,7 @@ use Plugins\Weather\Libraries\WeatherClient;
  */
 final class WeatherWidget implements WidgetInterface
 {
-    public function data(): array
+    public function data(array $context = []): array
     {
         $client = new WeatherClient();
         $items  = [];

@@ -13,7 +13,9 @@ namespace App\Libraries\Plugin;
 interface WidgetInterface
 {
     /**
+     * @param array<string, mixed> $context 슬롯을 부른 뷰가 넘긴 값 (예: 글 상세의 `post_id`). 없으면 빈 배열
+     *
      * @return array<string, mixed> 위젯 뷰로 넘길 변수
      */
-    public function data(): array;
+    public function data(array $context = []): array;
 }

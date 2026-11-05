@@ -136,6 +136,7 @@ ob_start();
             <?= esc(lang('Board.likes')) ?> <span class="fw-bold"><?= number_format($likeCount) ?></span>
         </button>
     </form>
+    <?= widget_slot('post_actions', ['post_id' => (int) $post['id']]) ?>
     <?php endif; ?>
 
     <!-- 본문 하단 광고 -->
