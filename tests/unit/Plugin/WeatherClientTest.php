@@ -18,7 +18,7 @@ final class WeatherClientTest extends CIUnitTestCase
     public static function setUpBeforeClass(): void
     {
         // 플러그인 네임스페이스는 활성화돼야 오토로드된다 — 테스트에서는 파일을 직접 읽는다
-        require_once APPPATH . 'Plugins/Weather/Libraries/WeatherClient.php';
+        class_exists(WeatherClient::class, false) || require_once APPPATH . 'Plugins/Weather/Libraries/WeatherClient.php';
     }
 
     protected function tearDown(): void

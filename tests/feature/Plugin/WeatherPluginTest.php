@@ -10,6 +10,7 @@ use CodeIgniter\Test\TestResponse;
 use Composer\Autoload\ClassLoader;
 use Config\Services;
 use Plugins\Weather\Libraries\WeatherClient;
+use Plugins\Weather\Widgets\WeatherWidget;
 use Tests\Support\FeatureTestCase;
 
 /**
@@ -133,5 +134,19 @@ final class WeatherPluginTest extends FeatureTestCase
 
         $this->page()->assertStatus(200);
         $this->assertStringContainsString('없는곳', $this->text());
+    }
+
+    public function testSidebarWidgetUsesConfiguredRegions(): void
+    {
+        $this->manager->sync();
+        $this->activate();
+        model(PluginModel::class)->saveSettings('weather', ['regions' => '대구']);
+        $this->prime('대구', '대구', 23.0);
+
+        $data = (new WeatherWidget())->data();
+        $html = html_entity_decode(view('\Plugins\Weather\Views\widgets\weather', $data), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $this->assertSame('대구', $data['items'][0]['region']);
+        $this->assertStringContainsString('23.0°C', $html);
     }
 }
