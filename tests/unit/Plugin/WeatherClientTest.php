@@ -62,6 +62,24 @@ final class WeatherClientTest extends CIUnitTestCase
         $this->assertSame($result, $client->current('서울-테스트'));
     }
 
+    public function testKnownCitySkipsGeocodingAndUnknownPicksMostPopulous(): void
+    {
+        $forecast = '{"current":{"temperature_2m":10.0,"relative_humidity_2m":50,"wind_speed_10m":1.0,"weather_code":3}}';
+
+        // 주요 도시는 지오코딩 없이 예보 1회
+        $known = $this->createMock(CURLRequest::class);
+        $known->expects($this->once())->method('get')->willReturn($this->body($forecast));
+        $this->assertSame('부산', (new WeatherClient($known))->current('부산')['name'] ?? null);
+
+        // 그 밖의 지역은 인구가 가장 많은 후보
+        $other = $this->createMock(CURLRequest::class);
+        $other->expects($this->exactly(2))->method('get')->willReturnOnConsecutiveCalls(
+            $this->body('{"results":[{"name":"작은마을","latitude":1,"longitude":1,"population":10},{"name":"큰도시","latitude":2,"longitude":2,"population":9000}]}'),
+            $this->body($forecast),
+        );
+        $this->assertSame('큰도시', (new WeatherClient($other))->current('테스트시')['name'] ?? null);
+    }
+
     public function testCurrentReturnsNullWhenRegionNotFoundOrApiFails(): void
     {
         $http = $this->createMock(CURLRequest::class);
