@@ -7,6 +7,7 @@ namespace App\Controllers\Front;
 use App\Controllers\BaseController;
 use App\Libraries\NewsletterMailer;
 use App\Models\SubscriberModel;
+use App\Models\WebhookDeliveryModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
@@ -47,6 +48,7 @@ class NewsletterController extends BaseController
         $subscriber = (new SubscriberModel())->subscribe($email);
         if ($subscriber !== null) {
             (new NewsletterMailer())->sendConfirmation($subscriber, $this->request->getLocale());
+            model(WebhookDeliveryModel::class)->enqueue('subscriber', $email, ['email' => $email]);
         }
 
         return $done;

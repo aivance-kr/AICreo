@@ -12,6 +12,7 @@ use App\Models\InquiryFieldModel;
 use App\Models\InquiryModel;
 use App\Models\PageModel;
 use App\Models\PostModel;
+use App\Models\WebhookDeliveryModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
@@ -130,6 +131,13 @@ class PageController extends BaseController
             '접수 시각' => date('Y-m-d H:i:s'),
             '요청 IP'   => $this->request->getIPAddress(),
         ] + $extraFields, (string) $this->request->getPost('message'), base_url('admin/inquiries/' . $inquiryId));
+
+        // 웹훅 알림은 큐에만 올리고 webhook:send 가 보낸다(실패해도 접수에는 영향 없음)
+        model(WebhookDeliveryModel::class)->enqueue(
+            'inquiry',
+            sprintf('#%d %s: %s', $inquiryId, (string) $this->request->getPost('name'), mb_substr((string) $this->request->getPost('subject'), 0, 100)),
+            ['id' => $inquiryId, 'name' => (string) $this->request->getPost('name'), 'subject' => (string) $this->request->getPost('subject'), 'admin_url' => base_url('admin/inquiries/' . $inquiryId)],
+        );
 
         // 클라이언트 이메일 발송 (설정에서 수신 이메일 읽기)
         $this->sendInquiryEmail($extra['extra']);

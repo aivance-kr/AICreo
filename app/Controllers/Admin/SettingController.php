@@ -36,7 +36,7 @@ class SettingController extends BaseController
             ]);
         }
 
-        $allowed = ['general', 'contact', 'sns', 'seo', 'footer'];
+        $allowed = ['general', 'contact', 'sns', 'seo', 'footer', 'notify'];
         if (! in_array($group, $allowed, true)) {
             $group = 'general';
         }
@@ -203,6 +203,15 @@ class SettingController extends BaseController
 
         if (array_key_exists('blog_home_post_limit', $postData)) {
             $postData['blog_home_post_limit'] = (string) min(100, max(1, (int) $postData['blog_home_post_limit']));
+        }
+
+        if (array_key_exists('webhook_url', $postData)) {
+            $url = trim((string) $postData['webhook_url']);
+
+            if ($url !== '' && (! preg_match('#^https?://#i', $url) || filter_var($url, FILTER_VALIDATE_URL) === false)) {
+                return redirect()->back()->withInput()->with('error', '웹훅 URL 은 http:// 또는 https:// 로 시작하는 올바른 주소여야 합니다.');
+            }
+            $postData['webhook_url'] = $url;
         }
 
         $this->settingModel->saveSettings($postData);
