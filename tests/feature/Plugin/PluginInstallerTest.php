@@ -146,7 +146,7 @@ final class PluginInstallerTest extends CIUnitTestCase
 
     public function testRejectsForbiddenExtension(): void
     {
-        foreach (['run.phtml', 'x.sh', 'noext', '.htaccess', 'a.php.exe'] as $name) {
+        foreach (['run.phtml', 'x.sh', 'noext', '.htaccess', 'a.php.exe', 'public/evil.php', 'public/x.svg', 'public/a.json', 'public/.htaccess'] as $name) {
             $zip = $this->makeZip(['plugin.json' => $this->manifestJson(), $name => 'x']);
 
             try {

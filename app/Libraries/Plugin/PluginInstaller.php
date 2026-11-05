@@ -32,6 +32,13 @@ class PluginInstaller
         'svg', 'webp', 'ico', 'woff', 'woff2', 'ttf',
     ];
 
+    /**
+     * @var list<string>
+     */
+    public const PUBLIC_EXTENSIONS = [
+        'css', 'js', 'map', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'woff', 'woff2', 'ttf',
+    ];
+
     private readonly string $pluginsPath;
     private readonly string $publicPath;
     private readonly string $tmpRoot;
@@ -103,7 +110,9 @@ class PluginInstaller
             }
 
             $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-            if (! in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+            // public/ 은 웹 루트로 옮겨지므로 실행·XSS 가능한 형식(php·json·md·svg)은 받지 않는다.
+            $allowed = str_starts_with($name, 'public/') ? self::PUBLIC_EXTENSIONS : self::ALLOWED_EXTENSIONS;
+            if (! in_array($extension, $allowed, true)) {
                 throw new PluginException("허용되지 않는 파일 형식입니다: {$name}");
             }
 
@@ -227,11 +236,24 @@ class PluginInstaller
             }
 
             foreach ($movedBackups as $original => $backup) {
-                $this->move($backup, $original);
+                if (! @rename($backup, $original)) {
+                    $this->quarantine($backup);
+                    log_message('critical', "[PluginInstaller] 기존 설치본 복원 실패, 보관: {$original}");
+                }
             }
 
             throw $e instanceof PluginException ? $e : new PluginException('플러그인 설치에 실패했습니다.', 0, $e);
         }
+    }
+
+    /**
+     * 복원하지 못한 기존 설치본을 정리 대상(workDir) 밖으로 빼서 보존한다.
+     */
+    private function quarantine(string $backup): void
+    {
+        $target = dirname($this->tmpRoot) . DIRECTORY_SEPARATOR . 'plugins_failed' . DIRECTORY_SEPARATOR . date('YmdHis') . '_' . basename($backup);
+        $this->makeDirectory(dirname($target));
+        @rename($backup, $target);
     }
 
     private function move(string $from, string $to): void
