@@ -10,3 +10,9 @@ parameters:
         - app/Plugins/*/Views/*
     universalObjectCratesClasses:
         - CodeIgniter\Entity\Entity
+    ignoreErrors:
+        # 플러그인 사용자 데이터 모델이 쓰는 인프라 트레이트 — 코어에는 소비자가 없고
+        # (Sample 은 전역 데이터), 테스트용 ScopedNoteModel 이 격리를 검증한다.
+        -
+            identifier: trait.unused
+            path: app/Models/Traits/UserScopedModel.php

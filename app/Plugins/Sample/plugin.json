@@ -1,0 +1,9 @@
+{
+  "key": "sample",
+  "name": "샘플 플러그인",
+  "version": "1.0.0",
+  "license_type": "onetime",
+  "menu": [
+    { "title": "샘플", "route": "sample", "icon": "bi-puzzle" }
+  ]
+}

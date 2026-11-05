@@ -65,6 +65,14 @@ $routes->get('auth/profile', 'Front\AuthController::profile');
 $routes->post('auth/profile', 'Front\AuthController::profileUpdate');
 $routes->post('auth/withdraw', 'Front\AuthController::withdraw');
 
+// ─── 내 플러그인 (회원) ───────────────────────────────────────────────────────
+// entitlement 필터를 걸지 않는다 — EntitlementFilter 가 미보유 사용자를 이리로 보낸다 (걸면 무한 리다이렉트)
+$routes->group('my', ['filter' => 'auth:member'], static function ($routes): void {
+    $routes->get('plugins', 'My\PluginController::index');
+    $routes->post('plugins/(:segment)/cancel', 'My\PluginController::cancelSubscription/$1');
+    $routes->post('plugins/(:segment)/activate', 'My\PluginController::activate/$1');
+});
+
 // ─── 소셜 로그인 ──────────────────────────────────────────────────────────────
 $routes->get('auth/social/(:segment)', 'Front\SocialAuthController::redirect/$1');
 $routes->get('auth/social/(:segment)/callback', 'Front\SocialAuthController::callback/$1');
@@ -200,6 +208,14 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->post('redirects/(:num)', 'Admin\RedirectController::update/$1');
     $routes->post('redirects/(:num)/toggle', 'Admin\RedirectController::toggle/$1');
     $routes->post('redirects/(:num)/delete', 'Admin\RedirectController::delete/$1');
+
+    // 플러그인
+    $routes->get('plugins', 'Admin\PluginController::index');
+    $routes->post('plugins/sync', 'Admin\PluginController::sync');
+    $routes->post('plugins/upload', 'Admin\PluginController::upload');
+    $routes->post('plugins/(:segment)/activate', 'Admin\PluginController::activate/$1');
+    $routes->post('plugins/(:segment)/deactivate', 'Admin\PluginController::deactivate/$1');
+    $routes->post('plugins/(:segment)/uninstall', 'Admin\PluginController::uninstall/$1');
 
     // 회원 관리
     $routes->get('users', 'Admin\UserController::index');

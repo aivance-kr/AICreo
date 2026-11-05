@@ -2,13 +2,6 @@
 <?php $pageTitle = '2단계 인증' ?>
 <?= $this->section('content') ?>
 
-<?php if (session()->has('error')): ?>
-    <div class="alert alert-danger" role="alert"><?= esc(session('error')) ?></div>
-<?php endif; ?>
-<?php if (session()->has('success')): ?>
-    <div class="alert alert-success" role="alert"><?= esc(session('success')) ?></div>
-<?php endif; ?>
-
 <?php if (! empty($recoveryCodes)): ?>
 <div class="alert alert-warning">
     <p class="fw-semibold mb-2">복구 코드 — 지금만 볼 수 있습니다. 안전한 곳에 보관하세요.</p>
