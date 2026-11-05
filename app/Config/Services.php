@@ -5,6 +5,7 @@ namespace Config;
 use App\Libraries\Ai\GroqPostAssistService;
 use App\Libraries\Ai\GroqSeriesService;
 use App\Libraries\Ai\GroqTagService;
+use App\Libraries\Plugin\PluginInstaller;
 use App\Libraries\Plugin\PluginManager;
 use App\Libraries\Seo\IndexNowService;
 use App\Libraries\ThemeView;
@@ -61,6 +62,15 @@ class Services extends BaseService
         }
 
         return new PluginManager(ENVIRONMENT === 'testing' ? WRITEPATH . 'plugins/active_test.php' : null);
+    }
+
+    public static function pluginInstaller(bool $getShared = true): PluginInstaller
+    {
+        if ($getShared) {
+            return static::getSharedInstance('pluginInstaller');
+        }
+
+        return new PluginInstaller();
     }
 
     /**
