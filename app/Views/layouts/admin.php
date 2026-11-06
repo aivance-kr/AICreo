@@ -111,19 +111,20 @@ $groupActive = static function (array $group): bool {
 
         /* 데스크톱(992px↑): 사이드바 대신 상단바에 그룹 이름만 노출하고,
            그룹을 누르면 전체 메뉴 패널이 펼쳐진다. 그 아래 폭은 오프캔버스(#sidebar)가 맡는다. */
-        #topnav .nav-btn { border: 0; background: transparent; color: var(--text-body); font-size: .875rem; padding: .35rem .7rem; border-radius: .375rem; white-space: nowrap; text-decoration: none; }
+        /* 상단 그룹 버튼과 패널 칼럼은 같은 칼럼 폭(--mega-col)을 써서 같은 x 에 정렬된다. 첫 칼럼은 대시보드 / 바로가기 */
+        #topnav, #megamenu .mega-groups { --mega-col: clamp(112px, 12vw, 168px); display: grid; grid-template-columns: repeat(7, var(--mega-col)); gap: 0; }
+        #topnav .nav-btn { text-align: left; border: 0; background: transparent; color: var(--text-body); font-size: .875rem; padding: .35rem .7rem; border-radius: .375rem; white-space: nowrap; text-decoration: none; }
         #topnav .nav-btn:hover,
         #topnav .nav-btn[aria-expanded="true"],
         #topnav .nav-btn.active { background: var(--surface-body); color: var(--primary); }
         #topnav .nav-btn.active { font-weight: 700; }
         #megamenu { position: absolute; left: 0; right: 0; top: 100%; background: var(--dark); box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .25); max-height: calc(100dvh - 3.5rem); overflow-y: auto; --focus-ring-color: var(--on-dark-strong); }
-        #megamenu .mega-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0 1rem; padding: 1rem 1.5rem; }
-        #megamenu .nav-link { color: var(--on-dark-body); padding: .38rem .5rem; font-size: .875rem; border-radius: .25rem; }
+        #megamenu .mega-groups { padding: 1rem 1.5rem; }
+        #megamenu .nav-link { color: var(--on-dark-body); padding: .38rem .7rem; font-size: .875rem; border-radius: .25rem; }
         #megamenu .nav-link:hover,
         #megamenu .nav-link.active { color: var(--on-dark-strong); background: var(--on-dark-raised); }
-        #megamenu .nav-section { color: var(--on-dark-muted); font-size: .7rem; padding: .4rem .5rem; letter-spacing: .06em; text-transform: uppercase; }
+        #megamenu .nav-section { color: var(--on-dark-muted); font-size: .7rem; padding: .4rem .7rem; letter-spacing: .06em; text-transform: uppercase; }
         #megamenu .nav-group.is-target .nav-section { color: var(--on-dark-strong); }
-        #megamenu .mega-foot { border-top: 1px solid var(--on-dark-raised); padding: .5rem 1.5rem; display: flex; gap: 1rem; }
         #megamenu .nav-link.text-danger { color: var(--on-dark-danger) !important; }
         #content { padding: 1.25rem 1rem; }
         @media (min-width: 992px) {
@@ -226,7 +227,7 @@ $groupActive = static function (array $group): bool {
             <i class="bi bi-list" aria-hidden="true"></i>
         </button>
         <h1 class="h6 mb-0 text-dark d-lg-none"><?= esc($pageTitle ?? '관리자') ?></h1>
-        <nav id="topnav" class="d-none d-lg-flex align-items-center gap-1" aria-label="관리자 메뉴 그룹">
+        <nav id="topnav" class="d-none d-lg-grid" aria-label="관리자 메뉴 그룹">
             <a href="/admin/dashboard" class="nav-btn <?= $isDashboard ? 'active' : '' ?>" <?= $isDashboard ? 'aria-current="page"' : '' ?>>대시보드</a>
             <?php foreach ($navGroups as $group): ?>
             <button type="button" class="nav-btn <?= $groupActive($group) ? 'active' : '' ?>" data-mega-group="<?= esc($group['key']) ?>"
@@ -240,9 +241,15 @@ $groupActive = static function (array $group): bool {
 
     <div id="megamenu" class="d-none" role="region" aria-label="전체 메뉴">
         <div class="mega-groups">
+            <section class="nav-group border-0 mt-0" aria-labelledby="mega-site">
+                <div class="nav-section" id="mega-site">바로가기</div>
+                <a href="/admin/help" class="nav-link"><i class="bi bi-question-circle me-2" aria-hidden="true"></i>도움말</a>
+                <a href="/" target="_blank" rel="noopener" class="nav-link"><i class="bi bi-box-arrow-up-right me-2" aria-hidden="true"></i>사이트 보기<span class="visually-hidden"> (새 창 열림)</span></a>
+                <a href="/auth/logout" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>로그아웃</a>
+            </section>
             <?php foreach ($navGroups as $group): ?>
             <section class="nav-group border-0 mt-0" data-mega-section="<?= esc($group['key']) ?>" aria-labelledby="mega-<?= esc($group['key']) ?>">
-                <div class="nav-section" id="mega-<?= esc($group['key']) ?>"><i class="bi bi-<?= esc($group['icon']) ?> me-1" aria-hidden="true"></i><?= esc($group['title']) ?></div>
+                <div class="nav-section" id="mega-<?= esc($group['key']) ?>"><?= esc($group['title']) ?></div>
                 <?php foreach ($group['items'] as $item): ?>
                 <a href="<?= esc($item[0]) ?>" class="nav-link <?= $item[3] ? 'active' : '' ?>" <?= $item[3] ? 'aria-current="page"' : '' ?>>
                     <i class="bi bi-<?= esc($item[1]) ?> me-2" aria-hidden="true"></i><?= esc($item[2]) ?>
@@ -253,11 +260,6 @@ $groupActive = static function (array $group): bool {
                 <?php endforeach; ?>
             </section>
             <?php endforeach; ?>
-        </div>
-        <div class="mega-foot">
-            <a href="/admin/help" class="nav-link"><i class="bi bi-question-circle me-2" aria-hidden="true"></i>도움말</a>
-            <a href="/" target="_blank" rel="noopener" class="nav-link"><i class="bi bi-box-arrow-up-right me-2" aria-hidden="true"></i>사이트 보기<span class="visually-hidden"> (새 창 열림)</span></a>
-            <a href="/auth/logout" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>로그아웃</a>
         </div>
     </div>
 </header>
