@@ -27,9 +27,9 @@ class PluginManager
     private readonly string $pluginsPath;
 
     /**
-     * @var list<WidgetDefinition>|null 요청 안에서 한 번만 읽는다
+     * @var array<string, PluginManifest>|null 요청 안에서 한 번만 읽는다
      */
-    private ?array $widgetCache = null;
+    private ?array $manifestCache = null;
 
     public function __construct(?string $cacheFile = null, ?string $pluginsPath = null)
     {
@@ -94,33 +94,86 @@ class PluginManager
     /**
      * 활성 플러그인의 위젯을 슬롯별로 `order` 순(같으면 key 순)으로 모은다.
      *
-     * 활성 목록(캐시 파일)에 있는 플러그인의 plugin.json 만 읽는다 — 비활성·제거된
-     * 플러그인은 목록에서 빠지므로 위젯도 즉시 사라진다. 깨진 매니페스트는 건너뛴다.
+     * 비활성·제거된 플러그인은 활성 목록에서 빠지므로 위젯도 즉시 사라진다.
      *
      * @return list<WidgetDefinition>
      */
     public function widgets(string $slot): array
     {
-        if ($this->widgetCache === null) {
-            $all = [];
+        $all = [];
+
+        foreach ($this->activeManifests() as $manifest) {
+            array_push($all, ...$manifest->widgets);
+        }
+
+        usort($all, static fn (WidgetDefinition $a, WidgetDefinition $b): int => [$a->order, $a->pluginKey] <=> [$b->order, $b->pluginKey]);
+
+        return array_values(array_filter($all, static fn (WidgetDefinition $w): bool => $w->slot === $slot));
+    }
+
+    /**
+     * 활성 플러그인의 매니페스트 menu[] 를 plugin key 순으로 모은다 (회원 메뉴 노출용).
+     *
+     * @return list<MenuItem>
+     */
+    public function menuItems(): array
+    {
+        $manifests = $this->activeManifests();
+        ksort($manifests);
+
+        $items = [];
+
+        foreach ($manifests as $manifest) {
+            array_push($items, ...$manifest->menu);
+        }
+
+        return $items;
+    }
+
+    /**
+     * 플러그인 루트의 README.md 원문. 없거나 키가 규칙에 어긋나면 null.
+     */
+    public function readme(string $key): ?string
+    {
+        if (preg_match(PluginManifest::KEY_PATTERN, $key) !== 1) {
+            return null;
+        }
+
+        $file = $this->pluginPath(PluginManifest::toPascalCase($key)) . DIRECTORY_SEPARATOR . 'README.md';
+
+        if (! is_file($file)) {
+            return null;
+        }
+
+        $content = file_get_contents($file);
+
+        return is_string($content) && trim($content) !== '' ? $content : null;
+    }
+
+    /**
+     * 활성 목록에 있는 플러그인의 plugin.json 을 요청 안에서 한 번만 읽는다. 깨진 매니페스트는 건너뛴다.
+     *
+     * @return array<string, PluginManifest> key => 매니페스트
+     */
+    private function activeManifests(): array
+    {
+        if ($this->manifestCache === null) {
+            $this->manifestCache = [];
 
             foreach ($this->activeDirectories() as $directory) {
                 try {
                     $manifest = PluginManifest::fromJsonFile($this->pluginPath($directory) . DIRECTORY_SEPARATOR . 'plugin.json');
                 } catch (InvalidManifestException $e) {
-                    log_message('error', '위젯을 건너뜁니다 [{dir}]: {msg}', ['dir' => $directory, 'msg' => $e->getMessage()]);
+                    log_message('error', '플러그인 매니페스트를 건너뜁니다 [{dir}]: {msg}', ['dir' => $directory, 'msg' => $e->getMessage()]);
 
                     continue;
                 }
 
-                array_push($all, ...$manifest->widgets);
+                $this->manifestCache[$manifest->key] = $manifest;
             }
-
-            usort($all, static fn (WidgetDefinition $a, WidgetDefinition $b): int => [$a->order, $a->pluginKey] <=> [$b->order, $b->pluginKey]);
-            $this->widgetCache = $all;
         }
 
-        return array_values(array_filter($this->widgetCache, static fn (WidgetDefinition $w): bool => $w->slot === $slot));
+        return $this->manifestCache;
     }
 
     /**
@@ -258,7 +311,7 @@ class PluginManager
      */
     public function writeActiveCache(): void
     {
-        $this->widgetCache = null;
+        $this->manifestCache = null;
         $this->cache->write($this->model()->activeKeys());
     }
 

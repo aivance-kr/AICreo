@@ -97,9 +97,11 @@ public/plugins/{plugin_key}/   # CSS/JS/이미지 (ZIP 의 public/ 이 여기로
 | `license_type` | ✅ | `onetime` \| `subscription` \| `credit` (1단계만 이식하면 의미 없는 값이라도 스키마는 유지) |
 | `requires.core` | ❌ | 제약 문자열. **현재 AILign 도 문법만 검증, 해석 안 함** |
 | `requires.plugins` | ❌ | key 배열. 강제는 2단계 `PluginDependencyService` |
-| `menu[]` | ❌ | `{title, route, icon}`. `route` 는 선행 `/` 금지 |
+| `menu[]` | ❌ | `{title, route, icon}`. `route` 는 선행 `/` 금지. **활성 플러그인의 항목이 로그인 회원의 «내 정보» 화면(`/auth/profile`) 상단에 버튼으로 노출된다** (`PluginManager::menuItems()`, 플러그인 key 순) |
 | `widgets[]` | ❌ | 위젯 슬롯 등록. 아래 «위젯 슬롯» 참고 |
 | `settings[]` | ❌ | `{key, label, default, help}` — 관리자가 `/admin/plugins/{key}/settings` 에서 입력하는 문자열 값(100자). 값은 `plugins.settings`(JSON)에 저장, 플러그인은 `model(PluginModel::class)->settingsFor('{key}')` 로 읽는다(비면 `default`). 재스캔해도 저장값은 유지 |
+
+**설명 문서**: 플러그인 루트의 `README.md`(마크다운, 표 가능, 원문 HTML 은 제거됨)를 두면 관리자 «플러그인» 목록에 **설명** 버튼이 생기고 `/admin/plugins/{key}/readme` 에서 볼 수 있다 (`PluginManager::readme()`, 변환은 `MarkdownRenderer`). 없으면 버튼도 없다. 예: `app/Plugins/Bookmark/README.md`.
 
 주의: 매니페스트의 `license_type` 은 **신규 등록 시 기본값 제안**일 뿐이다. 재스캔(`upsertFromManifest`)은 `name`·`version`·`manifest` 만 갱신하고, 운영자가 정한 `status`·가격·`license_type` 은 덮어쓰지 않는다.
 
