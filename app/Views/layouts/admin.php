@@ -50,6 +50,17 @@ $navGroups = [
         ['/admin/backup', 'database-down', '백업 관리', $isBackup],
     ]],
 ];
+
+// 항목 하나라도 활성이면 그 그룹이 활성이다(상단바 그룹 버튼 강조용).
+$groupActive = static function (array $group): bool {
+    foreach ($group['items'] as $item) {
+        if ($item[3]) {
+            return true;
+        }
+    }
+
+    return false;
+};
 ?>
 <!DOCTYPE html>
 <html lang="ko">
@@ -75,6 +86,8 @@ $navGroups = [
         #sidebar {
             width: var(--sidebar-w);
             background: var(--dark) !important;
+            height: 100vh;
+            max-height: 100dvh;
             overflow-y: auto;
             overscroll-behavior: contain;
         }
@@ -87,14 +100,6 @@ $navGroups = [
         #sidebar .nav-section { color: var(--on-dark-muted); font-size: .7rem; padding: .8rem 1.2rem .2rem; letter-spacing: .06em; text-transform: uppercase; }
         #sidebar .nav-group { border-top: 1px solid var(--on-dark-raised); margin-top: .35rem; padding-bottom: .15rem; }
         #sidebar .nav-group .nav-section { padding-top: .6rem; }
-        /* 넓은 화면(1200px↑)에서는 사이드바를 넓혀 그룹을 두 칼럼으로 나눈다. 그룹은 칼럼 사이에서 쪼개지지 않는다. */
-        @media (min-width: 1200px) {
-            body { --sidebar-w: 380px; }
-            #sidebar .nav-groups { column-count: 2; column-gap: 0; }
-            #sidebar .nav-group { break-inside: avoid; }
-            #sidebar .nav-groups .nav-section { padding-left: .9rem; padding-right: .5rem; }
-            #sidebar .nav-groups .nav-link.sub { padding: .38rem .5rem .38rem 1.3rem; }
-        }
         #sidebar .nav-link.sub { padding: .38rem 1.2rem .38rem 1.9rem; }
         /* Bootstrap .text-danger(#dc3545)는 사이드바 배경 위에서 3.2:1 로 AA 미달이었다 —
            어두운 표면 전용 danger 톤(5.2:1)으로 이 컨테이너 안에서만 되돌린다.
@@ -103,20 +108,27 @@ $navGroups = [
         #sidebar .nav-link.text-danger:hover { color: var(--on-dark-strong) !important; }
 
         #topbar { background: var(--surface-raised); border-bottom: 1px solid var(--border-subtle); padding: .6rem 1rem; position: sticky; top: 0; z-index: 100; }
-        #content { padding: 1.25rem 1rem; }
 
-        /* 데스크톱에서만 사이드바를 고정 배치한다.
-           그 아래 폭에서는 Bootstrap 오프캔버스가 맡으므로 여백을 주지 않는다. */
+        /* 데스크톱(992px↑): 사이드바 대신 상단바에 그룹 이름만 노출하고,
+           그룹을 누르면 전체 메뉴 패널이 펼쳐진다. 그 아래 폭은 오프캔버스(#sidebar)가 맡는다. */
+        #topnav .nav-btn { border: 0; background: transparent; color: var(--text-body); font-size: .875rem; padding: .35rem .7rem; border-radius: .375rem; white-space: nowrap; text-decoration: none; }
+        #topnav .nav-btn:hover,
+        #topnav .nav-btn[aria-expanded="true"],
+        #topnav .nav-btn.active { background: var(--surface-body); color: var(--primary); }
+        #topnav .nav-btn.active { font-weight: 700; }
+        #megamenu { position: absolute; left: 0; right: 0; top: 100%; background: var(--dark); box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .25); max-height: calc(100dvh - 3.5rem); overflow-y: auto; --focus-ring-color: var(--on-dark-strong); }
+        #megamenu .mega-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0 1rem; padding: 1rem 1.5rem; }
+        #megamenu .nav-link { color: var(--on-dark-body); padding: .38rem .5rem; font-size: .875rem; border-radius: .25rem; }
+        #megamenu .nav-link:hover,
+        #megamenu .nav-link.active { color: var(--on-dark-strong); background: var(--on-dark-raised); }
+        #megamenu .nav-section { color: var(--on-dark-muted); font-size: .7rem; padding: .4rem .5rem; letter-spacing: .06em; text-transform: uppercase; }
+        #megamenu .nav-group.is-target .nav-section { color: var(--on-dark-strong); }
+        #megamenu .mega-foot { border-top: 1px solid var(--on-dark-raised); padding: .5rem 1.5rem; display: flex; gap: 1rem; }
+        #megamenu .nav-link.text-danger { color: var(--on-dark-danger) !important; }
+        #content { padding: 1.25rem 1rem; }
         @media (min-width: 992px) {
-            #sidebar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 100vh;
-                max-height: 100dvh;
-            }
-            #topbar  { margin-left: var(--sidebar-w); padding: .6rem 1.5rem; }
-            #content { margin-left: var(--sidebar-w); padding: 1.5rem; }
+            #topbar  { padding: .6rem 1.5rem; }
+            #content { padding: 1.5rem; }
         }
 
         /* .btn-sm 터치 여유·.table-stack 반응형 표는 /css/tokens.css 로 옮겨
@@ -163,13 +175,13 @@ $navGroups = [
 
 <a class="skip-link" href="#main-content">본문 바로가기</a>
 
-<div class="offcanvas-lg offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel">
-    <div class="offcanvas-header d-lg-none">
+<div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel">
+    <div class="offcanvas-header">
         <span class="offcanvas-title h6 mb-0 text-white" id="sidebarLabel">관리자 메뉴</span>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="메뉴 닫기"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="메뉴 닫기"></button>
     </div>
 
-    <div class="offcanvas-body p-0 d-block">
+    <div class="offcanvas-body p-0">
         <div class="brand"><i class="bi bi-grid-3x3-gap-fill me-2" aria-hidden="true"></i><?= esc($settings['site_name'] ?? 'Admin') ?></div>
         <nav class="mt-2" aria-label="관리자 메뉴">
             <a href="/admin/dashboard" class="nav-link <?= $isDashboard ? 'active' : '' ?>" <?= $isDashboard ? 'aria-current="page"' : '' ?>>
@@ -207,16 +219,48 @@ $navGroups = [
     </div>
 </div>
 
-<div id="topbar" class="d-flex align-items-center justify-content-between">
+<header id="topbar" class="d-flex align-items-center justify-content-between">
     <div class="d-flex align-items-center">
         <button class="btn btn-sm btn-outline-secondary d-lg-none me-2" type="button"
                 data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="관리자 메뉴 열기">
             <i class="bi bi-list" aria-hidden="true"></i>
         </button>
-        <h1 class="h6 mb-0 text-dark"><?= esc($pageTitle ?? '관리자') ?></h1>
+        <h1 class="h6 mb-0 text-dark d-lg-none"><?= esc($pageTitle ?? '관리자') ?></h1>
+        <nav id="topnav" class="d-none d-lg-flex align-items-center gap-1" aria-label="관리자 메뉴 그룹">
+            <a href="/admin/dashboard" class="nav-btn <?= $isDashboard ? 'active' : '' ?>" <?= $isDashboard ? 'aria-current="page"' : '' ?>>대시보드</a>
+            <?php foreach ($navGroups as $group): ?>
+            <button type="button" class="nav-btn <?= $groupActive($group) ? 'active' : '' ?>" data-mega-group="<?= esc($group['key']) ?>"
+                    aria-expanded="false" aria-controls="megamenu">
+                <?= esc($group['title']) ?><?php if (($group['badge'] ?? 0) > 0): ?><span class="badge-dot ms-1" aria-hidden="true"></span><span class="visually-hidden"> (읽지 않은 문의 있음)</span><?php endif; ?>
+            </button>
+            <?php endforeach; ?>
+        </nav>
     </div>
     <span class="text-muted small"><i class="bi bi-person-circle me-1" aria-hidden="true"></i><?= esc($authUser['nickname']) ?></span>
-</div>
+
+    <div id="megamenu" class="d-none" role="region" aria-label="전체 메뉴">
+        <div class="mega-groups">
+            <?php foreach ($navGroups as $group): ?>
+            <section class="nav-group border-0 mt-0" data-mega-section="<?= esc($group['key']) ?>" aria-labelledby="mega-<?= esc($group['key']) ?>">
+                <div class="nav-section" id="mega-<?= esc($group['key']) ?>"><i class="bi bi-<?= esc($group['icon']) ?> me-1" aria-hidden="true"></i><?= esc($group['title']) ?></div>
+                <?php foreach ($group['items'] as $item): ?>
+                <a href="<?= esc($item[0]) ?>" class="nav-link <?= $item[3] ? 'active' : '' ?>" <?= $item[3] ? 'aria-current="page"' : '' ?>>
+                    <i class="bi bi-<?= esc($item[1]) ?> me-2" aria-hidden="true"></i><?= esc($item[2]) ?>
+                    <?php if (($item[4] ?? 0) > 0): ?>
+                    <span class="badge bg-danger ms-1"><?= esc((string) $item[4]) ?><span class="visually-hidden">건의 읽지 않은 문의</span></span>
+                    <?php endif; ?>
+                </a>
+                <?php endforeach; ?>
+            </section>
+            <?php endforeach; ?>
+        </div>
+        <div class="mega-foot">
+            <a href="/admin/help" class="nav-link"><i class="bi bi-question-circle me-2" aria-hidden="true"></i>도움말</a>
+            <a href="/" target="_blank" rel="noopener" class="nav-link"><i class="bi bi-box-arrow-up-right me-2" aria-hidden="true"></i>사이트 보기<span class="visually-hidden"> (새 창 열림)</span></a>
+            <a href="/auth/logout" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>로그아웃</a>
+        </div>
+    </div>
+</header>
 
 <main id="main-content" tabindex="-1">
 <div id="content">
@@ -241,6 +285,35 @@ $navGroups = [
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+<script>
+// 상단 그룹 버튼: 어느 그룹을 눌러도 전체 메뉴 패널이 열리고, 누른 그룹 제목이 강조된다.
+(function () {
+    var panel = document.getElementById('megamenu');
+    var buttons = document.querySelectorAll('[data-mega-group]');
+    if (!panel || !buttons.length) { return; }
+    function setOpen(open, key) {
+        panel.classList.toggle('d-none', !open);
+        buttons.forEach(function (b) {
+            b.setAttribute('aria-expanded', open && b.dataset.megaGroup === key ? 'true' : 'false');
+        });
+        panel.querySelectorAll('[data-mega-section]').forEach(function (sec) {
+            sec.classList.toggle('is-target', open && sec.dataset.megaSection === key);
+        });
+    }
+    buttons.forEach(function (b) {
+        b.addEventListener('click', function (e) {
+            e.stopPropagation();
+            setOpen(b.getAttribute('aria-expanded') !== 'true', b.dataset.megaGroup);
+        });
+    });
+    document.addEventListener('click', function (e) {
+        if (!panel.contains(e.target)) { setOpen(false); }
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !panel.classList.contains('d-none')) { setOpen(false); }
+    });
+})();
+</script>
 <?= $this->renderSection('scripts') ?>
 </body>
 </html>
