@@ -22,7 +22,6 @@ class BlockedIpModel extends Model
      */
     private const GOOGLEBOT_RANGES = [
         '66.249.64.0/19',
-        '34.64.0.0/13',
         '34.22.85.0/27',
         '192.178.4.0/22',
     ];
