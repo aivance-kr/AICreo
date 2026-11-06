@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Libraries\CloudflareIps;
+use App\Libraries\IpRange;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Model;
 
@@ -13,6 +14,18 @@ class BlockedIpModel extends Model
     public const REASON_AUTO   = 'auto';
     public const REASON_MANUAL = 'manual';
     public const BLOCK_DAYS    = 30;
+
+    /**
+     * 항상 차단에서 제외하는 구글봇 대역.
+     *
+     * @var list<string>
+     */
+    private const GOOGLEBOT_RANGES = [
+        '66.249.64.0/19',
+        '34.64.0.0/13',
+        '34.22.85.0/27',
+        '192.178.4.0/22',
+    ];
 
     protected $table         = 'blocked_ips';
     protected $primaryKey    = 'id';
@@ -46,13 +59,14 @@ class BlockedIpModel extends Model
     }
 
     /**
-     * `.env` 의 `security.ipWhitelist`(쉼표 구분)에 든 IP 는 차단 대상에서 제외한다.
+     * 구글봇 대역과 `.env` 의 `security.ipWhitelist`(쉼표 구분, 단일 IP 또는 CIDR)에 든 IP 는
+     * 차단 대상에서 제외한다.
      */
     public static function isWhitelisted(string $ipAddress): bool
     {
-        $list = array_map('trim', explode(',', (string) env('security.ipWhitelist', '')));
+        $list = array_filter(array_map('trim', explode(',', (string) env('security.ipWhitelist', ''))));
 
-        return in_array($ipAddress, $list, true);
+        return IpRange::containsAny($ipAddress, [...self::GOOGLEBOT_RANGES, ...$list]);
     }
 
     public function isBlocked(string $ipAddress): bool
@@ -86,7 +100,9 @@ class BlockedIpModel extends Model
         $builder = $this->builder()->where('blocked_until >', Time::now()->toDateTimeString());
 
         if ($keyword !== '') {
-            $builder->like('ip_address', $keyword);
+            // 앞뒤는 항상 부분 일치, 입력한 `*` 는 중간 와일드카드로 쓴다.
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $keyword);
+            $builder->where('ip_address LIKE', '%' . str_replace('*', '%', $escaped) . '%');
         }
 
         $total = (clone $builder)->countAllResults(false);

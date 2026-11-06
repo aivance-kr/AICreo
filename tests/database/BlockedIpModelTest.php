@@ -48,6 +48,47 @@ final class BlockedIpModelTest extends DatabaseTestCase
         }
     }
 
+    public function testGooglebotRangesAreNeverBlocked(): void
+    {
+        $model = new BlockedIpModel();
+
+        foreach (['66.249.66.1', '34.64.1.1', '34.22.85.30', '192.178.5.9'] as $ip) {
+            $this->assertFalse($model->block($ip, BlockedIpModel::REASON_AUTO), $ip);
+        }
+        $this->assertTrue($model->block('66.249.96.1', BlockedIpModel::REASON_AUTO));
+        $this->assertTrue($model->block('34.22.85.32', BlockedIpModel::REASON_AUTO));
+    }
+
+    public function testEnvWhitelistAcceptsCidr(): void
+    {
+        putenv('security.ipWhitelist=10.1.0.0/16');
+        $_ENV['security.ipWhitelist'] = '10.1.0.0/16';
+
+        try {
+            $this->assertTrue(BlockedIpModel::isWhitelisted('10.1.200.3'));
+            $this->assertFalse(BlockedIpModel::isWhitelisted('10.2.0.1'));
+        } finally {
+            putenv('security.ipWhitelist');
+            unset($_ENV['security.ipWhitelist']);
+        }
+    }
+
+    public function testSearchActiveSupportsPartialAndWildcard(): void
+    {
+        $model = new BlockedIpModel();
+        $model->block('1.2.3.4', BlockedIpModel::REASON_AUTO);
+        $model->block('1.9.3.44', BlockedIpModel::REASON_AUTO);
+
+        $this->assertSame(2, $model->searchActive('3.4', 1, 20)['total']);
+        $this->assertSame(1, $model->searchActive('1.2.*', 1, 20)['total']);
+        $this->assertSame(2, $model->searchActive('*3.4*', 1, 20)['total']);
+        $this->assertSame(2, $model->searchActive('1.*.3.4', 1, 20)['total']);
+        $this->assertSame(0, $model->searchActive('1%', 1, 20)['total']);
+
+        $model->block('195.178.110.199', BlockedIpModel::REASON_AUTO);
+        $this->assertSame(1, $model->searchActive('195.178.110.*', 1, 20)['total']);
+    }
+
     public function testBlockingAgainExtendsInsteadOfDuplicating(): void
     {
         $model = new BlockedIpModel();
