@@ -126,6 +126,7 @@ $groupActive = static function (array $group): bool {
         #megamenu .nav-section { color: var(--on-dark-muted); font-size: .7rem; padding: .4rem .7rem; letter-spacing: .06em; text-transform: uppercase; }
         #megamenu .nav-group.is-target .nav-section { color: var(--on-dark-strong); }
         #megamenu .nav-link.text-danger { color: var(--on-dark-danger) !important; }
+        #sitebar { padding: .45rem 1.5rem; background: var(--dark); color: var(--on-dark-strong); font-size: .8125rem; font-weight: 700; }
         #pagebar { padding: .9rem 1.5rem; background: var(--surface-raised); border-bottom: 1px solid var(--border-subtle); }
         #content { padding: 1.25rem 1rem; }
         @media (min-width: 992px) {
@@ -219,6 +220,10 @@ $groupActive = static function (array $group): bool {
             <a href="/auth/logout" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>로그아웃</a>
         </nav>
     </div>
+</div>
+
+<div id="sitebar" class="d-none d-lg-block">
+    <i class="bi bi-grid-3x3-gap-fill me-2" aria-hidden="true"></i><?= esc($settings['site_name'] ?? 'Admin') ?> <span class="fw-normal" style="color: var(--on-dark-muted)">관리자</span>
 </div>
 
 <header id="topbar" class="d-flex align-items-center justify-content-between">
