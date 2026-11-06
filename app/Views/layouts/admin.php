@@ -229,12 +229,13 @@ $groupActive = static function (array $group): bool {
         </button>
         <h1 class="h6 mb-0 text-dark d-lg-none"><?= esc($pageTitle ?? '관리자') ?></h1>
         <nav id="topnav" class="d-none d-lg-grid" aria-label="관리자 메뉴 그룹">
-            <a href="/admin/dashboard" class="nav-btn <?= $isDashboard ? 'active' : '' ?>" <?= $isDashboard ? 'aria-current="page"' : '' ?>>대시보드</a>
+            <a href="/admin/dashboard" class="nav-btn <?= $isDashboard ? 'active' : '' ?>" data-mega-group="home"
+               aria-expanded="false" aria-controls="megamenu" <?= $isDashboard ? 'aria-current="page"' : '' ?>>대시보드</a>
             <?php foreach ($navGroups as $group): ?>
-            <button type="button" class="nav-btn <?= $groupActive($group) ? 'active' : '' ?>" data-mega-group="<?= esc($group['key']) ?>"
-                    aria-expanded="false" aria-controls="megamenu">
+            <a href="<?= esc($group['items'][0][0]) ?>" class="nav-btn <?= $groupActive($group) ? 'active' : '' ?>" data-mega-group="<?= esc($group['key']) ?>"
+               aria-expanded="false" aria-controls="megamenu">
                 <?= esc($group['title']) ?><?php if (($group['badge'] ?? 0) > 0): ?><span class="badge-dot ms-1" aria-hidden="true"></span><span class="visually-hidden"> (읽지 않은 문의 있음)</span><?php endif; ?>
-            </button>
+            </a>
             <?php endforeach; ?>
         </nav>
     </div>
@@ -242,8 +243,9 @@ $groupActive = static function (array $group): bool {
 
     <div id="megamenu" class="d-none" role="region" aria-label="전체 메뉴">
         <div class="mega-groups">
-            <section class="nav-group border-0 mt-0" aria-labelledby="mega-site">
-                <div class="nav-section" id="mega-site">바로가기</div>
+            <section class="nav-group border-0 mt-0" data-mega-section="home" aria-labelledby="mega-site">
+                <div class="nav-section" id="mega-site">대시보드 · 바로가기</div>
+                <a href="/admin/dashboard" class="nav-link <?= $isDashboard ? 'active' : '' ?>" <?= $isDashboard ? 'aria-current="page"' : '' ?>><i class="bi bi-speedometer2 me-2" aria-hidden="true"></i>대시보드</a>
                 <a href="/admin/help" class="nav-link"><i class="bi bi-question-circle me-2" aria-hidden="true"></i>도움말</a>
                 <a href="/" target="_blank" rel="noopener" class="nav-link"><i class="bi bi-box-arrow-up-right me-2" aria-hidden="true"></i>사이트 보기<span class="visually-hidden"> (새 창 열림)</span></a>
                 <a href="/auth/logout" class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>로그아웃</a>
@@ -303,11 +305,13 @@ foreach ($navGroups as $navGroup) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 <script>
-// 상단 그룹 버튼: 어느 그룹을 눌러도 전체 메뉴 패널이 열리고, 누른 그룹 제목이 강조된다.
+// 상단 그룹 링크: 마우스를 올리거나 초점을 주면 전체 메뉴 패널이 열리고 해당 그룹 제목이 강조된다.
+// 클릭하면 그룹의 첫 메뉴로 이동한다. 상단바 밖으로 나가거나 Esc 를 누르면 닫힌다.
 (function () {
     var panel = document.getElementById('megamenu');
+    var header = document.getElementById('topbar');
     var buttons = document.querySelectorAll('[data-mega-group]');
-    if (!panel || !buttons.length) { return; }
+    if (!panel || !header || !buttons.length) { return; }
     function setOpen(open, key) {
         panel.classList.toggle('d-none', !open);
         buttons.forEach(function (b) {
@@ -318,18 +322,17 @@ foreach ($navGroups as $navGroup) {
         });
     }
     buttons.forEach(function (b) {
-        b.addEventListener('click', function (e) {
-            e.stopPropagation();
-            setOpen(b.getAttribute('aria-expanded') !== 'true', b.dataset.megaGroup);
-        });
+        b.addEventListener('mouseenter', function () { setOpen(true, b.dataset.megaGroup); });
+        b.addEventListener('focus', function () { setOpen(true, b.dataset.megaGroup); });
     });
-    document.addEventListener('click', function (e) {
-        if (!panel.contains(e.target)) { setOpen(false); }
+    header.addEventListener('mouseleave', function () { setOpen(false); });
+    header.addEventListener('focusout', function (e) {
+        if (!header.contains(e.relatedTarget)) { setOpen(false); }
     });
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && !panel.classList.contains('d-none')) { setOpen(false); }
     });
-})();
+})();;
 </script>
 <?= $this->renderSection('scripts') ?>
 </body>
