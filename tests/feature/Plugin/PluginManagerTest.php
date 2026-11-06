@@ -125,6 +125,30 @@ final class PluginManagerTest extends DatabaseTestCase
         $this->assertSame(['Valid'], $this->manager->activeDirectories());
     }
 
+    public function testMenuItemsOnlyFromActivePlugins(): void
+    {
+        $this->manager->sync();
+        $this->assertSame([], $this->manager->menuItems());
+
+        $this->manager->activate('valid');
+        $this->assertSame(['my/valid'], array_map(static fn ($item) => $item->route, $this->manager->menuItems()));
+
+        $this->manager->deactivate('valid');
+        $this->assertSame([], $this->manager->menuItems());
+    }
+
+    public function testReadmeReturnsContentOnlyWhenFilePresent(): void
+    {
+        $this->assertNull($this->manager->readme('valid'));
+        $this->assertNull($this->manager->readme('../etc'));
+
+        file_put_contents($this->pluginsPath . 'Valid/README.md', "# 설명\n");
+        $this->assertSame("# 설명\n", $this->manager->readme('valid'));
+
+        file_put_contents($this->pluginsPath . 'Valid/README.md', "  \n");
+        $this->assertNull($this->manager->readme('valid'));
+    }
+
     public function testDeactivateRemovesFromCache(): void
     {
         $this->manager->sync();

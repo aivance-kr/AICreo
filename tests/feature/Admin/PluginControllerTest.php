@@ -82,6 +82,30 @@ final class PluginControllerTest extends AdminTestCase
         $result->assertDontSee('/admin/plugins/plain_tool/settings');
     }
 
+    public function testReadmeButtonAndPageOnlyForPluginsWithReadme(): void
+    {
+        $this->addPlugin('plain_tool');
+        $this->addPlugin('doc_tool');
+        file_put_contents(
+            $this->pluginsPath . 'DocTool/README.md',
+            "# 사용법\n\n본문 설명\n\n<script>alert(1)</script>\n\n[나쁜 링크](javascript:alert(1))\n",
+        );
+        $this->manager->sync();
+
+        $list = $this->withSession($this->adminSession)->get('admin/plugins');
+        $list->assertSee('/admin/plugins/doc_tool/readme');
+        $list->assertDontSee('/admin/plugins/plain_tool/readme');
+
+        $page = $this->withSession($this->adminSession)->get('admin/plugins/doc_tool/readme');
+        $page->assertOK();
+        $page->assertSee('본문 설명');
+        $this->assertStringNotContainsString('alert(1)', $page->getBody());
+        $this->assertStringNotContainsString('href="javascript:', $page->getBody());
+
+        $this->withSession($this->adminSession)->get('admin/plugins/plain_tool/readme')
+            ->assertRedirectTo('/admin/plugins');
+    }
+
     public function testSettingsFormShowsDefaultAndSaves(): void
     {
         $this->addPluginWithSettings();

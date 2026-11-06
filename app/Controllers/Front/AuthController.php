@@ -98,7 +98,7 @@ class AuthController extends BaseController
 
         $user = $this->userModel->find(session()->get('user_id'));
 
-        return $this->render('auth/profile', ['user' => $user, 'page' => ['title' => lang('Auth.profileTitle'), 'noindex' => true]]);
+        return $this->render('auth/profile', ['user' => $user, 'pluginMenus' => service('pluginManager')->menuItems(), 'page' => ['title' => lang('Auth.profileTitle'), 'noindex' => true]]);
     }
 
     public function profileUpdate(): ResponseInterface|string

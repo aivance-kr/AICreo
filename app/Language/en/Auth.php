@@ -17,6 +17,7 @@ return [
     'providerNaver'            => 'Naver',
     'profileHeading'           => 'Edit my account',
     'profileTitle'             => 'My account',
+    'pluginMenuLabel'          => 'Plugin menu',
     'tabInfo'                  => 'Basic info',
     'tabPassword'              => 'Change password',
     'tabWithdraw'              => 'Delete account',

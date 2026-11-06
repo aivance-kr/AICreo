@@ -17,6 +17,7 @@ return [
     'providerNaver'            => '네이버',
     'profileHeading'           => '내 정보 수정',
     'profileTitle'             => '내 정보',
+    'pluginMenuLabel'          => '플러그인 메뉴',
     'tabInfo'                  => '기본 정보',
     'tabPassword'              => '비밀번호 변경',
     'tabWithdraw'              => '회원 탈퇴',
