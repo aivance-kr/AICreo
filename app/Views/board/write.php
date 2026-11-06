@@ -235,8 +235,11 @@ tinymce.init({
     language_url: 'https://cdn.jsdelivr.net/npm/tinymce-i18n@latest/langs6/ko_KR.js',
     height: 400,
     plugins: 'lists link image table code codesample',
-    toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | removeformat | codesample code',
-    menubar: false,
+    toolbar: 'undo redo | blocks fontsize | bold italic underline strikethrough | alignleft aligncenter alignright | bullist numlist outdent indent | blockquote hr | link image table | removeformat | codesample code',
+    toolbar_mode: 'wrap',
+    blocks_formats: <?= json_encode(lang('Board.editorBlocks'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
+    font_size_formats: '12px 14px 16px 18px 20px 24px 28px 32px',
+    menubar: 'edit insert format table',
     // 게시판 상세와 같은 CSS 를 써서 글자 크기·간격을 맞춘다 (body 에 .post-content 부여)
     content_css: '<?= asset_url('css/post-content.css') ?>',
     body_class: 'post-content',

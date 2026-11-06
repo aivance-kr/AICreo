@@ -69,7 +69,7 @@ final class HtmlSanitizer
         $config->set('Attr.AllowedFrameTargets', ['_blank']);
         $config->set('Attr.DefaultImageAlt', '');
         $config->set('HTML.TargetNoopener', true);
-        $config->set('CSS.AllowedProperties', ['text-align', 'width', 'height']);
+        $config->set('CSS.AllowedProperties', ['text-align', 'width', 'height', 'font-size']);
         $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'tel' => true]);
 
         return self::$purifier = new HTMLPurifier($config);
