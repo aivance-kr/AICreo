@@ -15,6 +15,16 @@ $providerLabel = match($user['social_provider'] ?? null) {
 <div class="container py-4" style="max-width:640px">
     <h1 class="h5 mb-4 fw-bold"><i class="bi bi-person-circle me-2" aria-hidden="true"></i><?= esc(lang('Auth.profileHeading')) ?></h1>
 
+    <?php if (! empty($pluginMenus)): ?>
+    <nav class="d-flex flex-wrap gap-2 mb-4" aria-label="<?= esc(lang('Auth.pluginMenuLabel')) ?>">
+        <?php foreach ($pluginMenus as $menuItem): ?>
+        <a href="/<?= esc($menuItem->route) ?>" class="btn btn-sm btn-outline-primary" aria-label="<?= esc($menuItem->title) ?>">
+            <?php if ($menuItem->icon !== ''): ?><i class="bi <?= esc($menuItem->icon) ?> me-1" aria-hidden="true"></i><?php endif; ?><?= esc($menuItem->title) ?>
+        </a>
+        <?php endforeach; ?>
+    </nav>
+    <?php endif; ?>
+
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
             <a class="nav-link <?= $activeTab === 'info' ? 'active' : '' ?>" href="/auth/profile"

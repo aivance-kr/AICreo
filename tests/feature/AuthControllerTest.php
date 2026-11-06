@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Libraries\Plugin\ActivePluginCache;
+use App\Libraries\Plugin\PluginManager;
 use App\Models\SettingModel;
 use App\Models\UserModel;
+use Config\Services;
 use Tests\Support\FeatureTestCase;
 
 /**
@@ -191,5 +194,31 @@ final class AuthControllerTest extends FeatureTestCase
 
         $result->assertRedirectTo('/auth/profile?tab=withdraw');
         $this->assertSame(1, (int) $userModel->find($userId)['is_active']);
+    }
+
+    public function testProfileShowsActivePluginMenuLinks(): void
+    {
+        $userId = (new UserModel())->insert([
+            'username' => 'menu-user',
+            'email'    => 'menu-user@example.com',
+            'password' => password_hash('password123', PASSWORD_DEFAULT),
+            'nickname' => '메뉴회원',
+            'role'     => 'member',
+        ]);
+        $session = ['user_id' => $userId, 'user_role' => 'member'];
+
+        $this->assertStringNotContainsString('/my/valid', $this->withSession($session)->get('auth/profile')->getBody());
+
+        // 활성 목록(캐시 파일)에 Valid 가 있는 매니페스트 관리자를 주입한다.
+        $cacheFile = WRITEPATH . 'plugin_profile_menu_active.php';
+        (new ActivePluginCache($cacheFile, SUPPORTPATH . 'Plugins/'))->write(['valid' => 'Valid']);
+
+        try {
+            Services::injectMock('pluginManager', new PluginManager($cacheFile, SUPPORTPATH . 'Plugins/'));
+            $this->assertStringContainsString('href="/my/valid"', $this->withSession($session)->get('auth/profile')->getBody());
+        } finally {
+            Services::reset();
+            @unlink($cacheFile);
+        }
     }
 }

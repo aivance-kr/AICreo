@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Exceptions\InvalidManifestException;
 use App\Exceptions\PluginException;
+use App\Libraries\MarkdownRenderer;
 use App\Libraries\Plugin\PluginInstaller;
 use App\Libraries\Plugin\PluginManager;
 use App\Libraries\Plugin\WidgetRenderer;
@@ -31,6 +32,7 @@ class PluginController extends BaseController
 
         foreach ($plugins as &$plugin) {
             $plugin['has_settings'] = $model->definitionsOf($plugin) !== [];
+            $plugin['has_readme']   = $this->manager()->readme((string) $plugin['plugin_key']) !== null;
         }
         unset($plugin);
 
@@ -75,6 +77,21 @@ class PluginController extends BaseController
             'plugin'      => $row,
             'definitions' => $model->settingDefinitions($key),
             'values'      => $model->settingsFor($key),
+        ]);
+    }
+
+    public function readme(string $key): ResponseInterface|string
+    {
+        $row      = model(PluginModel::class)->findByKey($key);
+        $markdown = $row === null ? null : $this->manager()->readme($key);
+
+        if ($row === null || $markdown === null) {
+            return redirect()->to(self::LIST_URL)->with('error', '설명 문서가 없는 플러그인입니다.');
+        }
+
+        return $this->render('admin/plugins/readme', [
+            'plugin'     => $row,
+            'readmeHtml' => MarkdownRenderer::toHtml($markdown),
         ]);
     }
 
