@@ -144,4 +144,5 @@ return [
     'aiPostNoKey'              => 'To use AI suggestions, set GROQ_API_KEY in .env.',
     'aiPostFailed'             => 'Could not get AI suggestions. Please try again shortly.',
     'home'                     => 'Home',
+    'editorBlocks'             => 'Paragraph=p; Heading 2=h2; Heading 3=h3; Heading 4=h4; Quote=blockquote; Code block=pre',
 ];

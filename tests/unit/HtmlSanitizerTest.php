@@ -60,6 +60,15 @@ final class HtmlSanitizerTest extends CIUnitTestCase
         $this->assertStringContainsString('noopener', $out);
     }
 
+    public function testKeepsFontSizeAndBlockquote(): void
+    {
+        $out = HtmlSanitizer::clean('<blockquote><p>인용</p></blockquote><p><span style="font-size: 24px; position: fixed;">큰 글씨</span></p>');
+
+        $this->assertStringContainsString('<blockquote>', $out);
+        $this->assertStringContainsString('font-size:24px', $out);
+        $this->assertStringNotContainsString('position', $out);
+    }
+
     public function testDropsUnknownClassesAndEmptyInput(): void
     {
         $this->assertStringNotContainsString('class=', HtmlSanitizer::clean('<p class="evil">x</p>'));

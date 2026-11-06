@@ -82,7 +82,11 @@ tinymce.init({
     language_url: 'https://cdn.jsdelivr.net/npm/tinymce-i18n@latest/langs6/ko_KR.js',
     height: 400,
     plugins: 'lists link image table code codesample',
-    toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image | codesample code',
+    toolbar: 'undo redo | blocks fontsize | bold italic underline strikethrough | alignleft aligncenter alignright | bullist numlist outdent indent | blockquote hr | link image table | removeformat | codesample code',
+    toolbar_mode: 'wrap',
+    blocks_formats: '문단=p; 제목 2=h2; 제목 3=h3; 제목 4=h4; 인용=blockquote; 코드 블록=pre',
+    font_size_formats: '12px 14px 16px 18px 20px 24px 28px 32px',
+    menubar: 'edit insert format table',
     images_upload_url: '/admin/media/upload',
     automatic_uploads: true,
 });
