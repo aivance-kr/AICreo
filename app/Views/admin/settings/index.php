@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '사이트 설정' ?>
+<?php $this->setVar('pageTitle', '사이트 설정') ?>
 <?= $this->section('content') ?>
 
 <!-- 탭 -->

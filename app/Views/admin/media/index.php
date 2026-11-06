@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '미디어 라이브러리' ?>
+<?php $this->setVar('pageTitle', '미디어 라이브러리') ?>
 <?= $this->section('content') ?>
 
 <!-- 업로드 영역 -->

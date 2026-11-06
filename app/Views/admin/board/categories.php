@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = ($board['name'] ?? '') . ' 카테고리 관리' ?>
+<?php $this->setVar('pageTitle', ($board['name'] ?? '') . ' 카테고리 관리') ?>
 <?= $this->section('content') ?>
 
 <div class="mb-2">

@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '문의 상세' ?>
+<?php $this->setVar('pageTitle', '문의 상세') ?>
 <?= $this->section('content') ?>
 
 <div class="mb-2"><a href="/admin/inquiries" class="text-muted small"><i class="bi bi-arrow-left" aria-hidden="true"></i> 목록</a></div>

@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '백업 관리' ?>
+<?php $this->setVar('pageTitle', '백업 관리') ?>
 <?= $this->section('content') ?>
 <div style="max-width:860px">
     <div class="card border-0 shadow-sm mb-4"><div class="card-body p-4 d-flex flex-wrap gap-3 align-items-center justify-content-between"><div><h1 class="h5 mb-1">백업 생성</h1><p class="text-muted small mb-0">데이터베이스와 <code>public/uploads</code> 파일을 하나의 ZIP으로 보관합니다.</p></div><form method="post" action="/admin/backup/create"><?= csrf_field() ?><button type="submit" class="btn btn-primary"<?= in_array($jobStatus['status'] ?? '', ['queued', 'running'], true) ? ' disabled' : '' ?>><i class="bi bi-download me-1" aria-hidden="true"></i>지금 백업</button></form></div></div>

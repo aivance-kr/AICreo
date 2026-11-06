@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = $page ? '페이지 수정' : '페이지 추가' ?>
+<?php $this->setVar('pageTitle', $page ? '페이지 수정' : '페이지 추가') ?>
 <?= $this->section('content') ?>
 
 <?= view('admin/partials/translations', ['translationRows' => $translationRows]) ?>

@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '미리보기 공유 링크' ?>
+<?php $this->setVar('pageTitle', '미리보기 공유 링크') ?>
 <?= $this->section('content') ?>
 
 <div class="mb-3 small">

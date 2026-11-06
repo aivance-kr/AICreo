@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '글 수정 이력' ?>
+<?php $this->setVar('pageTitle', '글 수정 이력') ?>
 <?= $this->section('content') ?>
 
 <div class="mb-3 small">

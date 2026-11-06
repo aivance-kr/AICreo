@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '페이지 관리' ?>
+<?php $this->setVar('pageTitle', '페이지 관리') ?>
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-between mb-3">
