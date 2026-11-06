@@ -7,6 +7,49 @@ $isOauthSettings   = str_starts_with($uri, 'admin/settings/oauth');
 $isBackup           = str_starts_with($uri, 'admin/backup');
 $isGeneralSettings = str_starts_with($uri, 'admin/settings') && ! $isThemeSettings && ! $isOauthSettings;
 $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
+
+// 사이드바 메뉴 정의 — [그룹 제목, 아이콘, 항목[]]. 항목: [주소, 아이콘, 이름, 활성 여부].
+// 모든 그룹은 항상 펼쳐 보여준다(찾기 쉽도록 접지 않음).
+$active = static fn (string $prefix): bool => str_starts_with($uri, $prefix);
+$navGroups = [
+    ['key' => 'content', 'title' => '콘텐츠', 'icon' => 'file-earmark-text', 'items' => [
+        ['/admin/pages', 'file-text', '페이지 관리', $active('admin/pages')],
+        ['/admin/boards', 'card-list', '게시판 관리', $active('admin/boards')],
+        ['/admin/posts', 'file-earmark-text', '전체 게시물', $active('admin/posts')],
+        ['/admin/series', 'collection', '시리즈 관리', $active('admin/series')],
+        ['/admin/comments', 'chat-left-text', '전체 댓글', $active('admin/comments')],
+        ['/admin/trash', 'trash', '휴지통', $active('admin/trash')],
+    ]],
+    ['key' => 'media', 'title' => '미디어·노출', 'icon' => 'images', 'items' => [
+        ['/admin/media', 'images', '미디어', $active('admin/media')],
+        ['/admin/banners', 'image', '배너 관리', $active('admin/banners')],
+        ['/admin/popups', 'window', '팝업 관리', $active('admin/popups')],
+        ['/admin/ads', 'megaphone', '광고 관리', $active('admin/ads')],
+    ]],
+    ['key' => 'contact', 'title' => '문의·구독', 'icon' => 'envelope', 'badge' => (int) $unreadInquiries, 'items' => [
+        ['/admin/inquiries', 'envelope', '문의 수신함', $active('admin/inquiries'), (int) $unreadInquiries],
+        ['/admin/inquiry-fields', 'ui-checks', '문의 폼 항목', $active('admin/inquiry-fields')],
+        ['/admin/subscribers', 'envelope-paper', '뉴스레터 구독자', $active('admin/subscribers')],
+    ]],
+    ['key' => 'site', 'title' => '사이트 구성', 'icon' => 'diagram-3', 'items' => [
+        ['/admin/menus', 'list-ul', '메뉴 관리', $active('admin/menus')],
+        ['/admin/redirects', 'signpost-split', '리다이렉트', $active('admin/redirects')],
+        ['/admin/plugins', 'plug', '플러그인', $active('admin/plugins')],
+    ]],
+    ['key' => 'ops', 'title' => '통계·보안', 'icon' => 'bar-chart', 'items' => [
+        ['/admin/stats', 'bar-chart', '접속 통계', $active('admin/stats')],
+        ['/admin/blocked-ips', 'slash-circle', '차단 IP', $active('admin/blocked-ips')],
+        ['/admin/logs', 'journal-text', '활동 로그', $active('admin/logs')],
+        ['/admin/users', 'person-lines-fill', '회원 관리', $active('admin/users')],
+    ]],
+    ['key' => 'settings', 'title' => '설정', 'icon' => 'gear', 'items' => [
+        ['/admin/settings/general', 'gear', '사이트 설정', $isGeneralSettings],
+        ['/admin/settings/theme', 'palette', '테마 관리', $isThemeSettings],
+        ['/admin/settings/oauth', 'people', '소셜 로그인', $isOauthSettings],
+        ['/admin/security', 'shield-lock', '2단계 인증', $active('admin/security')],
+        ['/admin/backup', 'database-down', '백업 관리', $isBackup],
+    ]],
+];
 ?>
 <!DOCTYPE html>
 <html lang="ko">
@@ -42,6 +85,17 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
         #sidebar .nav-link:hover,
         #sidebar .nav-link.active { color: var(--on-dark-strong); background: var(--on-dark-raised); }
         #sidebar .nav-section { color: var(--on-dark-muted); font-size: .7rem; padding: .8rem 1.2rem .2rem; letter-spacing: .06em; text-transform: uppercase; }
+        #sidebar .nav-group { border-top: 1px solid var(--on-dark-raised); margin-top: .35rem; padding-bottom: .15rem; }
+        #sidebar .nav-group .nav-section { padding-top: .6rem; }
+        /* 넓은 화면(1200px↑)에서는 사이드바를 넓혀 그룹을 두 칼럼으로 나눈다. 그룹은 칼럼 사이에서 쪼개지지 않는다. */
+        @media (min-width: 1200px) {
+            body { --sidebar-w: 380px; }
+            #sidebar .nav-groups { column-count: 2; column-gap: 0; }
+            #sidebar .nav-group { break-inside: avoid; }
+            #sidebar .nav-groups .nav-section { padding-left: .9rem; padding-right: .5rem; }
+            #sidebar .nav-groups .nav-link.sub { padding: .38rem .5rem .38rem 1.3rem; }
+        }
+        #sidebar .nav-link.sub { padding: .38rem 1.2rem .38rem 1.9rem; }
         /* Bootstrap .text-danger(#dc3545)는 사이드바 배경 위에서 3.2:1 로 AA 미달이었다 —
            어두운 표면 전용 danger 톤(5.2:1)으로 이 컨테이너 안에서만 되돌린다.
            .text-danger 자체가 !important 라 특정성이 아니라 !important 로만 이길 수 있다. */
@@ -118,92 +172,28 @@ $isDashboard       = $uri === 'admin' || $uri === 'admin/dashboard';
     <div class="offcanvas-body p-0 d-block">
         <div class="brand"><i class="bi bi-grid-3x3-gap-fill me-2" aria-hidden="true"></i><?= esc($settings['site_name'] ?? 'Admin') ?></div>
         <nav class="mt-2" aria-label="관리자 메뉴">
-            <div class="nav-section">콘텐츠</div>
             <a href="/admin/dashboard" class="nav-link <?= $isDashboard ? 'active' : '' ?>" <?= $isDashboard ? 'aria-current="page"' : '' ?>>
                 <i class="bi bi-speedometer2 me-2" aria-hidden="true"></i>대시보드
             </a>
-            <a href="/admin/pages" class="nav-link <?= str_starts_with($uri, 'admin/pages') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/pages') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-file-text me-2" aria-hidden="true"></i>페이지 관리
-            </a>
-            <a href="/admin/boards" class="nav-link <?= str_starts_with($uri, 'admin/boards') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/boards') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-card-list me-2" aria-hidden="true"></i>게시판 관리
-            </a>
-            <a href="/admin/posts" class="nav-link <?= str_starts_with($uri, 'admin/posts') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/posts') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>전체 게시물
-            </a>
-            <a href="/admin/series" class="nav-link <?= str_starts_with($uri, 'admin/series') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/series') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-collection me-2" aria-hidden="true"></i>시리즈 관리
-            </a>
-            <a href="/admin/comments" class="nav-link <?= str_starts_with($uri, 'admin/comments') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/comments') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-chat-left-text me-2" aria-hidden="true"></i>전체 댓글
-            </a>
-            <a href="/admin/media" class="nav-link <?= str_starts_with($uri, 'admin/media') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/media') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-images me-2" aria-hidden="true"></i>미디어
-            </a>
-            <a href="/admin/banners" class="nav-link <?= str_starts_with($uri, 'admin/banners') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/banners') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-image me-2" aria-hidden="true"></i>배너 관리
-            </a>
-            <a href="/admin/popups" class="nav-link <?= str_starts_with($uri, 'admin/popups') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/popups') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-window me-2" aria-hidden="true"></i>팝업 관리
-            </a>
-            <a href="/admin/ads" class="nav-link <?= str_starts_with($uri, 'admin/ads') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/ads') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-megaphone me-2" aria-hidden="true"></i>광고 관리
-            </a>
 
-            <div class="nav-section">운영</div>
-            <a href="/admin/stats" class="nav-link <?= str_starts_with($uri, 'admin/stats') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/stats') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-bar-chart me-2" aria-hidden="true"></i>접속 통계
-            </a>
-            <a href="/admin/blocked-ips" class="nav-link <?= str_starts_with($uri, 'admin/blocked-ips') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/blocked-ips') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-slash-circle me-2" aria-hidden="true"></i>차단 IP
-            </a>
-            <a href="/admin/redirects" class="nav-link <?= str_starts_with($uri, 'admin/redirects') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/redirects') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-signpost-split me-2" aria-hidden="true"></i>리다이렉트
-            </a>
-            <a href="/admin/plugins" class="nav-link <?= str_starts_with($uri, 'admin/plugins') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/plugins') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-plug me-2" aria-hidden="true"></i>플러그인
-            </a>
-            <a href="/admin/logs" class="nav-link <?= str_starts_with($uri, 'admin/logs') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/logs') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-journal-text me-2" aria-hidden="true"></i>활동 로그
-            </a>
-            <a href="/admin/subscribers" class="nav-link <?= str_starts_with($uri, 'admin/subscribers') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/subscribers') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-envelope-paper me-2" aria-hidden="true"></i>뉴스레터 구독자
-            </a>
-            <a href="/admin/trash" class="nav-link <?= str_starts_with($uri, 'admin/trash') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/trash') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-trash me-2" aria-hidden="true"></i>휴지통
-            </a>
-            <a href="/admin/users" class="nav-link <?= str_starts_with($uri, 'admin/users') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/users') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-person-lines-fill me-2" aria-hidden="true"></i>회원 관리
-            </a>
-            <a href="/admin/inquiries" class="nav-link <?= str_starts_with($uri, 'admin/inquiries') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/inquiries') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-envelope me-2" aria-hidden="true"></i>문의 수신함
-                <?php if ($unreadInquiries > 0): ?>
-                <span class="badge bg-danger ms-1"><?= esc((string) $unreadInquiries) ?><span class="visually-hidden">건의 읽지 않은 문의</span></span>
-                <?php endif; ?>
-            </a>
-            <a href="/admin/inquiry-fields" class="nav-link <?= str_starts_with($uri, 'admin/inquiry-fields') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/inquiry-fields') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-ui-checks me-2" aria-hidden="true"></i>문의 폼 항목
-            </a>
-            <a href="/admin/menus" class="nav-link <?= str_starts_with($uri, 'admin/menus') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/menus') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-list-ul me-2" aria-hidden="true"></i>메뉴 관리
-            </a>
-
-            <div class="nav-section">설정</div>
-            <a href="/admin/settings/general" class="nav-link <?= $isGeneralSettings ? 'active' : '' ?>" <?= $isGeneralSettings ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-gear me-2" aria-hidden="true"></i>사이트 설정
-            </a>
-            <a href="/admin/settings/theme" class="nav-link <?= $isThemeSettings ? 'active' : '' ?>" <?= $isThemeSettings ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-palette me-2" aria-hidden="true"></i>테마 관리
-            </a>
-            <a href="/admin/settings/oauth" class="nav-link <?= $isOauthSettings ? 'active' : '' ?>" <?= $isOauthSettings ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-people me-2" aria-hidden="true"></i>소셜 로그인
-            </a>
-            <a href="/admin/security" class="nav-link <?= str_starts_with($uri, 'admin/security') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/security') ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-shield-lock me-2" aria-hidden="true"></i>2단계 인증
-            </a>
-            <a href="/admin/backup" class="nav-link <?= $isBackup ? 'active' : '' ?>" <?= $isBackup ? 'aria-current="page"' : '' ?>>
-                <i class="bi bi-database-down me-2" aria-hidden="true"></i>백업 관리
-            </a>
+            <div class="nav-groups">
+            <?php foreach ($navGroups as $group): ?>
+            <section class="nav-group" aria-labelledby="nav-<?= esc($group['key']) ?>">
+                <div class="nav-section" id="nav-<?= esc($group['key']) ?>">
+                    <i class="bi bi-<?= esc($group['icon']) ?> me-1" aria-hidden="true"></i><?= esc($group['title']) ?>
+                    <?php if (($group['badge'] ?? 0) > 0): ?><span class="badge-dot ms-1" aria-hidden="true"></span><?php endif; ?>
+                </div>
+                <?php foreach ($group['items'] as $item): ?>
+                <a href="<?= esc($item[0]) ?>" class="nav-link sub <?= $item[3] ? 'active' : '' ?>" <?= $item[3] ? 'aria-current="page"' : '' ?>>
+                    <i class="bi bi-<?= esc($item[1]) ?> me-2" aria-hidden="true"></i><?= esc($item[2]) ?>
+                    <?php if (($item[4] ?? 0) > 0): ?>
+                    <span class="badge bg-danger ms-1"><?= esc((string) $item[4]) ?><span class="visually-hidden">건의 읽지 않은 문의</span></span>
+                    <?php endif; ?>
+                </a>
+                <?php endforeach; ?>
+            </section>
+            <?php endforeach; ?>
+            </div>
 
             <div class="nav-section mt-3">사이트</div>
             <a href="/admin/help" class="nav-link <?= str_starts_with($uri, 'admin/help') ? 'active' : '' ?>" <?= str_starts_with($uri, 'admin/help') ? 'aria-current="page"' : '' ?>>
