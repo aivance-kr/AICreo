@@ -54,44 +54,6 @@ final class CloudflareIps
 
     public static function contains(string $ip): bool
     {
-        $packed = inet_pton($ip);
-
-        if ($packed === false) {
-            return false;
-        }
-
-        foreach (self::RANGES as $range) {
-            [$subnet, $bits] = explode('/', $range);
-            $subnetPacked    = (string) inet_pton($subnet);
-
-            if (strlen($subnetPacked) !== strlen($packed)) {
-                continue;
-            }
-
-            if (self::matchesPrefix($packed, $subnetPacked, (int) $bits)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static function matchesPrefix(string $packed, string $subnetPacked, int $bits): bool
-    {
-        $fullBytes = intdiv($bits, 8);
-
-        if (strncmp($packed, $subnetPacked, $fullBytes) !== 0) {
-            return false;
-        }
-
-        $remainder = $bits % 8;
-
-        if ($remainder === 0) {
-            return true;
-        }
-
-        $mask = (0xFF << (8 - $remainder)) & 0xFF;
-
-        return (ord($packed[$fullBytes]) & $mask) === (ord($subnetPacked[$fullBytes]) & $mask);
+        return IpRange::containsAny($ip, self::RANGES);
     }
 }
