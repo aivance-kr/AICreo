@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '글 서명' ?>
+<?php $this->setVar('pageTitle', '글 서명') ?>
 <?= $this->section('content') ?>
 
 <!-- 탭 -->

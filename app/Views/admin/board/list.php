@@ -1,8 +1,7 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '게시판 관리' ?>
+<?php $this->setVar('pageTitle', '게시판 관리') ?>
 <?= $this->section('content') ?>
-<div class="d-flex justify-content-between mb-3">
-    <h5>게시판 관리</h5>
+<div class="d-flex justify-content-end mb-3">
     <a href="/admin/boards/create" class="btn btn-primary btn-sm">+ 게시판 추가</a>
 </div>
 <table class="table table-hover board-table table-stack">

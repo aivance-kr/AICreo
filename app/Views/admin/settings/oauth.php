@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '소셜 로그인 설정' ?>
+<?php $this->setVar('pageTitle', '소셜 로그인 설정') ?>
 <?= $this->section('content') ?>
 
 <!-- 탭 -->

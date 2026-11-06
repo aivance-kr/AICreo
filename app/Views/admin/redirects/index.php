@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '리다이렉트 관리' ?>
+<?php $this->setVar('pageTitle', '리다이렉트 관리') ?>
 <?= $this->section('content') ?>
 
 <?php

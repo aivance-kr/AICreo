@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '시리즈 관리' ?>
+<?php $this->setVar('pageTitle', '시리즈 관리') ?>
 <?= $this->section('content') ?>
 
 <div class="alert alert-info small">

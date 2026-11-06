@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '메뉴 관리' ?>
+<?php $this->setVar('pageTitle', '메뉴 관리') ?>
 <?= $this->section('content') ?>
 
 <?= view('admin/partials/locale_tabs', ['locales' => $locales, 'currentLocale' => $currentLocale, 'withAll' => false]) ?>

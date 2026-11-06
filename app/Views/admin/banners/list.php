@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '배너 관리' ?>
+<?php $this->setVar('pageTitle', '배너 관리') ?>
 
 <?= $this->section('content') ?>
 

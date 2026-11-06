@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '대시보드' ?>
+<?php $this->setVar('pageTitle', '대시보드') ?>
 <?= $this->section('content') ?>
 
 <!-- 빠른 작업 — 매일 반복하는 작성 액션을 사이드바 재탐색 없이 바로 시작한다 -->

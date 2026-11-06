@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = $banner ? '배너 수정' : '배너 등록' ?>
+<?php $this->setVar('pageTitle', $banner ? '배너 수정' : '배너 등록') ?>
 
 <?= $this->section('content') ?>
 

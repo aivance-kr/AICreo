@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '플러그인' ?>
+<?php $this->setVar('pageTitle', '플러그인') ?>
 <?= $this->section('content') ?>
 
 <?php

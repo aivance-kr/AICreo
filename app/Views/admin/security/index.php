@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '2단계 인증' ?>
+<?php $this->setVar('pageTitle', '2단계 인증') ?>
 <?= $this->section('content') ?>
 
 <?php if (! empty($recoveryCodes)): ?>

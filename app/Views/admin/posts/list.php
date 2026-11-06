@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '전체 게시물 관리' ?>
+<?php $this->setVar('pageTitle', '전체 게시물 관리') ?>
 
 <?= $this->section('content') ?>
 

@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '차단 IP 관리' ?>
+<?php $this->setVar('pageTitle', '차단 IP 관리') ?>
 
 <?= $this->section('content') ?>
 
