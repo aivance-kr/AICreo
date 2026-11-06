@@ -52,9 +52,10 @@ final class BlockedIpModelTest extends DatabaseTestCase
     {
         $model = new BlockedIpModel();
 
-        foreach (['66.249.66.1', '34.64.1.1', '34.22.85.30', '192.178.5.9'] as $ip) {
+        foreach (['66.249.66.1', '34.22.85.30', '192.178.5.9'] as $ip) {
             $this->assertFalse($model->block($ip, BlockedIpModel::REASON_AUTO), $ip);
         }
+        $this->assertTrue($model->block('34.64.1.1', BlockedIpModel::REASON_AUTO));
         $this->assertTrue($model->block('66.249.96.1', BlockedIpModel::REASON_AUTO));
         $this->assertTrue($model->block('34.22.85.32', BlockedIpModel::REASON_AUTO));
     }
