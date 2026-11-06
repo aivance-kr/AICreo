@@ -144,4 +144,5 @@ return [
     'aiPostNoKey'              => 'AI 제안을 쓰려면 .env 에 GROQ_API_KEY 를 설정해야 합니다.',
     'aiPostFailed'             => 'AI 제안을 받지 못했습니다. 잠시 후 다시 시도해 주세요.',
     'home'                     => '홈',
+    'editorBlocks'             => '문단=p; 제목 2=h2; 제목 3=h3; 제목 4=h4; 인용=blockquote; 코드 블록=pre',
 ];

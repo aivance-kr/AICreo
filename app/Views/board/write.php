@@ -237,7 +237,7 @@ tinymce.init({
     plugins: 'lists link image table code codesample',
     toolbar: 'undo redo | blocks fontsize | bold italic underline strikethrough | alignleft aligncenter alignright | bullist numlist outdent indent | blockquote hr | link image table | removeformat | codesample code',
     toolbar_mode: 'wrap',
-    blocks_formats: '문단=p; 제목 2=h2; 제목 3=h3; 제목 4=h4; 인용=blockquote; 코드 블록=pre',
+    blocks_formats: <?= json_encode(lang('Board.editorBlocks'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
     font_size_formats: '12px 14px 16px 18px 20px 24px 28px 32px',
     menubar: 'edit insert format table',
     // 게시판 상세와 같은 CSS 를 써서 글자 크기·간격을 맞춘다 (body 에 .post-content 부여)
