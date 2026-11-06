@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '도움말' ?>
+<?php $this->setVar('pageTitle', '도움말') ?>
 <?= $this->section('content') ?>
 
 <div class="card border-0 shadow-sm">

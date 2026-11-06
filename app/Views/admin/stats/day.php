@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '일별 접속 상세' ?>
+<?php $this->setVar('pageTitle', '일별 접속 상세') ?>
 
 <?= $this->section('content') ?>
 

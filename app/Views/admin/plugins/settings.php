@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = esc($plugin['name']) . ' 설정' ?>
+<?php $this->setVar('pageTitle', $plugin['name'] . ' 설정') ?>
 <?= $this->section('content') ?>
 
 <div class="card">

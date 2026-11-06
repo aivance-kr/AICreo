@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '글별 조회 통계' ?>
+<?php $this->setVar('pageTitle', '글별 조회 통계') ?>
 
 <?= $this->section('content') ?>
 

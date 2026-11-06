@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '문의 폼 항목' ?>
+<?php $this->setVar('pageTitle', '문의 폼 항목') ?>
 <?= $this->section('content') ?>
 
 <?php

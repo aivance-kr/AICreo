@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '문의 수신함' ?>
+<?php $this->setVar('pageTitle', '문의 수신함') ?>
 <?= $this->section('content') ?>
 
 <ul class="nav nav-tabs mb-3">

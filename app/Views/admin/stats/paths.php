@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '이동 경로 통계' ?>
+<?php $this->setVar('pageTitle', '이동 경로 통계') ?>
 
 <?php
 /** 라벨·건수 목록 카드. $link 가 true 면 라벨(주소)을 클릭해 그 페이지 기준으로 본다. */
@@ -28,8 +28,6 @@ $renderList = static function (string $title, array $rows, int $days, bool $link
 ?>
 
 <?= $this->section('content') ?>
-
-<h2 class="h5 mb-3">이동 경로 통계</h2>
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <a href="<?= base_url('admin/stats') ?>" class="btn btn-sm btn-outline-secondary">접속 통계</a>

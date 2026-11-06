@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = $ad ? '광고 수정' : '광고 등록' ?>
+<?php $this->setVar('pageTitle', $ad ? '광고 수정' : '광고 등록') ?>
 
 <?= $this->section('content') ?>
 

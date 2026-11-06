@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = $popup ? '팝업 수정' : '팝업 등록' ?>
+<?php $this->setVar('pageTitle', $popup ? '팝업 수정' : '팝업 등록') ?>
 
 <?= $this->section('content') ?>
 

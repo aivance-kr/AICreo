@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '휴지통' ?>
+<?php $this->setVar('pageTitle', '휴지통') ?>
 
 <?= $this->section('content') ?>
 

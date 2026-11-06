@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/admin') ?>
-<?php $pageTitle = '수정 이력 비교' ?>
+<?php $this->setVar('pageTitle', '수정 이력 비교') ?>
 <?= $this->section('content') ?>
 
 <?php
