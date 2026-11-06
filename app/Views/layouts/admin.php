@@ -126,6 +126,7 @@ $groupActive = static function (array $group): bool {
         #megamenu .nav-section { color: var(--on-dark-muted); font-size: .7rem; padding: .4rem .7rem; letter-spacing: .06em; text-transform: uppercase; }
         #megamenu .nav-group.is-target .nav-section { color: var(--on-dark-strong); }
         #megamenu .nav-link.text-danger { color: var(--on-dark-danger) !important; }
+        #pagebar { padding: .9rem 1.5rem; background: var(--surface-raised); border-bottom: 1px solid var(--border-subtle); }
         #content { padding: 1.25rem 1rem; }
         @media (min-width: 992px) {
             #topbar  { padding: .6rem 1.5rem; }
@@ -263,6 +264,20 @@ $groupActive = static function (array $group): bool {
         </div>
     </div>
 </header>
+
+<?php
+$activeGroupTitle = '';
+foreach ($navGroups as $navGroup) {
+    if ($groupActive($navGroup)) {
+        $activeGroupTitle = $navGroup['title'];
+        break;
+    }
+}
+?>
+<div id="pagebar" class="d-none d-lg-block">
+    <?php if ($activeGroupTitle !== ''): ?><div class="small text-muted"><?= esc($activeGroupTitle) ?></div><?php endif; ?>
+    <h1 class="h5 mb-0 text-dark"><?= esc($pageTitle ?? '관리자') ?></h1>
+</div>
 
 <main id="main-content" tabindex="-1">
 <div id="content">
