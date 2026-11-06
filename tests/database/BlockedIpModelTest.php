@@ -84,6 +84,9 @@ final class BlockedIpModelTest extends DatabaseTestCase
         $this->assertSame(2, $model->searchActive('*3.4*', 1, 20)['total']);
         $this->assertSame(2, $model->searchActive('1.*.3.4', 1, 20)['total']);
         $this->assertSame(0, $model->searchActive('1%', 1, 20)['total']);
+
+        $model->block('195.178.110.199', BlockedIpModel::REASON_AUTO);
+        $this->assertSame(1, $model->searchActive('195.178.110.*', 1, 20)['total']);
     }
 
     public function testBlockingAgainExtendsInsteadOfDuplicating(): void
