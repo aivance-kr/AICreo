@@ -88,7 +88,7 @@ class PostModel extends Model
      */
     public function getLatestPublic(int $limit, ?string $locale = null): array
     {
-        $builder = $this->select('posts.*, ' . self::BOARD_NAME_SQL . ' AS board_name, boards.slug AS board_slug, board_categories.name AS category_name, users.nickname AS user_nickname', false)
+        $builder = $this->select('posts.*, ' . self::BOARD_NAME_SQL . ' AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname, board_categories.name AS category_name', false)
             ->join('boards', 'boards.id = posts.board_id', 'inner')
             ->join('board_translations bt', 'bt.board_id = boards.id AND bt.locale = posts.locale', 'left')
             ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
