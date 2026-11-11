@@ -155,7 +155,11 @@
         var error = document.getElementById('passkey-add-error');
         error.textContent = '';
         Passkey.register(form, <?= json_encode(csrf_hash()) ?>).catch(function (e) {
-            if (e && e.name !== 'NotAllowedError') { error.textContent = e.message || '패스키를 등록하지 못했습니다.'; }
+            if (!e || e.name === 'NotAllowedError') { return; }
+            // InvalidStateError: 이 기기(또는 동기화된 계정)에 이미 등록된 패스키가 있다 — 브라우저의 영어 문구 대신 안내한다
+            error.textContent = e.name === 'InvalidStateError'
+                ? '이 기기(또는 연결된 Google·Apple 계정)에는 이미 이 계정의 패스키가 있습니다. 추가하지 않아도 로그인 화면에서 "패스키로 로그인"을 바로 쓸 수 있습니다.'
+                : (e.message || '패스키를 등록하지 못했습니다.');
         });
     });
 })();
