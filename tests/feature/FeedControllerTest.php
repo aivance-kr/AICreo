@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Libraries\Seo\LocaleCache;
+use App\Models\BoardCategoryModel;
 use App\Models\BoardModel;
 use App\Models\PostModel;
 use Tests\Support\FeatureTestCase;
@@ -85,5 +86,36 @@ final class FeedControllerTest extends FeatureTestCase
         $body = (string) $this->get('feed')->response()->getBody();
 
         $this->assertStringNotContainsString('피드 비밀 글', $body);
+    }
+
+    public function testFeedItemHasBoardAndCategory(): void
+    {
+        $boardId = (new BoardModel())->insert([
+            'slug'             => 'feed-cat-board',
+            'name'             => '카테고리 게시판',
+            'read_permission'  => 'guest',
+            'write_permission' => 'guest',
+            'is_active'        => 1,
+        ], true);
+        $categoryId = (new BoardCategoryModel())->insert([
+            'board_id' => $boardId,
+            'slug'     => 'tech',
+            'name'     => '기술 & 팁',
+        ], true);
+
+        (new PostModel())->insert([
+            'board_id'    => $boardId,
+            'category_id' => $categoryId,
+            'title'       => '분류 있는 글',
+            'content'     => '<p>본문</p>',
+            'author_name' => '작성자',
+            'is_secret'   => 0,
+        ]);
+        LocaleCache::clearFeed();
+
+        $body = (string) $this->get('feed')->response()->getBody();
+
+        $this->assertStringContainsString('<category>카테고리 게시판</category>', $body);
+        $this->assertStringContainsString('<category>기술 &amp; 팁</category>', $body);
     }
 }
