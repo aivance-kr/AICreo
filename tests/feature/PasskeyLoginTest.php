@@ -259,6 +259,25 @@ final class PasskeyLoginTest extends AdminTestCase
         $this->assertStringContainsString('테스트 키', (string) $result->response()->getBody());
     }
 
+    public function testSecurityPageExplainsAddFormFields(): void
+    {
+        $body = (string) $this->withSession($this->adminSession)->get('admin/security')->response()->getBody();
+
+        $this->assertStringContainsString('passkey-add-password-help', $body);
+        $this->assertStringContainsString('passkey-add-code-help', $body);
+    }
+
+    public function testSecurityPageHidesAddFormWhenNoFactorToReconfirm(): void
+    {
+        (new TwoFactor())->disable(1);
+        (new UserModel())->update(1, ['password' => '']);
+
+        $body = (string) $this->withSession($this->adminSession)->get('admin/security')->response()->getBody();
+
+        $this->assertStringNotContainsString('id="passkey-add"', $body);
+        $this->assertStringContainsString('2단계 인증을 먼저 켜 주세요', $body);
+    }
+
     public function testLoginPageOffersPasskeyButton(): void
     {
         $this->assertStringContainsString('passkey-login-btn', (string) $this->get('auth/login')->getBody());
