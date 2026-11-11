@@ -65,6 +65,8 @@ return [
     'twoFactorExpired'         => 'Verification time expired. Please log in again.',
     'twoFactorLocked'          => 'Too many failed attempts. Locked for {0} minutes.',
     'twoFactorBadCode'         => 'The code is incorrect.',
+    'loginPasskey'             => 'Log in with a passkey',
+    'passkeyFailed'            => 'Could not log in with the passkey. Please try again.',
     'socialUnsupported'        => 'Unsupported login method.',
     'socialCancelled'          => 'Social login was cancelled.',
     'badRequest'               => 'Invalid request. Please try again.',
