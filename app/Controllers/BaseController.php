@@ -119,6 +119,16 @@ class BaseController extends Controller
      */
     protected function startSession(array $user): ResponseInterface
     {
+        return redirect()->to($this->openSession($user));
+    }
+
+    /**
+     * 세션을 만들고 로그인 후 이동할 주소를 돌려준다(JSON 응답을 쓰는 패스키 로그인도 함께 쓴다).
+     *
+     * @param array<string, mixed> $user
+     */
+    protected function openSession(array $user): string
+    {
         session()->regenerate(true);
         session()->set([
             'user_id'       => $user['id'],
@@ -128,7 +138,7 @@ class BaseController extends Controller
 
         (new UserModel())->updateLastLogin((int) $user['id']);
 
-        return redirect()->to(session()->getTempdata('redirect_url') ?? '/');
+        return session()->getTempdata('redirect_url') ?? '/';
     }
 
     protected function getUserRole(): string

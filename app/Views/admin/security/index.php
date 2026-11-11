@@ -67,4 +67,73 @@
     </div>
 <?php endif; ?>
 
+<hr class="my-4">
+
+<h2 class="h5 fw-semibold">패스키</h2>
+<p class="small text-muted">
+    지문·얼굴·PIN·보안 키로 로그인합니다. 패스키로 로그인하면 인증 코드(2단계 인증)는 묻지 않습니다.
+    기기를 잃어버렸을 때를 대비해 비밀번호 로그인은 그대로 둡니다.
+</p>
+
+<?php if ($passkeys === []): ?>
+    <p class="text-muted">등록된 패스키가 없습니다.</p>
+<?php else: ?>
+    <ul class="list-group mb-3">
+        <?php foreach ($passkeys as $passkey): ?>
+            <li class="list-group-item">
+                <form method="post" action="/admin/security/passkeys/<?= (int) $passkey['id'] ?>/delete"
+                      class="d-flex flex-wrap align-items-center gap-2">
+                    <?= csrf_field() ?>
+                    <div class="me-auto">
+                        <div class="fw-semibold"><?= esc($passkey['name']) ?></div>
+                        <div class="small text-muted">
+                            등록 <?= esc(substr((string) $passkey['created_at'], 0, 10)) ?>
+                            · 마지막 사용 <?= $passkey['last_used_at'] ? esc(substr((string) $passkey['last_used_at'], 0, 16)) : '없음' ?>
+                        </div>
+                    </div>
+                    <?php if ($hasPassword): ?>
+                        <input type="password" id="passkey-del-password-<?= (int) $passkey['id'] ?>" name="password" class="form-control form-control-sm w-auto" placeholder="비밀번호" aria-label="비밀번호" required autocomplete="current-password">
+                    <?php endif; ?>
+                    <?php if ($totpEnabled): ?>
+                        <input type="text" id="passkey-del-code-<?= (int) $passkey['id'] ?>" name="code" class="form-control form-control-sm w-auto" placeholder="인증 코드" aria-label="인증 코드" required autocomplete="one-time-code">
+                    <?php endif; ?>
+                    <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
+                </form>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+<?php endif; ?>
+
+<form id="passkey-add" class="d-flex flex-column gap-2" style="max-width: 420px;" hidden>
+    <input type="text" id="passkey-add-name" name="name" class="form-control" placeholder="이름 (예: 맥북, 아이폰)" aria-label="패스키 이름" maxlength="100" required>
+    <?php if ($hasPassword): ?>
+        <input type="password" id="passkey-add-password" name="password" class="form-control" placeholder="비밀번호" aria-label="비밀번호" required autocomplete="current-password">
+    <?php endif; ?>
+    <?php if ($totpEnabled): ?>
+        <input type="text" id="passkey-add-code" name="code" class="form-control" placeholder="인증 코드" aria-label="인증 코드" required autocomplete="one-time-code">
+    <?php endif; ?>
+    <button type="submit" class="btn btn-primary">패스키 추가</button>
+    <div id="passkey-add-error" class="text-danger small" role="alert"></div>
+</form>
+<p id="passkey-unsupported" class="small text-muted">이 브라우저는 패스키를 지원하지 않습니다. 최신 Chrome·Safari·Edge·Firefox 에서 이용하세요.</p>
+
+<?= $this->endSection() ?>
+<?= $this->section('scripts') ?>
+<script src="/js/passkey.js"></script>
+<script>
+(function () {
+    var form = document.getElementById('passkey-add');
+    if (!form || !window.Passkey || !Passkey.supported()) { return; }
+    form.hidden = false;
+    document.getElementById('passkey-unsupported').hidden = true;
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var error = document.getElementById('passkey-add-error');
+        error.textContent = '';
+        Passkey.register(form, <?= json_encode(csrf_hash()) ?>).catch(function (e) {
+            if (e && e.name !== 'NotAllowedError') { error.textContent = e.message || '패스키를 등록하지 못했습니다.'; }
+        });
+    });
+})();
+</script>
 <?= $this->endSection() ?>
