@@ -49,10 +49,10 @@ class FeedController extends BaseController
             $items .= '    <guid>' . htmlspecialchars($link, ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</guid>\n";
             $items .= '    <description>' . htmlspecialchars($excerpt, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "</description>\n";
             // 게시판·카테고리는 부모-자식이 아니라 평면 태그라 domain 속성으로 종류만 구분한다
-            $items .= '    <category domain="board">' . htmlspecialchars((string) $post['board_name'], ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "</category>\n";
+            $items .= '    <category domain="board">' . self::xmlText((string) $post['board_name']) . "</category>\n";
 
             if (($post['category_name'] ?? '') !== '') {
-                $items .= '    <category domain="board-category">' . htmlspecialchars((string) $post['category_name'], ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "</category>\n";
+                $items .= '    <category domain="board-category">' . self::xmlText((string) $post['category_name']) . "</category>\n";
             }
 
             $items .= '    <pubDate>' . $pubDate . "</pubDate>\n";
@@ -73,5 +73,15 @@ class FeedController extends BaseController
             . $items
             . "</channel>\n"
             . "</rss>\n";
+    }
+
+    /**
+     * XML 금지 제어문자를 제거하고 이스케이프한다 — 피드 전체가 깨지지 않게
+     */
+    private static function xmlText(string $value): string
+    {
+        $clean = (string) preg_replace('/[^\x{9}\x{A}\x{D}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', $value);
+
+        return htmlspecialchars($clean, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 }

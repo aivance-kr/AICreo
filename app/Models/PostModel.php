@@ -91,7 +91,7 @@ class PostModel extends Model
         $builder = $this->select('posts.*, ' . self::BOARD_NAME_SQL . ' AS board_name, boards.slug AS board_slug, users.nickname AS user_nickname, board_categories.name AS category_name', false)
             ->join('boards', 'boards.id = posts.board_id', 'inner')
             ->join('board_translations bt', 'bt.board_id = boards.id AND bt.locale = posts.locale', 'left')
-            ->join('board_categories', 'board_categories.id = posts.category_id', 'left')
+            ->join('board_categories', 'board_categories.id = posts.category_id AND board_categories.is_active = 1 AND board_categories.board_id = posts.board_id', 'left')
             ->join('users', 'users.id = posts.user_id', 'left')
             ->where('posts.is_secret', 0)
             ->where('posts.is_active', 1)
