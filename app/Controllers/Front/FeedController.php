@@ -48,6 +48,13 @@ class FeedController extends BaseController
             $items .= '    <link>' . htmlspecialchars($link, ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</link>\n";
             $items .= '    <guid>' . htmlspecialchars($link, ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</guid>\n";
             $items .= '    <description>' . htmlspecialchars($excerpt, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "</description>\n";
+
+            // 게시판 → 카테고리 순으로 <category> 를 낸다(카테고리 없는 글은 게시판만)
+            foreach ([$post['board_name'] ?? null, $post['category_name'] ?? null] as $label) {
+                if (is_string($label) && $label !== '') {
+                    $items .= '    <category>' . htmlspecialchars($label, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "</category>\n";
+                }
+            }
             $items .= '    <pubDate>' . $pubDate . "</pubDate>\n";
             $items .= "  </item>\n";
         }
