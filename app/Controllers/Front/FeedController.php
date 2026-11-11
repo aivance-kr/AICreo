@@ -48,6 +48,13 @@ class FeedController extends BaseController
             $items .= '    <link>' . htmlspecialchars($link, ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</link>\n";
             $items .= '    <guid>' . htmlspecialchars($link, ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</guid>\n";
             $items .= '    <description>' . htmlspecialchars($excerpt, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "</description>\n";
+            // 게시판·카테고리는 부모-자식이 아니라 평면 태그라 domain 속성으로 종류만 구분한다
+            $items .= '    <category domain="board">' . htmlspecialchars((string) $post['board_name'], ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "</category>\n";
+
+            if (($post['category_name'] ?? '') !== '') {
+                $items .= '    <category domain="board-category">' . htmlspecialchars((string) $post['category_name'], ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "</category>\n";
+            }
+
             $items .= '    <pubDate>' . $pubDate . "</pubDate>\n";
             $items .= "  </item>\n";
         }
