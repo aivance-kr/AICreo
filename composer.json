@@ -15,7 +15,8 @@
         "codeigniter4/framework": "^4.7",
         "ezyang/htmlpurifier": "^4.19",
         "league/commonmark": "^2.10",
-        "spomky-labs/otphp": "^11"
+        "spomky-labs/otphp": "^11",
+        "web-auth/webauthn-lib": "^5.3"
     },
     "require-dev": {
         "codeigniter/coding-standard": "^1.9",

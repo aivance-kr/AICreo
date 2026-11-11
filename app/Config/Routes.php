@@ -58,6 +58,8 @@ $routes->get('auth/login', 'Front\AuthController::login');
 $routes->post('auth/login', 'Front\AuthController::loginProcess');
 $routes->get('auth/2fa', 'Front\TwoFactorController::form');
 $routes->post('auth/2fa', 'Front\TwoFactorController::verify');
+$routes->post('auth/passkey/options', 'Front\PasskeyController::options');
+$routes->post('auth/passkey/verify', 'Front\PasskeyController::verify');
 $routes->get('auth/logout', 'Front\AuthController::logout');
 $routes->get('auth/register', 'Front\AuthController::register');
 $routes->post('auth/register', 'Front\AuthController::registerProcess');
@@ -101,6 +103,11 @@ $routes->group('admin', ['filter' => 'auth:admin'], static function ($routes): v
     $routes->post('security/enable', 'Admin\SecurityController::enable');
     $routes->post('security/disable', 'Admin\SecurityController::disable');
     $routes->post('security/recovery', 'Admin\SecurityController::recovery');
+
+    // 패스키(WebAuthn)
+    $routes->post('security/passkeys/options', 'Admin\SecurityController::passkeyOptions');
+    $routes->post('security/passkeys', 'Admin\SecurityController::passkeyRegister');
+    $routes->post('security/passkeys/(:num)/delete', 'Admin\SecurityController::passkeyDelete/$1');
 
     // 도움말
     $routes->get('help', 'Admin\HelpController::index');

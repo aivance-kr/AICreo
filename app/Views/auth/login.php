@@ -23,6 +23,14 @@
                     <button type="submit" class="btn btn-primary w-100"><?= esc(lang('Auth.login')) ?></button>
                 </form>
 
+                <!-- 패스키 로그인(관리자) — 브라우저가 지원할 때만 보인다 -->
+                <div id="passkey-login" class="mt-2" hidden>
+                    <button type="button" id="passkey-login-btn" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-key" aria-hidden="true"></i> <?= esc(lang('Auth.loginPasskey')) ?>
+                    </button>
+                    <div id="passkey-error" class="text-danger small mt-2" role="alert"></div>
+                </div>
+
                 <?php
                 $socialEnabled = [
                     'naver'  => ($settings['oauth_naver_enabled'] ?? '1') === '1',
@@ -89,4 +97,23 @@
     </div>
 </div>
 </div>
+<?= $this->endSection() ?>
+<?= $this->section('scripts') ?>
+<script src="/js/passkey.js"></script>
+<script>
+(function () {
+    var box = document.getElementById('passkey-login');
+    if (!box || !window.Passkey || !Passkey.supported()) { return; }
+    box.hidden = false;
+    var failed = <?= json_encode(lang('Auth.passkeyFailed'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
+    document.getElementById('passkey-login-btn').addEventListener('click', function () {
+        var error = document.getElementById('passkey-error');
+        error.textContent = '';
+        Passkey.login(<?= json_encode(csrf_hash()) ?>).catch(function (e) {
+            // 사용자가 직접 취소한 경우는 오류로 보이지 않는다
+            if (e && e.name !== 'NotAllowedError') { error.textContent = failed; }
+        });
+    });
+})();
+</script>
 <?= $this->endSection() ?>

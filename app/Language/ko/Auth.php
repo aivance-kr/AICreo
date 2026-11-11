@@ -65,6 +65,8 @@ return [
     'twoFactorExpired'         => '인증 시간이 지났습니다. 다시 로그인해 주세요.',
     'twoFactorLocked'          => '인증에 여러 번 실패해 {0}분간 잠겼습니다.',
     'twoFactorBadCode'         => '코드가 올바르지 않습니다.',
+    'loginPasskey'             => '패스키로 로그인',
+    'passkeyFailed'            => '패스키로 로그인하지 못했습니다. 다시 시도해 주세요.',
     'socialUnsupported'        => '지원하지 않는 로그인 방식입니다.',
     'socialCancelled'          => '소셜 로그인이 취소되었습니다.',
     'badRequest'               => '잘못된 요청입니다. 다시 시도해주세요.',

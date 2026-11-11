@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Libraries\Passkey;
 use App\Libraries\TwoFactor;
+use App\Models\AdminLogModel;
+use App\Models\PasskeyModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use Throwable;
+use Webauthn\PublicKeyCredentialCreationOptions;
 
 /**
- * 관리자 본인 계정의 2단계 인증(TOTP) 설정·해제·복구 코드 재발급.
+ * 관리자 본인 계정의 2단계 인증(TOTP) 설정·해제·복구 코드 재발급과 패스키 등록·삭제.
  */
 class SecurityController extends BaseController
 {
@@ -21,10 +25,12 @@ class SecurityController extends BaseController
 
     private readonly UserModel $userModel;
     private readonly TwoFactor $twoFactor;
+    private readonly PasskeyModel $passkeys;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
+        $this->passkeys  = new PasskeyModel();
         $this->twoFactor = new TwoFactor($this->userModel);
     }
 
@@ -55,6 +61,8 @@ class SecurityController extends BaseController
             'hasPassword'   => ! empty($user['password']),
             'recoveryCodes' => session()->getFlashdata('recoveryCodes'),
             'remaining'     => $enabled ? count(json_decode((string) ($user['totp_recovery_codes'] ?? '[]'), true) ?: []) : 0,
+            'passkeys'      => $this->passkeys->listForUser((int) $user['id']),
+            'totpEnabled'   => $enabled,
         ]);
     }
 
@@ -110,6 +118,97 @@ class SecurityController extends BaseController
         return redirect()->to(self::URL)
             ->with('success', '복구 코드를 새로 발급했습니다. 이전 코드는 더 쓸 수 없습니다.')
             ->with('recoveryCodes', $this->twoFactor->regenerateRecoveryCodes((int) $user['id']));
+    }
+
+    /**
+     * 패스키 등록 1단계: 재확인을 통과하면 등록용 옵션(챌린지)을 내려준다.
+     * 세션을 탈취한 쪽이 자기 패스키를 심어 TOTP 를 우회하지 못하도록 비밀번호(와 켠 경우 TOTP 코드)를 다시 받는다.
+     */
+    public function passkeyOptions(): ResponseInterface
+    {
+        $user = $this->currentUser();
+
+        if (! $this->reauthenticated($user)) {
+            return $this->response->setStatusCode(403)->setJSON(['error' => '비밀번호 또는 인증 코드가 올바르지 않습니다.']);
+        }
+
+        $passkey = new Passkey();
+        $options = $passkey->creationOptions($user);
+        $passkey->remember(Passkey::CREATION_KEY, $options);
+
+        return $this->response->setJSON([
+            'csrf'    => csrf_hash(),
+            'options' => json_decode($passkey->toJson($options), true),
+        ]);
+    }
+
+    /**
+     * 패스키 등록 2단계: 기기가 만든 자격 증명을 검증해 저장한다. 본문은 {"name": "...", "credential": {...}}.
+     */
+    public function passkeyRegister(): ResponseInterface
+    {
+        $user    = $this->currentUser();
+        $body    = $this->request->getJSON(true);
+        $passkey = new Passkey();
+        $options = $passkey->recall(Passkey::CREATION_KEY, PublicKeyCredentialCreationOptions::class);
+
+        $credential = is_array($body) && is_array($body['credential'] ?? null) ? json_encode($body['credential']) : false;
+        $name       = is_array($body) && is_string($body['name'] ?? null) ? $body['name'] : '';
+        $row        = $options === null || $credential === false ? null : $passkey->register((int) $user['id'], $name, $credential, $options);
+
+        if ($row === null) {
+            return $this->response->setStatusCode(422)->setJSON(['error' => '패스키를 등록하지 못했습니다. 다시 시도해 주세요.']);
+        }
+
+        (new AdminLogModel())->record('update', 'user', (int) $user['id'], '패스키 등록');
+        session()->setFlashdata('success', '패스키를 등록했습니다.');
+
+        return $this->response->setJSON(['ok' => true]);
+    }
+
+    public function passkeyDelete(int $id): ResponseInterface
+    {
+        $user = $this->currentUser();
+        $row  = $this->passkeys->find($id);
+
+        if ($row === null || (int) $row['user_id'] !== (int) $user['id']) {
+            return redirect()->to(self::URL)->with('error', '패스키를 찾을 수 없습니다.');
+        }
+
+        if (! $this->reauthenticated($user)) {
+            return redirect()->to(self::URL)->with('error', '비밀번호 또는 인증 코드가 올바르지 않습니다.');
+        }
+
+        $this->passkeys->delete($id);
+        (new AdminLogModel())->record('update', 'user', (int) $user['id'], '패스키 삭제');
+
+        return redirect()->to(self::URL)->with('success', '패스키를 삭제했습니다.');
+    }
+
+    /**
+     * 패스키 추가·삭제 재확인: 비밀번호(있는 계정만) + 2단계 인증을 켠 경우 인증 코드.
+     * 비밀번호도 2단계 인증도 없는 계정(소셜 전용)은 다시 확인할 요소가 없으므로 거부한다 —
+     * 세션만 탈취해도 자기 패스키를 심을 수 있기 때문. 2단계 인증을 먼저 켜야 한다.
+     *
+     * @param array<string, mixed> $user
+     */
+    private function reauthenticated(array $user): bool
+    {
+        if (empty($user['password']) && ! TwoFactor::isEnabled($user)) {
+            return false;
+        }
+
+        if (! $this->passwordOk($user)) {
+            return false;
+        }
+
+        if (! TwoFactor::isEnabled($user)) {
+            return true;
+        }
+
+        $code = $this->request->getPost('code');
+
+        return is_string($code) && $this->twoFactor->attempt($user, $code);
     }
 
     /**

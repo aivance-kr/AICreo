@@ -161,6 +161,16 @@ post_series         — 글↔시리즈 다대다 피벗 (PK series_id+post_id, 
 - 로직은 `App\Libraries\TwoFactor`(spomky-labs/otphp, bacon/bacon-qr-code). 시크릿은 CI4 Encrypter 로 암호화해 `users.totp_secret` 에, 복구 코드는 SHA-256 해시만 `totp_recovery_codes` 에 저장한다. 같은 코드 재사용 불가(`totp_last_step`), 연속 5회 실패 시 15분 잠금(`totp_locked_until`), 시크릿·코드는 로그에 남기지 않는다.
 - **배포 전 서버 `.env` 에 `encryption.key` 필수**(`php spark key:generate`). 없으면 설정 화면이 켜기를 막는다. 키를 바꾸면 저장된 시크릿을 복호화할 수 없으니 `Config\Encryption::$previousKeys` 로 이전 키를 유지한다. 테스트용 키는 `phpunit.xml.dist` 에 있다.
 
+## 관리자 패스키(WebAuthn) 로그인
+
+- 관리자만 쓴다. `/admin/security` 에서 등록·삭제, 로그인 화면의 "패스키로 로그인" 버튼(브라우저가 `PublicKeyCredential.parse*FromJSON` 을 지원할 때만 보임)으로 이메일 입력 없이 로그인한다. 패스키는 기기 소지 + 생체/PIN(`userVerification=required`)이라 **로그인하면 TOTP 를 건너뛴다**. 비밀번호·소셜 로그인은 그대로 TOTP 를 거친다.
+- 서명·챌린지·오리진·서명 횟수 검증은 `web-auth/webauthn-lib` 가 한다. `App\Libraries\Passkey` 는 옵션 생성·세션 보관·저장만 맡는다. 자격 증명은 발견 가능(resident key)으로 등록해야 이메일 없이 로그인된다.
+- `passkeys` 테이블: `credential`(직렬화한 `CredentialRecord` JSON — 서명 횟수가 바뀔 때마다 갱신), `credential_hash`(자격 증명 ID 의 SHA-256, 조회·유일키). 패스키별 이름·마지막 사용 시각을 보인다.
+- 챌린지는 세션 tempdata(`passkey_request`/`passkey_creation`, 5분)에 두고 `Passkey::recall()` 이 꺼내면서 지운다 — 같은 챌린지를 두 번 쓸 수 없다. 로그인 엔드포인트: `POST /auth/passkey/options`·`/auth/passkey/verify`(JSON). 검증 뒤 `BaseController::openSession()` 으로 세션을 만든다(`finishLogin()` 이 아니라 TOTP 를 건너뛰는 유일한 경로).
+- 등록·삭제는 비밀번호(있는 계정)와 TOTP 를 켠 경우 인증 코드를 다시 받는다 — 세션을 탈취한 쪽이 자기 패스키를 심어 TOTP 를 우회하지 못하게 하기 위함. 등록·삭제는 관리자 활동 로그에 남는다(자격 증명 값은 남기지 않는다).
+- rpId·허용 오리진은 `app.baseURL` 에서 만든다(`Passkey::rpId()`/`origin()`). **baseURL 이 실제 접속 주소와 다르면 등록·로그인이 모두 실패**한다. WebAuthn 은 HTTPS(또는 localhost)에서만 동작하므로 `creo.test` 로컬 개발은 https 로 열어야 한다.
+- CSRF 토큰은 요청마다 새로 발급(`regenerate`)되므로 `options` 응답이 다음 요청(verify/register)에 쓸 `csrf` 를 같이 내려주고, `public/js/passkey.js` 가 `X-CSRF-TOKEN` 헤더로 보낸다.
+
 ## 리다이렉트 관리
 
 - `redirects` 테이블(`old_path` 유일·`new_path`·`status_code` 301/302·`is_active`·`hit_count`). `RedirectFilter`(전역 before)가 GET 요청의 `경로?쿼리` 와 `is_active=1` 행이 일치하면 이동시키고 `hit_count` 를 올린다.
