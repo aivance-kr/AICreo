@@ -187,11 +187,17 @@ class SecurityController extends BaseController
 
     /**
      * 패스키 추가·삭제 재확인: 비밀번호(있는 계정만) + 2단계 인증을 켠 경우 인증 코드.
+     * 비밀번호도 2단계 인증도 없는 계정(소셜 전용)은 다시 확인할 요소가 없으므로 거부한다 —
+     * 세션만 탈취해도 자기 패스키를 심을 수 있기 때문. 2단계 인증을 먼저 켜야 한다.
      *
      * @param array<string, mixed> $user
      */
     private function reauthenticated(array $user): bool
     {
+        if (empty($user['password']) && ! TwoFactor::isEnabled($user)) {
+            return false;
+        }
+
         if (! $this->passwordOk($user)) {
             return false;
         }

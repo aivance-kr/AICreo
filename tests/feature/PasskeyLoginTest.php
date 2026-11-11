@@ -173,6 +173,15 @@ final class PasskeyLoginTest extends AdminTestCase
             ->assertStatus(403);
     }
 
+    public function testRegisterOptionsRefusedWhenNoFactorToReconfirm(): void
+    {
+        // 소셜 전용 계정(비밀번호 없음) + 2단계 인증 꺼짐 → 재확인할 요소가 없다
+        (new TwoFactor())->disable(1);
+        (new UserModel())->update(1, ['password' => '']);
+
+        $this->withSession($this->adminSession)->post('admin/security/passkeys/options')->assertStatus(403);
+    }
+
     public function testRegisterOptionsRequireResidentKeyAndExcludeExisting(): void
     {
         $result = $this->withSession($this->adminSession)
