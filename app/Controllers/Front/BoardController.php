@@ -589,7 +589,7 @@ class BoardController extends BaseController
         }
 
         $isGuest = ! session()->get('user_id');
-        $rules   = ['content' => 'required'];
+        $rules   = ['content' => 'required|max_length[2000]'];
         if ($isGuest) {
             $rules['author_name']     = 'required';
             $rules['author_password'] = 'required|min_length[4]';
