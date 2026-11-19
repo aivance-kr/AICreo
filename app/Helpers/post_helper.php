@@ -228,3 +228,45 @@ if (! function_exists('post_markdown_inline')) {
         return implode('', $parts);
     }
 }
+
+if (! function_exists('comment_html')) {
+    /**
+     * 댓글 본문을 안전한 HTML 로 바꾼다 — 전체를 이스케이프한 뒤 http(s) URL 만 링크로 만들고 줄바꿈을 <br> 로 바꾼다.
+     * 링크는 스팸 SEO 방지를 위해 nofollow ugc 를 붙인다.
+     */
+    function comment_html(?string $text): string
+    {
+        $escaped = esc((string) $text);
+
+        // 이스케이프된 문자열이라 " ' < > 는 엔티티로 바뀌어 있다 — 엔티티 앞에서 URL 을 끊어 속성 탈출을 막는다
+        $linked = preg_replace_callback(
+            '#https?://\S{1,2048}#iu',
+            static function (array $m): string {
+                // 따옴표·꺾쇠 엔티티 앞에서 끊어 속성 탈출을 막는다 — 나머지는 링크 뒤에 그대로 붙인다
+                $url      = (string) preg_split('/(?=&(?:quot|\#039|lt|gt);)/', $m[0], 2)[0];
+                $trailing = substr($m[0], strlen($url));
+                $open     = substr_count($url, '(');
+                $close    = substr_count($url, ')');
+
+                // 문장부호(엔티티로 바뀐 따옴표 포함)는 링크에서 뺀다. 닫는 괄호는 여는 괄호와 짝이 없을 때만 뺀다
+                while (true) {
+                    if (preg_match('/(?:[.,!?;:]|&#039;|&quot;)$/u', $url, $t) === 1) {
+                        $cut = $t[0];
+                    } elseif ($close > $open && str_ends_with($url, ')')) {
+                        $cut = ')';
+                        $close--;
+                    } else {
+                        break;
+                    }
+                    $trailing = $cut . $trailing;
+                    $url      = substr($url, 0, -strlen($cut));
+                }
+
+                return '<a href="' . $url . '" target="_blank" rel="nofollow ugc noopener noreferrer">' . $url . '</a>' . $trailing;
+            },
+            $escaped,
+        );
+
+        return nl2br((string) $linked);
+    }
+}
