@@ -214,7 +214,7 @@ ob_start();
                     <?php endif; ?>
                 </div>
             </div>
-            <p class="mb-0 mt-1 small"><?= nl2br(esc($c['content'])) ?></p>
+            <p class="mb-0 mt-1 small"><?= comment_html($c['content']) ?></p>
         </div>
         <?php endforeach; ?>
     </div>
