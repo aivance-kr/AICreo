@@ -279,11 +279,21 @@ ob_start();
 <?php endif; ?>
 </div>
 
+<div class="post-scroll-buttons">
+    <button type="button" class="post-scroll-buttons__btn post-scroll-buttons__btn--top" aria-label="<?= esc(lang('Board.scrollToTop'), 'attr') ?>" title="<?= esc(lang('Board.scrollToTop')) ?>">
+        <i class="bi bi-arrow-up" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="post-scroll-buttons__btn post-scroll-buttons__btn--bottom" aria-label="<?= esc(lang('Board.scrollToBottom'), 'attr') ?>" title="<?= esc(lang('Board.scrollToBottom')) ?>">
+        <i class="bi bi-arrow-down" aria-hidden="true"></i>
+    </button>
+</div>
+
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
 <script src="<?= asset_url('js/post-toc.js') ?>" defer></script>
 <script src="<?= asset_url('js/code-highlight.js') ?>" defer></script>
 <script src="<?= asset_url('js/post-share.js') ?>" defer></script>
+<script src="<?= asset_url('js/post-scroll-buttons.js') ?>" defer></script>
 <?php if (! $preview): ?>
 <script>
 const guestModal = document.getElementById('guestModal');

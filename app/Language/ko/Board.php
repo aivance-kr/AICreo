@@ -44,6 +44,8 @@ return [
     'prevEpisode'              => '← 이전 편',
     'nextEpisode'              => '다음 편 →',
     'readProgress'             => '읽기 진행률',
+    'scrollToTop'              => '맨 위로 이동',
+    'scrollToBottom'           => '맨 아래로 이동',
     'edit'                     => '수정',
     'delete'                   => '삭제',
     'confirmDeletePost'        => '이 게시글을 삭제하시겠습니까? 되돌릴 수 없습니다.',
