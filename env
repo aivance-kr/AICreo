@@ -103,15 +103,10 @@ app.baseURL = 'http://creo.test/'
 SLACK_INQUIRY_WEBHOOK_URL = ''
 
 #--------------------------------------------------------------------
-# AIGraph (공용 LangGraph 서비스) — aivance/aigraph 클라이언트 설정
+# AIGraph (선택) — 비공개 LangGraph 서비스 클라이언트
 #--------------------------------------------------------------------
-# 설치 절차: AIGraph 저장소 docs/client-install.md (composer.json 에 path 저장소가 이미 있다).
-#   운영 서버: /home/aicreo/AIGraph 가 실제 클론이다. 배포 때 composer update aivance/aigraph 로 반영.
-#   로컬: sudo ln -s <AIGraph 작업 폴더> /home/aicreo/AIGraph 로 같은 경로를 만든다.
-# 설치 후 service('aigraph')로 사용. 아래 값만 채우면 동작한다(미설정이면 호출 실패).
-# 접속 주소: 솔루션·Apache·agera 가 한 서버에서 돌고 agera 는 127.0.0.1 에만 열린다.
-#   서버 호스트 — http://graph.aivance.kr (/etc/hosts 가 127.0.0.1 로 해석, TLS 없음 — https 쓰지 말 것)
-#   개발자 PC — 직접 접속 불가. ssh -L 2026:127.0.0.1:2026 <서버> 터널 후 http://127.0.0.1:2026
-# aigraph.baseURL = http://graph.aivance.kr
+# 이 저장소의 기본 의존성이 아니다(composer.json 에 없음). 비공개 서비스를 쓰는 서버에서만
+# 별도로 설치하며, 설치 절차·접속 주소는 비공개 AIGraph 저장소 문서를 따른다.
+# aigraph.baseURL =
 # aigraph.tenant  =
 # aigraph.secret  =
