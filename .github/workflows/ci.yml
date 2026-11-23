@@ -54,6 +54,10 @@ jobs:
           # 러너 컨테이너가 network_mode: host 면 $(hostname) 이 호스트 이름이라
           # 컨테이너 이름이 아니므로(docker network connect 가 "No such container"로
           # 실패) 네트워크 연결을 건너뛰고, 호스트 127.0.0.1 의 임시 포트로 접속한다.
+          # 같은 호스트의 다른 잡이 127.0.0.1 포트로 붙어도 인증하지 못하게
+          # 실행마다 무작위 root 비밀번호를 쓴다(.env 에 같이 반영).
+          DB_PW="$(openssl rand -hex 16)"
+          sed -i "s/^database.tests.password = .*/database.tests.password = ${DB_PW}/" .env
           docker network create ci-net-${{ github.run_id }}
           NET_ARGS="--network ci-net-${{ github.run_id }}"
           if docker inspect "$(hostname)" >/dev/null 2>&1; then
@@ -63,7 +67,7 @@ jobs:
             HOST_PORT="-p 127.0.0.1::3306"
           fi
           docker run -d --name ci-mysql-${{ github.run_id }} \
-            -e MYSQL_ROOT_PASSWORD=root \
+            -e MYSQL_ROOT_PASSWORD="$DB_PW" \
             -e MYSQL_DATABASE=ci4_agency_test \
             $NET_ARGS $HOST_PORT \
             --tmpfs /var/lib/mysql \
@@ -88,7 +92,7 @@ jobs:
           # 성공할 때까지(=재시작이 끝날 때까지) 재시도한다.
           ready=0
           for i in $(seq 1 60); do
-            docker exec ci-mysql-${{ github.run_id }} mysql -uroot -proot -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && { ready=1; break; }
+            docker exec ci-mysql-${{ github.run_id }} mysql -uroot -p"$DB_PW" -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && { ready=1; break; }
             sleep 1
           done
           if [ "$ready" != "1" ]; then
