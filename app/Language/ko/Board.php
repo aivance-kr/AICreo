@@ -7,6 +7,7 @@ return [
     'categoryLabel'            => '카테고리',
     'all'                      => '전체',
     'writePost'                => '글쓰기',
+    'chooseBoard'              => '게시판 선택',
     'searchScope'              => '검색 범위',
     'title'                    => '제목',
     'content'                  => '내용',

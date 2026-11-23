@@ -281,6 +281,34 @@ class BoardController extends BaseController
 
     // ─── 작성 ───────────────────────────────────────────────────────────────
 
+    /**
+     * 게시판을 정하지 않고 들어온 글쓰기 — 읽기·쓰기 권한이 모두 있는 게시판이 하나면 바로 그 글쓰기 화면으로, 여럿이면 고르게 한다.
+     */
+    public function writeChoose(): ResponseInterface|string
+    {
+        $boards = array_values(array_filter(
+            $this->boardModel->getActiveBoards($this->request->getLocale()),
+            fn (array $board): bool => $this->checkPermission($board['read_permission'])
+                && $this->checkPermission($board['write_permission']),
+        ));
+
+        if ($boards === []) {
+            if (! session()->get('user_id')) {
+                session()->setTempdata('redirect_url', current_url(), 300);
+
+                return redirect()->to('/auth/login')->with('error', lang('Board.noWritePermission'));
+            }
+
+            throw PageNotFoundException::forPageNotFound();
+        }
+
+        if (count($boards) === 1) {
+            return redirect()->to('/board/' . $boards[0]['slug'] . '/write');
+        }
+
+        return $this->render('board/write_choose', ['boards' => $boards]);
+    }
+
     public function write(string $boardSlug): ResponseInterface|string
     {
         $board = $this->boardModel->getBySlug($boardSlug, $this->request->getLocale());
