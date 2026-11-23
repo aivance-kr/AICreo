@@ -150,6 +150,33 @@ jobs:
           composer --version
           php -r '$required = ["intl", "mbstring", "mysqli", "gd"]; if (!extension_loaded("xdebug") && !extension_loaded("pcov")) { fwrite(STDERR, "커버리지 드라이버(xdebug/pcov)가 없습니다.\n"); exit(1); } foreach ($required as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "필수 PHP 확장이 없습니다: {$extension}\n"); exit(1); } } if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION < 5) { fwrite(STDERR, "PHP 8.5 이상이 필요합니다.\n"); exit(1); }'
 
+      - name: AIGraph 클라이언트 클론 (composer path 저장소)
+        # composer.json 의 path 저장소가 /home/aicreo/AIGraph/client 를 가리킨다(운영 서버와 같은 경로,
+        # AIGraph 저장소 docs/client-install.md). 이 러너에는 그 경로가 없어 composer install 이 실패하므로
+        # 설치 전에 main 을 얕게 받아 둔다. 비공개 저장소라 읽기 전용 토큰(AIGRAPH_READ_TOKEN)이 필요하다.
+        # 토큰은 URL 이 아니라 헤더로 넘겨 .git/config·로그에 남기지 않는다. 포크 PR 은 시크릿이 비어 실패한다.
+        env:
+          AIGRAPH_READ_TOKEN: ${{ secrets.AIGRAPH_READ_TOKEN }}
+        run: |
+          if [ -z "$AIGRAPH_READ_TOKEN" ]; then
+            echo "::error::시크릿 AIGRAPH_READ_TOKEN 이 없습니다(AIGraph 저장소 읽기 권한 토큰)."
+            exit 1
+          fi
+          DIR=/home/aicreo/AIGraph
+          sudo mkdir -p "$DIR"
+          sudo chown -R "$(id -u):$(id -g)" "$DIR"
+          AUTH="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$AIGRAPH_READ_TOKEN" | base64 | tr -d '\n')"
+          echo "::add-mask::${AUTH#AUTHORIZATION: basic }"
+          # 같은 러너에서 잡이 겹쳐도 깨지지 않게 있으면 갱신하고 없으면 새로 받는다.
+          [ -d "$DIR/.git" ] || git -C "$DIR" init -q -b main
+          git -C "$DIR" remote get-url origin >/dev/null 2>&1 \
+            || git -C "$DIR" remote add origin https://github.com/aivance-kr/AIGraph.git
+          git -C "$DIR" -c http.extraheader="$AUTH" fetch --depth 1 origin main
+          # composer 가 path 저장소 버전을 브랜치 이름(dev-main)에서 읽는다 — 락 파일과 같도록 main 으로 맞춘다.
+          git -C "$DIR" checkout -q -f -B main FETCH_HEAD
+          test -f "$DIR/client/composer.json"
+          echo "AIGraph: $(git -C "$DIR" rev-parse --short HEAD)"
+
       - name: Install dependencies
         # ramsey/composer-install 은 잡 종료 시 Composer 캐시를 GitHub 캐시로 올리는데(Post 단계),
         # 이 러너는 영속 디스크라 로컬 Composer 캐시가 이미 남는다. 원격 업로드가 6분 넘게 걸려
