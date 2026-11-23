@@ -173,6 +173,19 @@ final class BoardControllerTest extends FeatureTestCase
         $this->assertStringContainsString('/board/free/write', $body);
     }
 
+    public function testWriteChooseHidesBoardsViewerCannotRead(): void
+    {
+        (new BoardModel())->update($this->boardId('qna'), ['read_permission' => 'admin', 'write_permission' => 'guest']);
+
+        $body = $this->withSession([
+            'user_id'       => 2,
+            'user_nickname' => '회원',
+            'user_role'     => 'member',
+        ])->get('write')->getBody();
+
+        $this->assertStringNotContainsString('/board/qna/write', $body);
+    }
+
     public function testWriteChooseRedirectsGuestToLoginWhenNoWritableBoard(): void
     {
         (new BoardModel())->builder()->update(['write_permission' => 'admin']);
