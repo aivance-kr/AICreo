@@ -44,6 +44,8 @@ return [
     'prevEpisode'              => '← Previous',
     'nextEpisode'              => 'Next →',
     'readProgress'             => 'Reading progress',
+    'scrollToTop'              => 'Scroll to top',
+    'scrollToBottom'           => 'Scroll to bottom',
     'edit'                     => 'Edit',
     'delete'                   => 'Delete',
     'confirmDeletePost'        => 'Delete this post? This cannot be undone.',
