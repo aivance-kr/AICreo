@@ -20,6 +20,7 @@ $front = static function (RouteCollection $routes): void {
     $routes->get('archive/(:num)/(:num)', 'Front\ArchiveController::month/$1/$2');
     $routes->get('tags', 'Front\TagController::index');
     $routes->get('tags/(:segment)', 'Front\TagController::show/$1');
+    $routes->get('write', 'Front\BoardController::writeChoose');
     $routes->get('board/(:segment)', 'Front\BoardController::index/$1');
     $routes->get('board/(:segment)/write', 'Front\BoardController::write/$1');
     $routes->post('board/(:segment)/write', 'Front\BoardController::store/$1');

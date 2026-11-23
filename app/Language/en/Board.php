@@ -7,6 +7,7 @@ return [
     'categoryLabel'            => 'Categories',
     'all'                      => 'All',
     'writePost'                => 'Write a post',
+    'chooseBoard'              => 'Choose a board',
     'searchScope'              => 'Search scope',
     'title'                    => 'Title',
     'content'                  => 'Content',
