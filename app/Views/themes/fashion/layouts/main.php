@@ -73,6 +73,7 @@ $sidebarHtml = trim(view('themes/default/components/blog_sidebar', [
                 <div class="fm-account">
                 <?php if ($authUser['loggedIn']): ?>
                     <span><?= esc($authUser['nickname']) ?></span>
+                    <a href="/write"><?= esc(lang('Board.writePost')) ?></a>
                     <?php if ($authUser['role'] === 'admin'): ?><a href="/admin"><?= esc(lang('Site.admin')) ?></a><?php endif; ?>
                     <a href="/auth/profile"><?= esc(lang('Site.profile')) ?></a>
                     <a href="/auth/logout"><?= esc(lang('Site.logout')) ?></a>
