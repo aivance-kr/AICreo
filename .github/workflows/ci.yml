@@ -92,7 +92,7 @@ jobs:
           # 성공할 때까지(=재시작이 끝날 때까지) 재시도한다.
           ready=0
           for i in $(seq 1 60); do
-            docker exec ci-mysql-${{ github.run_id }} mysql -uroot -p"$DB_PW" -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && { ready=1; break; }
+            docker exec -e MYSQL_PWD="$DB_PW" ci-mysql-${{ github.run_id }} mysql -uroot -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && { ready=1; break; }
             sleep 1
           done
           if [ "$ready" != "1" ]; then
@@ -199,6 +199,8 @@ jobs:
           docker rm -f -v ci-mysql-${{ github.run_id }} 2>/dev/null || true
           docker network disconnect -f ci-net-${{ github.run_id }} "$(hostname)" 2>/dev/null || true
           docker network rm ci-net-${{ github.run_id }} 2>/dev/null || true
+          # 무작위 DB 비밀번호가 든 .env 를 공유 러너 디스크에 남기지 않는다.
+          rm -f .env
 
   notify:
     name: Slack 알림
