@@ -48,15 +48,28 @@ jobs:
       - name: MySQL 컨테이너 기동
         run: |
           docker rm -f ci-mysql-${{ github.run_id }} 2>/dev/null || true
-          # 러너가 도커 컨테이너라 호스트에 게시한 포트(127.0.0.1)에는 닿지 못한다
-          # ("Connection refused"). 실행별 전용 네트워크에 러너와 MySQL 을 같이 붙이고
-          # 컨테이너 이름으로 접속한다 — 호스트 포트를 쓰지 않아 잡끼리 겹치지 않는다.
+          # 러너가 브리지 네트워크의 도커 컨테이너면 호스트에 게시한 포트(127.0.0.1)에는
+          # 닿지 못한다("Connection refused"). 이 경우 실행별 전용 네트워크에 러너와
+          # MySQL 을 같이 붙이고 컨테이너 이름으로 접속한다.
+          # 러너 컨테이너가 network_mode: host 면 $(hostname) 이 호스트 이름이라
+          # 컨테이너 이름이 아니므로(docker network connect 가 "No such container"로
+          # 실패) 네트워크 연결을 건너뛰고, 호스트 127.0.0.1 의 임시 포트로 접속한다.
+          # 같은 호스트의 다른 잡이 127.0.0.1 포트로 붙어도 인증하지 못하게
+          # 실행마다 무작위 root 비밀번호를 쓴다(.env 에 같이 반영).
+          DB_PW="$(openssl rand -hex 16)"
+          sed -i "s/^database.tests.password = .*/database.tests.password = ${DB_PW}/" .env
           docker network create ci-net-${{ github.run_id }}
-          docker network connect ci-net-${{ github.run_id }} "$(hostname)"
+          NET_ARGS="--network ci-net-${{ github.run_id }}"
+          if docker inspect "$(hostname)" >/dev/null 2>&1; then
+            docker network connect ci-net-${{ github.run_id }} "$(hostname)"
+            HOST_PORT=""
+          else
+            HOST_PORT="-p 127.0.0.1::3306"
+          fi
           docker run -d --name ci-mysql-${{ github.run_id }} \
-            -e MYSQL_ROOT_PASSWORD=root \
+            -e MYSQL_ROOT_PASSWORD="$DB_PW" \
             -e MYSQL_DATABASE=ci4_agency_test \
-            --network ci-net-${{ github.run_id }} \
+            $NET_ARGS $HOST_PORT \
             --tmpfs /var/lib/mysql \
             mysql:8.0 \
             --innodb-flush-log-at-trx-commit=0 \
@@ -79,13 +92,19 @@ jobs:
           # 성공할 때까지(=재시작이 끝날 때까지) 재시도한다.
           ready=0
           for i in $(seq 1 60); do
-            docker exec ci-mysql-${{ github.run_id }} mysql -uroot -proot -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && { ready=1; break; }
+            docker exec ci-mysql-${{ github.run_id }} mysql -uroot -p"$DB_PW" -e "SELECT 1" ci4_agency_test >/dev/null 2>&1 && { ready=1; break; }
             sleep 1
           done
           if [ "$ready" != "1" ]; then
             echo "::error::MySQL 이 60초 안에 준비되지 않았습니다"
             docker logs ci-mysql-${{ github.run_id }} 2>&1 | tail -20
             exit 1
+          fi
+          # 호스트 포트로 게시한 경우 .env 의 접속 대상을 127.0.0.1:<임시 포트> 로 바꾼다.
+          if [ -n "$HOST_PORT" ]; then
+            PORT="$(docker port ci-mysql-${{ github.run_id }} 3306/tcp | head -n1 | sed 's/.*://')"
+            sed -i -e "s/^database.tests.hostname = .*/database.tests.hostname = 127.0.0.1/" \
+                   -e "s/^database.tests.port = .*/database.tests.port = ${PORT}/" .env
           fi
 
       - name: PHP 8.5+ 보장 (러너 이미지 편차 대응)
