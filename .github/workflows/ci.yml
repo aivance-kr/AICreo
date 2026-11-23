@@ -164,14 +164,24 @@ jobs:
           fi
           DIR=/home/aicreo/AIGraph
           sudo mkdir -p "$DIR"
-          sudo chown -R "$(id -u):$(id -g)" "$DIR"
-          AUTH="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$AIGRAPH_READ_TOKEN" | base64 | tr -d '\n')"
-          echo "::add-mask::${AUTH#AUTHORIZATION: basic }"
+          # 심볼릭 링크로 바꿔치기된 경로에 chown 하지 않는다. 방금 만든(또는 이전 실행이 만든) 디렉터리 자체만 넘긴다.
+          if [ -L "$DIR" ] || [ ! -d "$DIR" ]; then
+            echo "::error::$DIR 가 일반 디렉터리가 아닙니다."
+            exit 1
+          fi
+          [ "$(stat -c %u "$DIR")" = "$(id -u)" ] || sudo chown "$(id -u):$(id -g)" "$DIR"
+          # 토큰은 명령행 인자(ps 로 보임)가 아니라 환경 변수로 git 설정에 넘긴다(git 2.31+).
+          AUTH="$(printf 'x-access-token:%s' "$AIGRAPH_READ_TOKEN" | base64 | tr -d '\n')"
+          echo "::add-mask::${AUTH}"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic ${AUTH}"
           # 같은 러너에서 잡이 겹쳐도 깨지지 않게 있으면 갱신하고 없으면 새로 받는다.
           [ -d "$DIR/.git" ] || git -C "$DIR" init -q -b main
           git -C "$DIR" remote get-url origin >/dev/null 2>&1 \
             || git -C "$DIR" remote add origin https://github.com/aivance-kr/AIGraph.git
-          git -C "$DIR" -c http.extraheader="$AUTH" fetch --depth 1 origin main
+          git -C "$DIR" fetch --depth 1 origin main
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0 AUTH
           # composer 가 path 저장소 버전을 브랜치 이름(dev-main)에서 읽는다 — 락 파일과 같도록 main 으로 맞춘다.
           git -C "$DIR" checkout -q -f -B main FETCH_HEAD
           test -f "$DIR/client/composer.json"
