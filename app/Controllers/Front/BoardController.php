@@ -282,13 +282,14 @@ class BoardController extends BaseController
     // ─── 작성 ───────────────────────────────────────────────────────────────
 
     /**
-     * 게시판을 정하지 않고 들어온 글쓰기 — 쓸 수 있는 게시판이 하나면 바로 그 글쓰기 화면으로, 여럿이면 고르게 한다.
+     * 게시판을 정하지 않고 들어온 글쓰기 — 읽기·쓰기 권한이 모두 있는 게시판이 하나면 바로 그 글쓰기 화면으로, 여럿이면 고르게 한다.
      */
     public function writeChoose(): ResponseInterface|string
     {
         $boards = array_values(array_filter(
             $this->boardModel->getActiveBoards($this->request->getLocale()),
-            fn (array $board): bool => $this->checkPermission($board['write_permission']),
+            fn (array $board): bool => $this->checkPermission($board['read_permission'])
+                && $this->checkPermission($board['write_permission']),
         ));
 
         if ($boards === []) {
