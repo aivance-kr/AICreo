@@ -161,6 +161,25 @@ final class BoardControllerTest extends FeatureTestCase
             ->countAllResults());
     }
 
+    public function testWriteChooseListsWritableBoardsForAdmin(): void
+    {
+        $body = $this->withSession([
+            'user_id'       => 1,
+            'user_nickname' => '관리자',
+            'user_role'     => 'admin',
+        ])->get('write')->getBody();
+
+        $this->assertStringContainsString('/board/notice/write', $body);
+        $this->assertStringContainsString('/board/free/write', $body);
+    }
+
+    public function testWriteChooseRedirectsGuestToLoginWhenNoWritableBoard(): void
+    {
+        (new BoardModel())->builder()->update(['write_permission' => 'admin']);
+
+        $this->get('write')->assertRedirectTo('/auth/login');
+    }
+
     public function testWriteFormUploadsPastedImagesBeforeSubmit(): void
     {
         $body = $this->withSession([
